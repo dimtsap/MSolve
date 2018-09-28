@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ISAAR.MSolve.FEM\ISAAR.MSolve.FEM.csproj" />
+    <ProjectReference Include="..\ISAAR.MSolve.Problems\ISAAR.MSolve.Problems.csproj" />
+    <ProjectReference Include="..\ISAAR.MSolve.Solvers\ISAAR.MSolve.Solvers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Ansys.ACT.Core">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\ACT\bin\Win64\Ansys.ACT.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Ansys.ACT.Interfaces">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\ACT\bin\Win64\Ansys.ACT.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Ansys.ACT.WB1">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\aisol\bin\winx64\Ansys.ACT.WB1.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

@@ -240,38 +240,40 @@ namespace ISAAR.MSolve.ANSYS
 				solver.Analysis.MeshData.Nodes.ToList()
 					.ForEach(n => model.NodesDictionary.Add(n.Id, new Node3D(n.Id, n.X, n.Y, n.Z)));
 				var mat = (_api.DataModel.GeoData.Assemblies[0].Parts[0].Bodies[0] as IGeoBody).Material;
-				Console.WriteLine(JsonConvert.SerializeObject(mat));
+				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\materials.json", JsonConvert.SerializeObject(mat));
 
 				var elementsList = new List<Element>();
 				var factory = new ContinuumElement3DFactory(null, null);
-				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
-				{
-					var elementNodes = new List<Node3D>();
-					ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D) model.NodesDictionary[id]));
-					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
-					var elementWrapper = new Element() {ID = ansysElement.Id, ElementType = element};
-					foreach (Node node in element.Nodes) elementWrapper.AddNode(node);
-					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-					model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				}
 
-				var staticStructural = _api.DataModel.Project.Model.Analyses[0];
+				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\elements.json", JsonConvert.SerializeObject(solver.Analysis.MeshData.Elements));
+				
+				//foreach (var ansysElement in solver.Analysis.MeshData.Elements)
+				//{
+				//	var elementNodes = new List<Node3D>();
+				//	ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D) model.NodesDictionary[id]));
+				//	var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
+				//	var elementWrapper = new Element() {ID = ansysElement.Id, ElementType = element};
+				//	foreach (Node node in element.Nodes) elementWrapper.AddNode(node);
+				//	model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				//	model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				//}
 
-				model.ConnectDataStructures();
-				var linearSystems = new Dictionary<int, ILinearSystem>();
-				linearSystems[0] = new SkylineLinearSystem(0, model.Subdomains[0].Forces);
-				SolverSkyline solverSkyline = new SolverSkyline(linearSystems[0]);
-				ProblemStructural provider = new ProblemStructural(model, linearSystems);
-				LinearAnalyzer childAnalyzer = new LinearAnalyzer(solverSkyline, linearSystems);
-				StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
-				parentAnalyzer.BuildMatrices();
-				parentAnalyzer.Initialize();
-				parentAnalyzer.Solve();
+				//var staticStructural = _api.DataModel.Project.Model.Analyses[0];
+
+				//model.ConnectDataStructures();
+				//var linearSystems = new Dictionary<int, ILinearSystem>();
+				//linearSystems[0] = new SkylineLinearSystem(0, model.Subdomains[0].Forces);
+				//SolverSkyline solverSkyline = new SolverSkyline(linearSystems[0]);
+				//ProblemStructural provider = new ProblemStructural(model, linearSystems);
+				//LinearAnalyzer childAnalyzer = new LinearAnalyzer(solverSkyline, linearSystems);
+				//StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
+				//parentAnalyzer.BuildMatrices();
+				//parentAnalyzer.Initialize();
+				//parentAnalyzer.Solve();
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Error:");
-				Console.WriteLine(e.Message);
+				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\error.json", JsonConvert.SerializeObject(e));
 				return false;
 			}
 
@@ -285,8 +287,11 @@ namespace ISAAR.MSolve.ANSYS
 			var valueY = Convert.ToDouble(load.Properties["ValueY"]);
 			var valueZ = Convert.ToDouble(load.Properties["ValueZ"]);
 
-			return nodeIds.Select(nodeId => mesh.NodeById(nodeId))
+			var a= nodeIds.Select(nodeId => mesh.NodeById(nodeId))
 				.Select(node => Math.Sqrt(valueX * valueX + valueY * valueY + valueZ * valueZ)).ToList();
+
+			System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\loadNodes.json", JsonConvert.SerializeObject(a));
+			return a;
 		}
 
 		private List<TempLoad> _loads = new List<TempLoad>();
@@ -319,7 +324,11 @@ namespace ISAAR.MSolve.ANSYS
 		public virtual IEnumerable<double> NodeBoundaryValues(IUserLoad load, IEnumerable<int> nodeIds)
 		{
 			IMeshData mesh = ((IMechanicalUserLoad) load).Analysis.MeshData;
-			return nodeIds.Select(nodeId => mesh.NodeById(nodeId)).Select(node => 0.0).ToList();
+			var b= nodeIds.Select(nodeId => mesh.NodeById(nodeId)).Select(node => 0.0).ToList();
+
+			System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\boundaryNodes.json", JsonConvert.SerializeObject(b));
+
+			return b;
 		}
 
 		private Dictionary<int, List<DOFType>> _nodeConstrains = new Dictionary<int, List<DOFType>>();

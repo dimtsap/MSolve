@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Ansys.ACT.Interfaces.Common;
 using Ansys.ACT.Interfaces.Mechanical;
@@ -7,7 +8,10 @@ using Ansys.ACT.Interfaces.Mesh;
 using Ansys.ACT.Interfaces.UserObject;
 using ISAAR.MSolve.FEM.Entities;
 using System.Linq;
+using Ansys.ACT.Automation.Mechanical;
+using Ansys.ACT.Core.Callbacks;
 using Ansys.ACT.Interfaces.Geometry;
+using Ansys.ACT.Interfaces.Graphics.Entities;
 using Ansys.ACT.Interfaces.Project;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.Geometry.Shapes;
@@ -15,12 +19,18 @@ using ISAAR.MSolve.Solvers.Interfaces;
 using ISAAR.MSolve.Solvers.Skyline;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Analyzers;
+using ISAAR.MSolve.Discretization.Interfaces;
+using Newtonsoft.Json;
+using SimpleExpressionEvaluator;
+using INode = Ansys.ACT.Interfaces.Mesh.INode;
+using Model = ISAAR.MSolve.FEM.Entities.Model;
 
 namespace ISAAR.MSolve.ANSYS
 {
 	public class MainMSolve
 	{
-		private Dictionary<ElementTypeEnum, Dictionary<int, int[]>> ElementTypesNodesDictionary =new Dictionary<ElementTypeEnum, Dictionary<int, int[]>>()
+		private Dictionary<ElementTypeEnum, Dictionary<int, int[]>> ElementTypesNodesDictionary =
+			new Dictionary<ElementTypeEnum, Dictionary<int, int[]>>()
 			{
 				{
 					ElementTypeEnum.kTri3,
@@ -197,69 +207,55 @@ namespace ISAAR.MSolve.ANSYS
 					}
 				},
 			};
-		private Dictionary<ElementTypeEnum, CellType3D> AnsysMSolveElementDictionary= new Dictionary<ElementTypeEnum, CellType3D>
-		{
-			{ElementTypeEnum.kHex8, CellType3D.Hexa8 },
-			{ElementTypeEnum.kHex20, CellType3D.Hexa20 },
-			{ElementTypeEnum.kTet4, CellType3D.Tet4 },
-			{ElementTypeEnum.kTet10, CellType3D.Tet10 },
-			{ElementTypeEnum.kWedge6, CellType3D.Wedge6 },
-			{ElementTypeEnum.kWedge15, CellType3D.Wedge15 },
-			{ElementTypeEnum.kPyramid5, CellType3D.Pyra5 },
-			{ElementTypeEnum.kPyramid13, CellType3D.Pyra13 },
-		};
+
+		private Dictionary<ElementTypeEnum, CellType3D> AnsysMSolveElementDictionary =
+			new Dictionary<ElementTypeEnum, CellType3D>
+			{
+				{ElementTypeEnum.kHex8, CellType3D.Hexa8},
+				{ElementTypeEnum.kHex20, CellType3D.Hexa20},
+				{ElementTypeEnum.kTet4, CellType3D.Tet4},
+				{ElementTypeEnum.kTet10, CellType3D.Tet10},
+				{ElementTypeEnum.kWedge6, CellType3D.Wedge6},
+				{ElementTypeEnum.kWedge15, CellType3D.Wedge15},
+				{ElementTypeEnum.kPyramid5, CellType3D.Pyra5},
+				{ElementTypeEnum.kPyramid13, CellType3D.Pyra13},
+			};
 
 
 		private readonly IMechanicalExtAPI _api;
-		private readonly IMechanicalUserSolver _solver;
 
-		public MainMSolve(IExtAPI api, IUserSolver solver)
+		public MainMSolve(IExtAPI api)
 		{
 			_api = api as IMechanicalExtAPI;
-			_solver = solver as IMechanicalUserSolver;
 		}
 
-		public bool Solve(IUserResult solver, Func<int, string, bool> func)
+		public bool SolveStatic(IUserSolver userSolver, Func<int, string, bool> func)
 		{
+			var solver = userSolver as IMechanicalUserSolver;
 			try
 			{
 				var model = new Model();
-				model.SubdomainsDictionary.Add(0, new Subdomain() { ID = 0 });
+				model.SubdomainsDictionary.Add(0, new Subdomain() {ID = 0});
 
-				_solver.Analysis.MeshData.Nodes.ToList().ForEach(n => model.NodesDictionary.Add(n.Id,new Node3D(n.Id, n.X, n.Y, n.Z)));
-				//TODO:Materials
-				var mat = (_api.DataModel.GeoData.Assemblies[0].Parts[0].Bodies[0] as IGeoBody).Material.ToString();
-				Console.WriteLine(mat);
+				solver.Analysis.MeshData.Nodes.ToList()
+					.ForEach(n => model.NodesDictionary.Add(n.Id, new Node3D(n.Id, n.X, n.Y, n.Z)));
+				var mat = (_api.DataModel.GeoData.Assemblies[0].Parts[0].Bodies[0] as IGeoBody).Material;
+				Console.WriteLine(JsonConvert.SerializeObject(mat));
 
-				var elementsList= new List<Element>();
+				var elementsList = new List<Element>();
 				var factory = new ContinuumElement3DFactory(null, null);
-				foreach (var ansysElement in _solver.Analysis.MeshData.Elements)
+				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
 				{
-					var elementNodes= new List<Node3D>();
-					ansysElement.NodeIds.ToList().ForEach(id=>elementNodes.Add((Node3D)model.NodesDictionary[id]));
-					var element=factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type],elementNodes);
-					var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
+					var elementNodes = new List<Node3D>();
+					ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D) model.NodesDictionary[id]));
+					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
+					var elementWrapper = new Element() {ID = ansysElement.Id, ElementType = element};
 					foreach (Node node in element.Nodes) elementWrapper.AddNode(node);
 					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
 					model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
 				}
 
 				var staticStructural = _api.DataModel.Project.Model.Analyses[0];
-
-				//TODO: find load and constrains
-				var loads= staticStructural.GetLoadObjects("ExtensionName").ToList();
-				foreach (var load in loads)
-				{
-					var userLoad=load as IMechanicalUserLoad;
-					if (userLoad.IsLoad)
-					{
-					}
-					else if (userLoad.IsSupport)
-					{
-
-					}
-				}
-
 
 				model.ConnectDataStructures();
 				var linearSystems = new Dictionary<int, ILinearSystem>();
@@ -271,7 +267,6 @@ namespace ISAAR.MSolve.ANSYS
 				parentAnalyzer.BuildMatrices();
 				parentAnalyzer.Initialize();
 				parentAnalyzer.Solve();
-
 			}
 			catch (Exception e)
 			{
@@ -282,5 +277,85 @@ namespace ISAAR.MSolve.ANSYS
 
 			return true;
 		}
+
+		public virtual IEnumerable<double> NodeLoadValues(IUserLoad load, IEnumerable<int> nodeIds)
+		{
+			IMeshData mesh = ((IMechanicalUserLoad) load).Analysis.MeshData;
+			var valueX = Convert.ToDouble(load.Properties["ValueX"]);
+			var valueY = Convert.ToDouble(load.Properties["ValueY"]);
+			var valueZ = Convert.ToDouble(load.Properties["ValueZ"]);
+
+			return nodeIds.Select(nodeId => mesh.NodeById(nodeId))
+				.Select(node => Math.Sqrt(valueX * valueX + valueY * valueY + valueZ * valueZ)).ToList();
+		}
+
+		private List<TempLoad> _loads = new List<TempLoad>();
+
+		public virtual void WriteInitialLoadValues(IUserLoad load, StringWriter filename)
+		{
+			var res = new List<double>();
+			IMeshData mesh = ((IMechanicalUserLoad) load).Analysis.MeshData;
+			var valueX = Convert.ToDouble(load.Properties["ValueX"]);
+			var valueY = Convert.ToDouble(load.Properties["ValueY"]);
+			var valueZ = Convert.ToDouble(load.Properties["ValueZ"]);
+
+			var propGeo = load.Properties["Geometry"];
+			var refIds = (propGeo.Value as Surface).Ids;
+
+			foreach (var refId in refIds)
+			{
+				var meshRegion = mesh.MeshRegionById(refId);
+				var nodeIds = meshRegion.NodeIds;
+				foreach (var nodeId in nodeIds)
+				{
+					INode node = mesh.NodeById(nodeId);
+					_loads.Add(new TempLoad {Amount = valueX, DofType = DOFType.X, nodeId = nodeId});
+					_loads.Add(new TempLoad {Amount = valueY, DofType = DOFType.Y, nodeId = nodeId});
+					_loads.Add(new TempLoad {Amount = valueZ, DofType = DOFType.Z, nodeId = nodeId});
+				}
+			}
+		}
+
+		public virtual IEnumerable<double> NodeBoundaryValues(IUserLoad load, IEnumerable<int> nodeIds)
+		{
+			IMeshData mesh = ((IMechanicalUserLoad) load).Analysis.MeshData;
+			return nodeIds.Select(nodeId => mesh.NodeById(nodeId)).Select(node => 0.0).ToList();
+		}
+
+		private Dictionary<int, List<DOFType>> _nodeConstrains = new Dictionary<int, List<DOFType>>();
+
+		public virtual void WriteInitialBoundaryValues(IUserLoad load, StringWriter filename)
+		{
+			var res = new List<double>();
+			IMeshData mesh = ((IMechanicalUserLoad) load).Analysis.MeshData;
+			var valueX = Convert.ToInt32(load.Properties["ConstraintX"]);
+			var valueY = Convert.ToInt32(load.Properties["ConstraintX"]);
+			var valueZ = Convert.ToInt32(load.Properties["ConstraintZ"]);
+
+			var propGeo = load.Properties["Geometry"];
+			var refIds = (propGeo.Value as Surface).Ids;
+
+			foreach (var refId in refIds)
+			{
+				var meshRegion = mesh.MeshRegionById(refId);
+				var nodeIds = meshRegion.NodeIds;
+				foreach (var nodeId in nodeIds)
+				{
+					if (!_nodeConstrains.ContainsKey(nodeId))
+						_nodeConstrains.Add(nodeId, new List<DOFType>());
+					if (valueX == 1) _nodeConstrains[nodeId].Add(DOFType.X);
+					if (valueY == 1) _nodeConstrains[nodeId].Add(DOFType.Y);
+					if (valueZ == 1) _nodeConstrains[nodeId].Add(DOFType.Z);
+					_nodeConstrains[nodeId].Distinct();
+				}
+			}
+		}
+	}
+
+	public class TempLoad
+	{
+		public double Amount { get; set; }
+		public DOFType DofType { get; set; }
+		public int nodeId { get; set; }
 	}
 }

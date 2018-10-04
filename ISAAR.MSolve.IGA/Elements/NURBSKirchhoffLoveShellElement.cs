@@ -7,6 +7,8 @@ using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.IGA.Problems.SupportiveClasses;
+using ISAAR.MSolve.LinearAlgebra.LinearSystems.Algorithms.CG;
+using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
@@ -118,7 +120,7 @@ namespace ISAAR.MSolve.IGA.Elements
 
 				var surfaceBasisVector2 = CalculateSurfaceBasisVector1(jacobianMatrix, 1);
 
-				var surfaceBasisVector3 = surfaceBasisVector1.CrossProduct(surfaceBasisVector2);
+				var surfaceBasisVector3 = surfaceBasisVector1^surfaceBasisVector2;
 				var J1 = surfaceBasisVector3.Norm;
 				surfaceBasisVector3.Multiply(1 / J1);
 
@@ -126,7 +128,7 @@ namespace ISAAR.MSolve.IGA.Elements
 				var surfaceBasisVectorDerivative2 = CalculateSurfaceBasisVector1(hessianMatrix, 1);
 				var surfaceBasisVectorDerivative12 = CalculateSurfaceBasisVector1(hessianMatrix, 2);
 
-				Matrix2D ElasticityMatrix = ((IContinuumMaterial2D)shellElement.Patch.Material).ConstitutiveMatrix;
+				Matrix2D constitutiveMatrix = CalculateConstitutiveMatrix(shellElement, surfaceBasisVector1, surfaceBasisVector2);
 
 				var Bmembrane = CalculateMembraneDeformationMatrix(nurbs, j, surfaceBasisVector1, surfaceBasisVector2);
 
@@ -135,13 +137,13 @@ namespace ISAAR.MSolve.IGA.Elements
 				double membraneStiffness = ((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).YoungModulus * shellElement.Patch.Thickness /
 				                           (1 - Math.Pow(((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).PoissonRatio, 2));
 
-				var Kmembrane = Bmembrane.Transpose() * ElasticityMatrix * Bmembrane * membraneStiffness * J1 *
+				var Kmembrane = Bmembrane.Transpose() * constitutiveMatrix * Bmembrane * membraneStiffness * J1 *
 				                gaussPoints[j].WeightFactor;
 
 				double bendingStiffness = ((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).YoungModulus * Math.Pow(shellElement.Patch.Thickness, 3) /
 				                          12 / (1 - Math.Pow(((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).PoissonRatio, 2));
 
-				var Kbending = Bbending.Transpose() * ElasticityMatrix * Bbending * bendingStiffness * J1 *
+				var Kbending = Bbending.Transpose() * constitutiveMatrix * Bbending * bendingStiffness * J1 *
 				               gaussPoints[j].WeightFactor;
 
 
@@ -151,22 +153,56 @@ namespace ISAAR.MSolve.IGA.Elements
 			return stiffnessMatrixElement;
 		}
 
+		private Matrix2D CalculateConstitutiveMatrix(NURBSKirchhoffLoveShellElement element,Vector surfaceBasisVector1, Vector surfaceBasisVector2)
+		{
+			var auxMatrix1 = Matrix2by2.Create(surfaceBasisVector1.DotProduct(surfaceBasisVector1),
+				surfaceBasisVector1.DotProduct(surfaceBasisVector2),
+				surfaceBasisVector2.DotProduct(surfaceBasisVector1),
+				surfaceBasisVector2.DotProduct(surfaceBasisVector2));
+			var auxVector1= LinearAlgebra.Vectors.Vector.CreateFromArray(new double[2]{1,0});
+
+			var solver = new ConjugateGradient(100, 1e-9);
+			var (aa1, stats1) = solver.Solve(auxMatrix1, auxVector1);
+
+			auxVector1 = LinearAlgebra.Vectors.Vector.CreateFromArray(new double[2] { 0, 1 });
+			var (aa2, stats2) = solver.Solve(auxMatrix1, auxVector1);
+			var material =((IContinuumMaterial2D)element.Patch.Material);
+			var constitutiveMatrix = new Matrix2D(new double[3, 3]
+			{
+				{ aa1[0]*aa1[0],
+					material.PoissonRatio*aa1[0]*aa2[1]+(1-material.PoissonRatio)*aa1[1]*aa1[1],
+					aa1[0]*aa1[1]
+				},
+				{
+					material.PoissonRatio*aa1[0]*aa2[1]+(1-material.PoissonRatio)*aa1[1]*aa1[1],
+					aa2[1]*aa2[1],
+					aa2[1]*aa1[1]
+				},
+				{
+					aa1[0]*aa1[1],
+					aa2[1]*aa1[1],
+					0.5*(1-material.PoissonRatio)*aa1[0]*aa2[1]+(1+material.PoissonRatio)*aa1[1]*aa1[1]
+				},
+			});
+			return constitutiveMatrix;
+		}
+
 		private Matrix2D CalculateBendingDeformationMatrix(Vector surfaceBasisVector3, NURBS2D nurbs, int j,
 			Vector surfaceBasisVector2, Vector surfaceBasisVectorDerivative1, Vector surfaceBasisVector1, double J1,
 			Vector surfaceBasisVectorDerivative2, Vector surfaceBasisVectorDerivative12)
 		{
 			Matrix2D Bbending = new Matrix2D(3, ControlPoints.Count * 3);
-			for (int column = 0; column < ControlPoints.Count * 3; column++)
+			for (int column = 0; column < ControlPoints.Count * 3; column+=3)
 			{
 				#region BI1
 
-				var BI1 = surfaceBasisVector3.CrossProduct(surfaceBasisVector3);
+				var BI1 = surfaceBasisVector3^surfaceBasisVector3;
 				BI1.Multiply(nurbs.NurbsDerivativeValuesHeta[column / 3, j]);
-				var auxVector = surfaceBasisVector2.CrossProduct(surfaceBasisVector3);
+				var auxVector = surfaceBasisVector2^surfaceBasisVector3;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesKsi[column / 3, j]);
 				BI1.Add(auxVector);
 				BI1.Multiply(surfaceBasisVector3.DotProduct(surfaceBasisVectorDerivative1));
-				auxVector = surfaceBasisVector1.CrossProduct(surfaceBasisVectorDerivative1);
+				auxVector = surfaceBasisVector1^surfaceBasisVectorDerivative1;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesHeta[column / 3, j]);
 				BI1.Add(auxVector);
 				BI1.Multiply(1 / J1);
@@ -180,16 +216,16 @@ namespace ISAAR.MSolve.IGA.Elements
 
 				#region BI2
 
-				Vector BI2 = surfaceBasisVector3.CrossProduct(surfaceBasisVector3);
+				Vector BI2 = surfaceBasisVector3^surfaceBasisVector3;
 				BI2.Multiply(nurbs.NurbsDerivativeValuesHeta[column / 3, j]);
-				auxVector = surfaceBasisVector2.CrossProduct(surfaceBasisVector3);
+				auxVector = surfaceBasisVector2^surfaceBasisVector3;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesKsi[column / 3, j]);
 				BI2.Add(auxVector);
 				BI2.Multiply(surfaceBasisVector3.DotProduct(surfaceBasisVectorDerivative2));
-				auxVector = surfaceBasisVector1.CrossProduct(surfaceBasisVectorDerivative2);
+				auxVector = surfaceBasisVector1^surfaceBasisVectorDerivative2;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesHeta[column / 3, j]);
 				BI2.Add(auxVector);
-				auxVector = surfaceBasisVectorDerivative2.CrossProduct(surfaceBasisVector2);
+				auxVector = surfaceBasisVectorDerivative2^surfaceBasisVector2;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesKsi[column / 3, j]);
 				BI2.Add(auxVector);
 				BI2.Multiply(1 / J1);
@@ -203,16 +239,16 @@ namespace ISAAR.MSolve.IGA.Elements
 
 				#region BI3
 
-				Vector BI3 = surfaceBasisVector3.CrossProduct(surfaceBasisVector3);
+				Vector BI3 = surfaceBasisVector3^surfaceBasisVector3;
 				BI3.Multiply(nurbs.NurbsDerivativeValuesHeta[column / 3, j]);
-				auxVector = surfaceBasisVector2.CrossProduct(surfaceBasisVector3);
+				auxVector = surfaceBasisVector2^surfaceBasisVector3;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesKsi[column / 3, j]);
 				BI3.Add(auxVector);
 				BI3.Multiply(surfaceBasisVector3.DotProduct(surfaceBasisVectorDerivative12));
-				auxVector = surfaceBasisVector1.CrossProduct(surfaceBasisVectorDerivative12);
+				auxVector = surfaceBasisVector1^surfaceBasisVectorDerivative12;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesHeta[column / 3, j]);
 				BI3.Add(auxVector);
-				auxVector = surfaceBasisVectorDerivative2.CrossProduct(surfaceBasisVector2);
+				auxVector = surfaceBasisVectorDerivative2^surfaceBasisVector2;
 				auxVector.Multiply(nurbs.NurbsDerivativeValuesKsi[column / 3, j]);
 				BI3.Add(auxVector);
 				BI3.Multiply(1 / J1);
@@ -243,8 +279,8 @@ namespace ISAAR.MSolve.IGA.Elements
 		private Matrix2D CalculateMembraneDeformationMatrix(NURBS2D nurbs, int j, Vector surfaceBasisVector1,
 			Vector surfaceBasisVector2)
 		{
-			Matrix2D dRIa = new Matrix2D(3, ControlPoints.Count * 3);
-			for (int i = 0; i < ControlPoints.Count * 3; i++)
+			Matrix2D dRIa = new Matrix2D(3, ControlPoints.Count );
+			for (int i = 0; i < ControlPoints.Count ; i++)
 			{
 				for (int m = 0; m < 3; m++)
 				{
@@ -254,7 +290,7 @@ namespace ISAAR.MSolve.IGA.Elements
 			}
 
 			Matrix2D Bmembrane = new Matrix2D(3, ControlPoints.Count * 3);
-			for (int column = 0; column < ControlPoints.Count * 3; column++)
+			for (int column = 0; column < ControlPoints.Count * 3; column+=3)
 			{
 				Bmembrane[0, column] = nurbs.NurbsDerivativeValuesKsi[column / 3, j] * surfaceBasisVector1[0];
 				Bmembrane[0, column + 1] = nurbs.NurbsDerivativeValuesKsi[column / 3, j] * surfaceBasisVector1[1];

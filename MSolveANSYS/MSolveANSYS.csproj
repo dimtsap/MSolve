@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ISAAR.MSolve.FEM\ISAAR.MSolve.FEM.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Ans.EngineeringData">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\EngineeringData\bin\Win64\Ans.EngineeringData.dll</HintPath>
+    </Reference>
+    <Reference Include="Ans.EngineeringData.Material">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\EngineeringData\bin\Win64\Ans.EngineeringData.Material.dll</HintPath>
+    </Reference>
+    <Reference Include="Ansys.ACT.Interfaces">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\ACT\bin\Win64\Ansys.ACT.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Ansys.ACT.WB1">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\aisol\bin\winx64\Ansys.ACT.WB1.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

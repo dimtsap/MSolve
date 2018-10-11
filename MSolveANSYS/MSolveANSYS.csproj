@@ -28,6 +28,9 @@
     <Reference Include="Ans.TabularData.Interop">
       <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Framework\bin\Win64\Ans.TabularData.Interop.dll</HintPath>
     </Reference>
+    <Reference Include="Ansys.ACT.Core">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\ACT\bin\Win64\Ansys.ACT.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Ansys.ACT.Interfaces">
       <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\ACT\bin\Win64\Ansys.ACT.Interfaces.dll</HintPath>
     </Reference>

@@ -245,20 +245,23 @@ namespace MSolveANSYS
 				var elementsList = new List<Element>();
 				var factory = new ContinuumElement3DFactory(material, null);
 
-				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\elementTypes.json", JsonConvert.SerializeObject(solver.Analysis.MeshData.Elements.Select(e => e.Type).ToList()));
+				//foreach (var ansysElement in solver.Analysis.MeshData.Elements)
+				//{
+				//	var elementNodes = new List<Node3D>();
+				//	ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D)model.NodesDictionary[id]));
+				//	var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
+				//	var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
+				//	foreach (var node in element.Nodes) elementWrapper.AddNode(node);
+				//	model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				//	model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				//}
 
-				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
-				{
-					var elementNodes = new List<Node3D>();
-					ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D)model.NodesDictionary[id]));
-					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
-					var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
-					foreach (var node in element.Nodes) elementWrapper.AddNode(node);
-					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-					model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				}
+				var ansysLoads=_api.DataModel.Project.Model.Analyses[0].GetLoadObjects("MSolveANSYS").ToList();
 
-				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\Ok.json", $"Ok. {DateTime.Now}");
+				var load = ansysLoads[0] as IMechanicalUserLoad;
+				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\loadProperties.json", JsonConvert.SerializeObject(load.Properties));
+				
+				//System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\Ok.json", $"Ok. {DateTime.Now}");
 
 				//var staticStructural = _api.DataModel.Project.Model.Analyses[0];
 				//model.ConnectDataStructures();

@@ -39,7 +39,7 @@ build:
   verbosity: detailed
 after_build:
 - ps: >-
-    SonarQube.Scanner.MSBuild sonar.cfamily.build-wrapper-output.bypass=true end /d:"sonar.login=$env:SONARCLOUD_TOKEN"
+    SonarQube.Scanner.MSBuild end /d:"sonar.login=$env:SONARCLOUD_TOKEN"
 test_script:
 - ps: >-
     Remove-Item -Recurse -Force .sonarqube

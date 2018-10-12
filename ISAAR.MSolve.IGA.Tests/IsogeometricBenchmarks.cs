@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.IGA.Elements;
@@ -1057,7 +1058,287 @@ namespace ISAAR.MSolve.IGA.Tests
 				Assert.Equal(displacementVectorExpected.At(i, 0), linearSystems[0].Solution[i], 7);
 
 		}
-		
+
+		[Fact]
+		public void IsogeometricCamshaftLoad1()
+		{
+			VectorExtensions.AssignTotalAffinityCount();
+			Model model = new Model();
+			ModelCreator modelCreator = new ModelCreator(model);
+			string filename = "..\\..\\..\\InputFiles\\Camshaft.txt";
+			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+			modelReader.CreateModelFromFile();
+
+			// Forces and Boundary Conditions
+			Value camshaftLoad1 = delegate (double x, double y, double z)//3
+			{
+				var lobe1start = 0.0412;
+				var lobe1end = 0.05788;
+
+				var lobe2start = 0.06128;
+				var lobe2end = 0.07796;
+
+				if ((z>= lobe1start&&z<=lobe1end)|| (z >= lobe2start && z <= lobe2end))
+					return new double[] { 0, -400, 0 };
+				return new double[]{0,0,0};
+			};
+
+			Value camshaftLoad2 = delegate (double x, double y, double z)//5
+			{
+				var lobe3start = 0.12916;
+				var lobe3end = 0.14384;
+
+				var lobe4start = 0.15064;
+				var lobe4end = 0.16592;
+
+				if ((z >= lobe3start && z <= lobe3end) || (z >= lobe4start && z <= lobe4end))
+					return new double[] { -400, 0, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+			Value camshaftLoad3 = delegate (double x, double y, double z)//2
+			{
+				var lobe5start = 0.2302;
+				var lobe5end = 0.24888;
+
+				var lobe6start = 0.25368;
+				var lobe6end = 0.26896;
+
+				if ((z >= lobe5start && z <= lobe5end) || (z >= lobe6start && z <= lobe6end))
+					return new double[] { 0, 400, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+			Value camshaftLoad4 = delegate (double x, double y, double z)//4
+			{
+				var lobe7start = 0.32016;
+				var lobe7end = 0.33824;
+
+				var lobe8start = 0.34164;
+				var lobe8end = 0.35692;
+
+				if ((z >= lobe7start && z <= lobe7end) || (z >= lobe8start && z <= lobe8end))
+					return new double[] { 400, 0, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+
+			model.PatchesDictionary[0].FacesDictionary[3].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad1));
+			model.PatchesDictionary[0].FacesDictionary[5].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad2));
+			model.PatchesDictionary[0].FacesDictionary[2].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad3));
+			model.PatchesDictionary[0].FacesDictionary[4].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad4));
+
+			var ds1 = 0.0;
+			var de1 = 0.017;
+
+			var ds2 = 0.1907;
+			var de2 = 0.204;
+
+			var ds3 = 0.39332;
+			var de3 = 0.40672;
+			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].ControlPointsDictionary.Values)
+			{
+				if ((controlPoint.Z >= ds1 && controlPoint.Z <= de1) ||
+				    (controlPoint.Z >= ds2 && controlPoint.Z <= de2) ||
+				    (controlPoint.Z >= ds3 && controlPoint.Z <= de3))
+				{
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+				}
+			}
+
+			model.ConnectDataStructures();
+
+			// Solvers
+			var linearSystems = new Dictionary<int, ILinearSystem>();
+			linearSystems[0] = new SkylineLinearSystem(0, model.PatchesDictionary[0].Forces);
+			SolverSkyline solver = new SolverSkyline(linearSystems[0]);
+			ProblemStructural provider = new ProblemStructural(model, linearSystems);
+			LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
+			StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
+
+			parentAnalyzer.BuildMatrices();
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+			var solutionList = (from controlPoint in model.ControlPoints from keyValuePair in model.ControlPointDOFsDictionary[controlPoint.ID] select keyValuePair.Value == -1 ? 0.0 : linearSystems[0].Solution[keyValuePair.Value]).ToList();
+			var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
+			var output=new LinearAlgebra.Output.FullVectorWriter();
+			output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution1.txt");
+
+		}
+
+
+		[Fact]
+		public void IsogeometricCamshaftLoad2()
+		{
+			VectorExtensions.AssignTotalAffinityCount();
+			Model model = new Model();
+			ModelCreator modelCreator = new ModelCreator(model);
+			string filename = "..\\..\\..\\InputFiles\\Camshaft.txt";
+			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+			modelReader.CreateModelFromFile();
+
+			// Forces and Boundary Conditions
+			Value camshaftLoad1 = delegate (double x, double y, double z)//3
+			{
+				var lobe1start = 0.0412;
+				var lobe1end = 0.05788;
+
+				var lobe2start = 0.06128;
+				var lobe2end = 0.07796;
+
+				if ((z >= lobe1start && z <= lobe1end) || (z >= lobe2start && z <= lobe2end))
+					return new double[] { 0, -400, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+			
+			Value camshaftLoad3 = delegate (double x, double y, double z)//2
+			{
+				var lobe5start = 0.2302;
+				var lobe5end = 0.24888;
+
+				var lobe6start = 0.25368;
+				var lobe6end = 0.26896;
+
+				if ((z >= lobe5start && z <= lobe5end) || (z >= lobe6start && z <= lobe6end))
+					return new double[] { 0, 400, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+			
+
+			model.PatchesDictionary[0].FacesDictionary[3].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad1));
+			model.PatchesDictionary[0].FacesDictionary[2].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad3));
+			
+			var ds1 = 0.0;
+			var de1 = 0.017;
+
+			var ds2 = 0.1907;
+			var de2 = 0.204;
+
+			var ds3 = 0.39332;
+			var de3 = 0.40672;
+			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].ControlPointsDictionary.Values)
+			{
+				if ((controlPoint.Z >= ds1 && controlPoint.Z <= de1) ||
+					(controlPoint.Z >= ds2 && controlPoint.Z <= de2) ||
+					(controlPoint.Z >= ds3 && controlPoint.Z <= de3))
+				{
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+				}
+			}
+
+			model.ConnectDataStructures();
+
+			// Solvers
+			var linearSystems = new Dictionary<int, ILinearSystem>();
+			linearSystems[0] = new SkylineLinearSystem(0, model.PatchesDictionary[0].Forces);
+			SolverSkyline solver = new SolverSkyline(linearSystems[0]);
+			ProblemStructural provider = new ProblemStructural(model, linearSystems);
+			LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
+			StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
+
+			parentAnalyzer.BuildMatrices();
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+			var solutionList = (from controlPoint in model.ControlPoints from keyValuePair in model.ControlPointDOFsDictionary[controlPoint.ID] select keyValuePair.Value == -1 ? 0.0 : linearSystems[0].Solution[keyValuePair.Value]).ToList();
+			var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
+			var output = new LinearAlgebra.Output.FullVectorWriter();
+			output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution2.txt");
+
+		}
+
+		[Fact]
+		public void IsogeometricCamshaftLoad3()
+		{
+			VectorExtensions.AssignTotalAffinityCount();
+			Model model = new Model();
+			ModelCreator modelCreator = new ModelCreator(model);
+			string filename = "..\\..\\..\\InputFiles\\Camshaft.txt";
+			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+			modelReader.CreateModelFromFile();
+
+			// Forces and Boundary Conditions
+			
+			Value camshaftLoad2 = delegate (double x, double y, double z)//5
+			{
+				var lobe3start = 0.12916;
+				var lobe3end = 0.14384;
+
+				var lobe4start = 0.15064;
+				var lobe4end = 0.16592;
+
+				if ((z >= lobe3start && z <= lobe3end) || (z >= lobe4start && z <= lobe4end))
+					return new double[] { -400, 0, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+			
+			Value camshaftLoad4 = delegate (double x, double y, double z)//4
+			{
+				var lobe7start = 0.32016;
+				var lobe7end = 0.33824;
+
+				var lobe8start = 0.34164;
+				var lobe8end = 0.35692;
+
+				if ((z >= lobe7start && z <= lobe7end) || (z >= lobe8start && z <= lobe8end))
+					return new double[] { 400, 0, 0 };
+				return new double[] { 0, 0, 0 };
+			};
+
+
+			model.PatchesDictionary[0].FacesDictionary[5].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad2));
+			model.PatchesDictionary[0].FacesDictionary[4].LoadingConditions.Add(new NeumannBoundaryCondition(camshaftLoad4));
+
+			var ds1 = 0.0;
+			var de1 = 0.017;
+
+			var ds2 = 0.1907;
+			var de2 = 0.204;
+
+			var ds3 = 0.39332;
+			var de3 = 0.40672;
+			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].ControlPointsDictionary.Values)
+			{
+				if ((controlPoint.Z >= ds1 && controlPoint.Z <= de1) ||
+					(controlPoint.Z >= ds2 && controlPoint.Z <= de2) ||
+					(controlPoint.Z >= ds3 && controlPoint.Z <= de3))
+				{
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+				}
+			}
+
+			model.ConnectDataStructures();
+
+			// Solvers
+			var linearSystems = new Dictionary<int, ILinearSystem>();
+			linearSystems[0] = new SkylineLinearSystem(0, model.PatchesDictionary[0].Forces);
+			SolverSkyline solver = new SolverSkyline(linearSystems[0]);
+			ProblemStructural provider = new ProblemStructural(model, linearSystems);
+			LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
+			StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
+
+			parentAnalyzer.BuildMatrices();
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+			var solutionList = (from controlPoint in model.ControlPoints from keyValuePair in model.ControlPointDOFsDictionary[controlPoint.ID] select keyValuePair.Value == -1 ? 0.0 : linearSystems[0].Solution[keyValuePair.Value]).ToList();
+			var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
+			var output = new LinearAlgebra.Output.FullVectorWriter();
+			output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution3.txt");
+
+		}
+
+
 		//[Fact]
 		public void IsogeometricPlaneStrainRing()
 		{

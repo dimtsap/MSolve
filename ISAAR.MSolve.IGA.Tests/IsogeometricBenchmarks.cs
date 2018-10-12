@@ -1059,7 +1059,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
 		}
 
-		[Fact]
+		
 		public void IsogeometricCamshaftLoad1()
 		{
 			VectorExtensions.AssignTotalAffinityCount();
@@ -1163,14 +1163,14 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Solve();
 
 			var solutionList = (from controlPoint in model.ControlPoints from keyValuePair in model.ControlPointDOFsDictionary[controlPoint.ID] select keyValuePair.Value == -1 ? 0.0 : linearSystems[0].Solution[keyValuePair.Value]).ToList();
-			var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
-			var output=new LinearAlgebra.Output.FullVectorWriter();
-			output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution1.txt");
+			//var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
+			//var output=new LinearAlgebra.Output.FullVectorWriter();
+			//output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution1.txt");
 
 		}
 
 
-		[Fact]
+		
 		public void IsogeometricCamshaftLoad2()
 		{
 			VectorExtensions.AssignTotalAffinityCount();
@@ -1248,13 +1248,13 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Solve();
 
 			var solutionList = (from controlPoint in model.ControlPoints from keyValuePair in model.ControlPointDOFsDictionary[controlPoint.ID] select keyValuePair.Value == -1 ? 0.0 : linearSystems[0].Solution[keyValuePair.Value]).ToList();
-			var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
-			var output = new LinearAlgebra.Output.FullVectorWriter();
-			output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution2.txt");
+			//var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
+			//var output = new LinearAlgebra.Output.FullVectorWriter();
+			//output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution2.txt");
 
 		}
 
-		[Fact]
+		
 		public void IsogeometricCamshaftLoad3()
 		{
 			VectorExtensions.AssignTotalAffinityCount();
@@ -1332,9 +1332,9 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Solve();
 
 			var solutionList = (from controlPoint in model.ControlPoints from keyValuePair in model.ControlPointDOFsDictionary[controlPoint.ID] select keyValuePair.Value == -1 ? 0.0 : linearSystems[0].Solution[keyValuePair.Value]).ToList();
-			var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
-			var output = new LinearAlgebra.Output.FullVectorWriter();
-			output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution3.txt");
+			//var solutionVector = LinearAlgebra.Vectors.Vector.CreateFromArray(solutionList.ToArray());
+			//var output = new LinearAlgebra.Output.FullVectorWriter();
+			//output.WriteToFile(solutionVector, "..\\..\\..\\InputFiles\\camshaftSolution3.txt");
 
 		}
 

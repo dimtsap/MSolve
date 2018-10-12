@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+	<ProjectGuid>{3363184F-1D81-4B57-98AF-45E1BFC459F3}</ProjectGuid>
   </PropertyGroup>
 
   <ItemGroup>

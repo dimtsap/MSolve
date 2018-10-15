@@ -245,16 +245,17 @@ namespace MSolveANSYS
 				var elementsList = new List<Element>();
 				var factory = new ContinuumElement3DFactory(material, null);
 
-				//foreach (var ansysElement in solver.Analysis.MeshData.Elements)
-				//{
-				//	var elementNodes = new List<Node3D>();
-				//	ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D)model.NodesDictionary[id]));
-				//	var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
-				//	var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
-				//	foreach (var node in element.Nodes) elementWrapper.AddNode(node);
-				//	model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				//	model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				//}
+				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
+				{
+					var elementNodes = new List<Node3D>();
+					ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D) model.NodesDictionary[id]));
+					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
+					var elementWrapper = new Element() {ID = ansysElement.Id, ElementType = element};
+					foreach (var node in element.Nodes) elementWrapper.AddNode(node);
+					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+					model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				}
+				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\ElementsDictionary.json", JsonConvert.SerializeObject(model.ElementsDictionary));
 
 				var ansysLoads=_api.DataModel.Project.Model.Analyses[0].GetLoadObjects("MSolveANSYS").ToList();
 

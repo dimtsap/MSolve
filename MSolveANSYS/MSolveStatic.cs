@@ -5,17 +5,25 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Ansys.ACT.Automation.Mechanical;
+using Ansys.ACT.Automation.Mechanical.BoundaryConditions;
 using Ansys.ACT.Interfaces.Common;
 using Ansys.ACT.Interfaces.Geometry;
 using Ansys.ACT.Interfaces.Mesh;
 using Ansys.ACT.Interfaces.UserObject;
+using Ansys.Core.Units;
 using Ansys.EngineeringData.Material;
+using ISAAR.MSolve.Discretization.Interfaces;
 using Newtonsoft.Json;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.FEM.Materials;
 using ISAAR.MSolve.Geometry.Shapes;
 using Model = ISAAR.MSolve.FEM.Entities.Model;
+using ISAAR.MSolve.Solvers.Interfaces;
+using ISAAR.MSolve.Solvers.Skyline;
+using ISAAR.MSolve.Problems;
+using ISAAR.MSolve.Analyzers;
+using ISAAR.MSolve.Numerical.LinearAlgebra;
 
 namespace MSolveANSYS
 {
@@ -228,6 +236,7 @@ namespace MSolveANSYS
 			var solver = userSolver as IMechanicalUserSolver;
 			try
 			{
+				VectorExtensions.AssignTotalAffinityCount();
 				var model = new Model();
 				model.SubdomainsDictionary.Add(0, new Subdomain() { ID = 0 });
 
@@ -245,35 +254,73 @@ namespace MSolveANSYS
 				var elementsList = new List<Element>();
 				var factory = new ContinuumElement3DFactory(material, null);
 
-				//foreach (var ansysElement in solver.Analysis.MeshData.Elements)
-				//{
-				//	var elementNodes = new List<Node3D>();
-				//	ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D)model.NodesDictionary[id]));
-				//	var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
-				//	var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
-				//	foreach (var node in element.Nodes) elementWrapper.AddNode(node);
-				//	model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				//	model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				//}
+				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
+				{
+					var elementNodes = new List<Node3D>();
+					ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D)model.NodesDictionary[id]));
+					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
+					var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
+					foreach (var node in element.Nodes) elementWrapper.AddNode(node);
+					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+					model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				}
 
-				var ansysLoads=_api.DataModel.Project.Model.Analyses[0].GetLoadObjects("MSolveANSYS").ToList();
+				var force = _api.Application.InvokeUIThread(()=>_api.DataModel.Project.Model.Analyses[0].Children[1]) as Force;
 
-				var load = ansysLoads[0] as IMechanicalUserLoad;
-				System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\loadProperties.json", JsonConvert.SerializeObject(load.Properties));
-				
-				//System.IO.File.WriteAllText(@"C:\Users\Dimitris\Desktop\ANSYS Models\Ok.json", $"Ok. {DateTime.Now}");
+				var forceLocation =_api.Application.InvokeUIThread(() => force.Location) as ISelectionInfo;
+				var xValue = _api.Application.InvokeUIThread(() => force.XComponent.Output.DiscreteValues[0]) as Quantity;
+				var yValue = _api.Application.InvokeUIThread(() => force.YComponent.Output.DiscreteValues[0]) as Quantity;
+				var zValue = _api.Application.InvokeUIThread(() => force.ZComponent.Output.DiscreteValues[0]) as Quantity;
+				var magnitude = _api.Application.InvokeUIThread(() => force.Magnitude.Output.DiscreteValues[1]) as Quantity;
+				var forceSurfaceId = forceLocation.Ids[0];
+				var forceNodes=solver.Analysis.MeshData.MeshRegionById(forceSurfaceId).Nodes;
 
-				//var staticStructural = _api.DataModel.Project.Model.Analyses[0];
-				//model.ConnectDataStructures();
-				//var linearSystems = new Dictionary<int, ILinearSystem>();
-				//linearSystems[0] = new SkylineLinearSystem(0, model.Subdomains[0].Forces);
-				//SolverSkyline solverSkyline = new SolverSkyline(linearSystems[0]);
-				//ProblemStructural provider = new ProblemStructural(model, linearSystems);
-				//LinearAnalyzer childAnalyzer = new LinearAnalyzer(solverSkyline, linearSystems);
-				//StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
-				//parentAnalyzer.BuildMatrices();
-				//parentAnalyzer.Initialize();
-				//parentAnalyzer.Solve();
+				foreach (var node in forceNodes)
+				{
+					model.Loads.Add(new Load()
+					{
+						Amount = xValue.Value * magnitude.Value / forceNodes.Count,
+						Node = model.NodesDictionary[node.Id],
+						DOF = DOFType.X
+					});
+					model.Loads.Add(new Load()
+					{
+						Amount = yValue.Value * magnitude.Value / forceNodes.Count,
+						Node = model.NodesDictionary[node.Id],
+						DOF = DOFType.Y
+					});
+					model.Loads.Add(new Load()
+					{
+						Amount = zValue.Value * magnitude.Value / forceNodes.Count,
+						Node = model.NodesDictionary[node.Id],
+						DOF = DOFType.Z
+					});
+				}
+
+
+				var fixedSupport = _api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children[2]) as FixedSupport;
+				var fixedLocation = _api.Application.InvokeUIThread(() => fixedSupport.Location) as ISelectionInfo;
+				var fixedSurfaceId = fixedLocation.Ids[0];
+				var fixedNodes = solver.Analysis.MeshData.MeshRegionById(fixedSurfaceId).Nodes;
+
+				foreach (var node in fixedNodes)
+				{
+					model.NodesDictionary[node.Id].Constraints.Add(DOFType.X);
+					model.NodesDictionary[node.Id].Constraints.Add(DOFType.Y);
+					model.NodesDictionary[node.Id].Constraints.Add(DOFType.Z);
+				}
+
+
+				model.ConnectDataStructures();
+				var linearSystems = new Dictionary<int, ILinearSystem>();
+				linearSystems[0] = new SkylineLinearSystem(0, model.Subdomains[0].Forces);
+				SolverSkyline solverSkyline = new SolverSkyline(linearSystems[0]);
+				ProblemStructural provider = new ProblemStructural(model, linearSystems);
+				LinearAnalyzer childAnalyzer = new LinearAnalyzer(solverSkyline, linearSystems);
+				StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
+				parentAnalyzer.BuildMatrices();
+				parentAnalyzer.Initialize();
+				parentAnalyzer.Solve();
 			}
 			catch (Exception e)
 			{

@@ -10,11 +10,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ISAAR.MSolve.FEM\ISAAR.MSolve.FEM.csproj" />
+    <ProjectReference Include="..\ISAAR.MSolve.Problems\ISAAR.MSolve.Problems.csproj" />
+    <ProjectReference Include="..\ISAAR.MSolve.Solvers\ISAAR.MSolve.Solvers.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Ans.ComponentSystem.Interop">
       <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\scdm\Addins\ANSYS 19.1\Ans.ComponentSystem.Interop.dll</HintPath>
+    </Reference>
+    <Reference Include="Ans.Core">
+      <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\scdm\Addins\ANSYS 19.1\Ans.Core.dll</HintPath>
     </Reference>
     <Reference Include="Ans.EngineeringData">
       <HintPath>..\..\..\..\..\..\Program Files\ANSYS Inc\ANSYS Student\v191\Addins\EngineeringData\bin\Win64\Ans.EngineeringData.dll</HintPath>

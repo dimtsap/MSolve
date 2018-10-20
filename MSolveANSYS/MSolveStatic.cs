@@ -9,6 +9,7 @@ using Ansys.ACT.Automation.Mechanical.BoundaryConditions;
 using Ansys.ACT.Interfaces.Common;
 using Ansys.ACT.Interfaces.Geometry;
 using Ansys.ACT.Interfaces.Mesh;
+using Ansys.ACT.Interfaces.Post;
 using Ansys.ACT.Interfaces.UserObject;
 using Ansys.Core.Units;
 using Ansys.EngineeringData.Material;
@@ -24,6 +25,7 @@ using ISAAR.MSolve.Solvers.Skyline;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
+using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
 
 namespace MSolveANSYS
 {
@@ -221,6 +223,11 @@ namespace MSolveANSYS
 				{ElementTypeEnum.kPyramid13, CellType3D.Pyra13},
 			};
 
+		private Dictionary<ElementTypeEnum, int[]> AnsysMSolveElementLocalCoordinates =
+			new Dictionary<ElementTypeEnum, int[]>()
+			{
+				{ElementTypeEnum.kHex8, new[] {4,5,1,0,7,6,2,3}}
+			};
 
 		private readonly IMechanicalExtAPI _api;
 		private readonly IMechanicalUserSolver _solver;
@@ -231,13 +238,16 @@ namespace MSolveANSYS
 			_solver= solver as IMechanicalUserSolver;
 		}
 
+
+		public Model model;
+		public IVector SolutionVector;
 		public bool onsolve(IUserSolver userSolver, Func<int, string, bool> func)
 		{
 			var solver = userSolver as IMechanicalUserSolver;
 			try
 			{
 				VectorExtensions.AssignTotalAffinityCount();
-				var model = new Model();
+				model = new Model();
 				model.SubdomainsDictionary.Add(0, new Subdomain() { ID = 0 });
 
 				solver.Analysis.MeshData.Nodes.ToList()
@@ -253,12 +263,14 @@ namespace MSolveANSYS
 
 				var elementsList = new List<Element>();
 				var factory = new ContinuumElement3DFactory(material, null);
+				
 
 				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
 				{
-					var elementNodes = new List<Node3D>();
-					ansysElement.NodeIds.ToList().ForEach(id => elementNodes.Add((Node3D)model.NodesDictionary[id]));
-					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], elementNodes);
+					var ansysNodes = new List<Node3D>();
+					ansysElement.NodeIds.ToList().ForEach(id => ansysNodes.Add((Node3D)model.NodesDictionary[id]));
+					var msolveNodes = RenumberNodesFromAnsysToMSolve(ansysNodes, ansysElement.Type);
+					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], msolveNodes);
 					var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
 					foreach (var node in element.Nodes) elementWrapper.AddNode(node);
 					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
@@ -321,6 +333,8 @@ namespace MSolveANSYS
 				parentAnalyzer.BuildMatrices();
 				parentAnalyzer.Initialize();
 				parentAnalyzer.Solve();
+
+				SolutionVector = linearSystems[0].Solution;
 			}
 			catch (Exception e)
 			{
@@ -329,6 +343,12 @@ namespace MSolveANSYS
 			}
 
 			return true;
+		}
+
+		private List<Node3D> RenumberNodesFromAnsysToMSolve(IReadOnlyList<Node3D> ansysNodes, ElementTypeEnum elementType)
+		{
+			var connectivity = AnsysMSolveElementLocalCoordinates[elementType];
+			return ansysNodes.Select((t, i) => ansysNodes[connectivity[i]]).ToList();
 		}
 
 		/// <summary>
@@ -367,5 +387,67 @@ namespace MSolveANSYS
 			return variablesDictionary;
 		}
 
+		public IEnumerable<string> getreader(IUserSolver userSolver)
+		{
+			return new[] {"MSolveStaticReader"};
+		}
+
+		public class MSolveStaticReader : ICustomResultReader
+		{
+			private MSolveStatic _mSolveStatic;
+
+			public IEnumerable<string> GetComponentNames(string resultName)
+			{
+				return new[] { "X", "Y", "Z" };
+			}
+
+			public string GetComponentUnit(string resultName, string componentName)
+			{
+				return "Length";
+			}
+
+			public ResultLocationEnum GetResultLocation(string resultName)
+			{
+				return ResultLocationEnum.Node;
+			}
+
+			public IEnumerable<string> GetResultNames()
+			{
+				return new[] { "U" };
+			}
+
+			public ResultTypeEnum GetResultType(string resultName)
+			{
+				return ResultTypeEnum.Vector;
+			}
+
+			public IEnumerable<double> GetStepValues()
+			{
+				return new[] { 1.0 };
+			}
+
+			public void GetValues(string resultName, IResultCollector collector)
+			{
+				//if (resultName == "U")
+				//{
+				//	var nodalDisplacements = new double[3];
+				//	nodalDisplacements[0] = (_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.X] == -1) ? 0
+				//		: _mSolveStatic.SolutionVector[_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.X]];
+				//	nodalDisplacements[1] = (_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Y] == -1) ? 0
+				//		: _mSolveStatic.SolutionVector[_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Y]];
+				//	nodalDisplacements[2] = (_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Z] == -1) ? 0
+				//		: _mSolveStatic.SolutionVector[_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Z]];
+				//	return nodalDisplacements;
+				//}
+				//else
+				//{
+				//	return new[] { 0.0 };
+				//}
+			}
+
+			public void SetCurrentStep(IStepInfo stepInfo)
+			{
+			}
+		}
 	}
 }

@@ -389,65 +389,12 @@ namespace MSolveANSYS
 
 		public IEnumerable<string> getreader(IUserSolver userSolver)
 		{
-			return new[] {"MSolveStaticReader"};
-		}
-
-		public class MSolveStaticReader : ICustomResultReader
-		{
-			private MSolveStatic _mSolveStatic;
-
-			public IEnumerable<string> GetComponentNames(string resultName)
+			return new[]
 			{
-				return new[] { "X", "Y", "Z" };
-			}
-
-			public string GetComponentUnit(string resultName, string componentName)
-			{
-				return "Length";
-			}
-
-			public ResultLocationEnum GetResultLocation(string resultName)
-			{
-				return ResultLocationEnum.Node;
-			}
-
-			public IEnumerable<string> GetResultNames()
-			{
-				return new[] { "U" };
-			}
-
-			public ResultTypeEnum GetResultType(string resultName)
-			{
-				return ResultTypeEnum.Vector;
-			}
-
-			public IEnumerable<double> GetStepValues()
-			{
-				return new[] { 1.0 };
-			}
-
-			public void GetValues(string resultName, IResultCollector collector)
-			{
-				//if (resultName == "U")
-				//{
-				//	var nodalDisplacements = new double[3];
-				//	nodalDisplacements[0] = (_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.X] == -1) ? 0
-				//		: _mSolveStatic.SolutionVector[_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.X]];
-				//	nodalDisplacements[1] = (_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Y] == -1) ? 0
-				//		: _mSolveStatic.SolutionVector[_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Y]];
-				//	nodalDisplacements[2] = (_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Z] == -1) ? 0
-				//		: _mSolveStatic.SolutionVector[_mSolveStatic.model.NodalDOFsDictionary[id][DOFType.Z]];
-				//	return nodalDisplacements;
-				//}
-				//else
-				//{
-				//	return new[] { 0.0 };
-				//}
-			}
-
-			public void SetCurrentStep(IStepInfo stepInfo)
-			{
-			}
+				"MSolveANSYS.MSolveStaticReader" ,
+				JsonConvert.SerializeObject(model.NodalDOFsDictionary),
+				JsonConvert.SerializeObject(SolutionVector),
+			};
 		}
 	}
 }

@@ -227,7 +227,8 @@ namespace MSolveANSYS
 		private readonly Dictionary<ElementTypeEnum, int[]> _ansysMSolveElementLocalCoordinates =
 			new Dictionary<ElementTypeEnum, int[]>()
 			{
-				{ElementTypeEnum.kHex8, new[] {4,5,1,0,7,6,2,3}}
+				{ElementTypeEnum.kHex8, new[] {4,5,1,0,7,6,2,3}},
+				{ElementTypeEnum.kHex20, new int[20] {4,5,1,0,7,6,2,3,12,16,15,17,13,8,9,11,14,19,18,10}}
 			};
 
 		private readonly IMechanicalExtAPI _api;

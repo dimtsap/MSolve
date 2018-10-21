@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using Ansys.ACT.Automation.Mechanical;
 using Ansys.ACT.Automation.Mechanical.BoundaryConditions;
+using Ansys.ACT.Automation.Mechanical.Enums;
 using Ansys.ACT.Interfaces.Common;
 using Ansys.ACT.Interfaces.Geometry;
 using Ansys.ACT.Interfaces.Mesh;
@@ -257,7 +258,7 @@ namespace MSolveANSYS
 
 				GenerateElements(material, solver);
 
-				CalculateLoads(solver);
+				CalculateForces(solver);
 
 				ImposeFixedSupport(solver);
 
@@ -285,12 +286,13 @@ namespace MSolveANSYS
 
 		private void ImposeFixedSupport(IMechanicalUserSolver solver)
 		{
-			var fixedSupports =
+			var ansysFixedSupports =
 				_api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children
-						.Where(c => c.GetType() == typeof(FixedSupport)).ToList()) as List<FixedSupport>;
+						.Where(c => c.GetType() == typeof(FixedSupport)).ToList()) as List<DataModelObject>;
 
-			foreach (var fixedSupport in fixedSupports)
+			foreach (var ansysFixedSupport in ansysFixedSupports)
 			{
+				var fixedSupport = ansysFixedSupport as FixedSupport;
 				var fixedLocation = _api.Application.InvokeUIThread(() => fixedSupport.Location) as ISelectionInfo;
 				var fixedSurfaceId = fixedLocation.Ids[0];
 				var fixedNodes = solver.Analysis.MeshData.MeshRegionById(fixedSurfaceId).Nodes;
@@ -332,10 +334,61 @@ namespace MSolveANSYS
 			return material;
 		}
 
-		private void CalculateLoads(IMechanicalUserSolver solver)
+		private void CalculateForces(IMechanicalUserSolver solver)
 		{
-			var force = _api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children[1]) as Force;
+			var forces =
+				_api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children
+					.Where(c => c.GetType() == typeof(Force)).ToList()) as List<DataModelObject>;
 
+			foreach (var ansysForce in forces)
+			{
+				var force = ansysForce as Force;
+				var isParsed = Enum.TryParse<LoadDefineBy>(_api.Application.InvokeUIThread(() => force.DefineBy).ToString(), out var defineBy);
+				if (defineBy==LoadDefineBy.Vector)
+				{
+					CalculateVectorForce(solver, force);
+				}
+				else
+				{
+					CalculateComponentsForce(solver, force);
+				}
+			}
+		}
+
+		private void CalculateComponentsForce(IMechanicalUserSolver solver, Force force)
+		{
+			var forceLocation = _api.Application.InvokeUIThread(() => force.Location) as ISelectionInfo;
+			var xValue = _api.Application.InvokeUIThread(() => force.XComponent.Output.DiscreteValues[1]) as Quantity;
+			var yValue = _api.Application.InvokeUIThread(() => force.YComponent.Output.DiscreteValues[1]) as Quantity;
+			var zValue = _api.Application.InvokeUIThread(() => force.ZComponent.Output.DiscreteValues[1]) as Quantity;
+			var forceSurfaceId = forceLocation.Ids[0];
+			var forceNodes = solver.Analysis.MeshData.MeshRegionById(forceSurfaceId).Nodes;
+
+			foreach (var node in forceNodes)
+			{
+				model.Loads.Add(new Load()
+				{
+					Amount = xValue.Value / forceNodes.Count,
+					Node = model.NodesDictionary[node.Id],
+					DOF = DOFType.X
+				});
+				model.Loads.Add(new Load()
+				{
+					Amount = yValue.Value / forceNodes.Count,
+					Node = model.NodesDictionary[node.Id],
+					DOF = DOFType.Y
+				});
+				model.Loads.Add(new Load()
+				{
+					Amount = zValue.Value / forceNodes.Count,
+					Node = model.NodesDictionary[node.Id],
+					DOF = DOFType.Z
+				});
+			}
+		}
+
+		private void CalculateVectorForce(IMechanicalUserSolver solver, Force force)
+		{
 			var forceLocation = _api.Application.InvokeUIThread(() => force.Location) as ISelectionInfo;
 			var xValue = _api.Application.InvokeUIThread(() => force.XComponent.Output.DiscreteValues[0]) as Quantity;
 			var yValue = _api.Application.InvokeUIThread(() => force.YComponent.Output.DiscreteValues[0]) as Quantity;

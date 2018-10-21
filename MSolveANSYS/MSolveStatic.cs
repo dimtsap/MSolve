@@ -210,7 +210,7 @@ namespace MSolveANSYS
 				},
 			};
 
-		private Dictionary<ElementTypeEnum, CellType3D> AnsysMSolveElementDictionary =
+		private readonly Dictionary<ElementTypeEnum, CellType3D> _ansysMSolveElementDictionary =
 			new Dictionary<ElementTypeEnum, CellType3D>
 			{
 				{ElementTypeEnum.kHex8, CellType3D.Hexa8},
@@ -223,7 +223,7 @@ namespace MSolveANSYS
 				{ElementTypeEnum.kPyramid13, CellType3D.Pyra13},
 			};
 
-		private Dictionary<ElementTypeEnum, int[]> AnsysMSolveElementLocalCoordinates =
+		private readonly Dictionary<ElementTypeEnum, int[]> _ansysMSolveElementLocalCoordinates =
 			new Dictionary<ElementTypeEnum, int[]>()
 			{
 				{ElementTypeEnum.kHex8, new[] {4,5,1,0,7,6,2,3}}
@@ -253,75 +253,13 @@ namespace MSolveANSYS
 				solver.Analysis.MeshData.Nodes.ToList()
 					.ForEach(n => model.NodesDictionary.Add(n.Id, new Node3D(n.Id, n.X, n.Y, n.Z)));
 				
-				var mat = (_api.DataModel.GeoData.Assemblies[0].Parts[0].Bodies[0] as IGeoBody).Material as MaterialClass;
-				var dataDictionary=GetMaterialPropertyByName(mat, "Elasticity");
-				var material = new ElasticMaterial3D()
-				{
-					YoungModulus = dataDictionary["Young's Modulus"].Value,
-					PoissonRatio = dataDictionary["Poisson's Ratio"].Value
-				};
+				var material = GetAnsysMaterial();
 
-				var elementsList = new List<Element>();
-				var factory = new ContinuumElement3DFactory(material, null);
-				
+				GenerateElements(material, solver);
 
-				foreach (var ansysElement in solver.Analysis.MeshData.Elements)
-				{
-					var ansysNodes = new List<Node3D>();
-					ansysElement.NodeIds.ToList().ForEach(id => ansysNodes.Add((Node3D)model.NodesDictionary[id]));
-					var msolveNodes = RenumberNodesFromAnsysToMSolve(ansysNodes, ansysElement.Type);
-					var element = factory.CreateElement(AnsysMSolveElementDictionary[ansysElement.Type], msolveNodes);
-					var elementWrapper = new Element() { ID = ansysElement.Id, ElementType = element };
-					foreach (var node in element.Nodes) elementWrapper.AddNode(node);
-					model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-					model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
-				}
+				CalculateLoads(solver);
 
-				var force = _api.Application.InvokeUIThread(()=>_api.DataModel.Project.Model.Analyses[0].Children[1]) as Force;
-
-				var forceLocation =_api.Application.InvokeUIThread(() => force.Location) as ISelectionInfo;
-				var xValue = _api.Application.InvokeUIThread(() => force.XComponent.Output.DiscreteValues[0]) as Quantity;
-				var yValue = _api.Application.InvokeUIThread(() => force.YComponent.Output.DiscreteValues[0]) as Quantity;
-				var zValue = _api.Application.InvokeUIThread(() => force.ZComponent.Output.DiscreteValues[0]) as Quantity;
-				var magnitude = _api.Application.InvokeUIThread(() => force.Magnitude.Output.DiscreteValues[1]) as Quantity;
-				var forceSurfaceId = forceLocation.Ids[0];
-				var forceNodes=solver.Analysis.MeshData.MeshRegionById(forceSurfaceId).Nodes;
-
-				foreach (var node in forceNodes)
-				{
-					model.Loads.Add(new Load()
-					{
-						Amount = xValue.Value * magnitude.Value / forceNodes.Count,
-						Node = model.NodesDictionary[node.Id],
-						DOF = DOFType.X
-					});
-					model.Loads.Add(new Load()
-					{
-						Amount = yValue.Value * magnitude.Value / forceNodes.Count,
-						Node = model.NodesDictionary[node.Id],
-						DOF = DOFType.Y
-					});
-					model.Loads.Add(new Load()
-					{
-						Amount = zValue.Value * magnitude.Value / forceNodes.Count,
-						Node = model.NodesDictionary[node.Id],
-						DOF = DOFType.Z
-					});
-				}
-
-
-				var fixedSupport = _api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children[2]) as FixedSupport;
-				var fixedLocation = _api.Application.InvokeUIThread(() => fixedSupport.Location) as ISelectionInfo;
-				var fixedSurfaceId = fixedLocation.Ids[0];
-				var fixedNodes = solver.Analysis.MeshData.MeshRegionById(fixedSurfaceId).Nodes;
-
-				foreach (var node in fixedNodes)
-				{
-					model.NodesDictionary[node.Id].Constraints.Add(DOFType.X);
-					model.NodesDictionary[node.Id].Constraints.Add(DOFType.Y);
-					model.NodesDictionary[node.Id].Constraints.Add(DOFType.Z);
-				}
-
+				ImposeFixedSupport(solver);
 
 				model.ConnectDataStructures();
 				var linearSystems = new Dictionary<int, ILinearSystem>();
@@ -345,9 +283,93 @@ namespace MSolveANSYS
 			return true;
 		}
 
+		private void ImposeFixedSupport(IMechanicalUserSolver solver)
+		{
+			var fixedSupports =
+				_api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children
+						.Where(c => c.GetType() == typeof(FixedSupport)).ToList()) as List<FixedSupport>;
+
+			foreach (var fixedSupport in fixedSupports)
+			{
+				var fixedLocation = _api.Application.InvokeUIThread(() => fixedSupport.Location) as ISelectionInfo;
+				var fixedSurfaceId = fixedLocation.Ids[0];
+				var fixedNodes = solver.Analysis.MeshData.MeshRegionById(fixedSurfaceId).Nodes;
+
+				foreach (var node in fixedNodes)
+				{
+					model.NodesDictionary[node.Id].Constraints.Add(DOFType.X);
+					model.NodesDictionary[node.Id].Constraints.Add(DOFType.Y);
+					model.NodesDictionary[node.Id].Constraints.Add(DOFType.Z);
+				}
+			}
+		}
+
+		private void GenerateElements(ElasticMaterial3D material, IMechanicalUserSolver solver)
+		{
+			var factory = new ContinuumElement3DFactory(material, null);
+			foreach (var ansysElement in solver.Analysis.MeshData.Elements)
+			{
+				var ansysNodes = new List<Node3D>();
+				ansysElement.NodeIds.ToList().ForEach(id => ansysNodes.Add((Node3D) model.NodesDictionary[id]));
+				var msolveNodes = RenumberNodesFromAnsysToMSolve(ansysNodes, ansysElement.Type);
+				var element = factory.CreateElement(_ansysMSolveElementDictionary[ansysElement.Type], msolveNodes);
+				var elementWrapper = new Element() {ID = ansysElement.Id, ElementType = element};
+				foreach (var node in element.Nodes) elementWrapper.AddNode(node);
+				model.ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+				model.SubdomainsDictionary[0].ElementsDictionary.Add(ansysElement.Id, elementWrapper);
+			}
+		}
+
+		private ElasticMaterial3D GetAnsysMaterial()
+		{
+			var mat = (_api.DataModel.GeoData.Assemblies[0].Parts[0].Bodies[0] as IGeoBody).Material as MaterialClass;
+			var dataDictionary = GetMaterialPropertyByName(mat, "Elasticity");
+			var material = new ElasticMaterial3D()
+			{
+				YoungModulus = dataDictionary["Young's Modulus"].Value,
+				PoissonRatio = dataDictionary["Poisson's Ratio"].Value
+			};
+			return material;
+		}
+
+		private void CalculateLoads(IMechanicalUserSolver solver)
+		{
+			var force = _api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children[1]) as Force;
+
+			var forceLocation = _api.Application.InvokeUIThread(() => force.Location) as ISelectionInfo;
+			var xValue = _api.Application.InvokeUIThread(() => force.XComponent.Output.DiscreteValues[0]) as Quantity;
+			var yValue = _api.Application.InvokeUIThread(() => force.YComponent.Output.DiscreteValues[0]) as Quantity;
+			var zValue = _api.Application.InvokeUIThread(() => force.ZComponent.Output.DiscreteValues[0]) as Quantity;
+			var magnitude = _api.Application.InvokeUIThread(() => force.Magnitude.Output.DiscreteValues[1]) as Quantity;
+			var forceSurfaceId = forceLocation.Ids[0];
+			var forceNodes = solver.Analysis.MeshData.MeshRegionById(forceSurfaceId).Nodes;
+
+			foreach (var node in forceNodes)
+			{
+				model.Loads.Add(new Load()
+				{
+					Amount = xValue.Value * magnitude.Value / forceNodes.Count,
+					Node = model.NodesDictionary[node.Id],
+					DOF = DOFType.X
+				});
+				model.Loads.Add(new Load()
+				{
+					Amount = yValue.Value * magnitude.Value / forceNodes.Count,
+					Node = model.NodesDictionary[node.Id],
+					DOF = DOFType.Y
+				});
+				model.Loads.Add(new Load()
+				{
+					Amount = zValue.Value * magnitude.Value / forceNodes.Count,
+					Node = model.NodesDictionary[node.Id],
+					DOF = DOFType.Z
+				});
+			}
+		}
+
 		private List<Node3D> RenumberNodesFromAnsysToMSolve(IReadOnlyList<Node3D> ansysNodes, ElementTypeEnum elementType)
 		{
-			var connectivity = AnsysMSolveElementLocalCoordinates[elementType];
+			var connectivity = _ansysMSolveElementLocalCoordinates[elementType];
 			return ansysNodes.Select((t, i) => ansysNodes[connectivity[i]]).ToList();
 		}
 

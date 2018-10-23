@@ -228,7 +228,11 @@ namespace MSolveANSYS
 			new Dictionary<ElementTypeEnum, int[]>()
 			{
 				{ElementTypeEnum.kHex8, new[] {4,5,1,0,7,6,2,3}},
-				{ElementTypeEnum.kHex20, new int[20] {4,5,1,0,7,6,2,3,12,16,15,17,13,8,9,11,14,19,18,10}}
+				{ElementTypeEnum.kHex20, new int[20] {4,5,1,0,7,6,2,3,12,16,15,17,13,8,9,11,14,19,18,10}},
+				{ElementTypeEnum.kTet4, new int[4]{0,3,1,2} },
+				{ElementTypeEnum.kTet10, new int[10]{0,3,1,2,7,8,4,6,5,9} },
+				{ElementTypeEnum.kWedge6, new int[6]{5,4,3,2,1,0} },
+				{ElementTypeEnum.kWedge15, new int[15]{5,4,3,2,1,0,10,11,14,9,13,12,7,8,6} }
 			};
 
 		private readonly IMechanicalExtAPI _api;

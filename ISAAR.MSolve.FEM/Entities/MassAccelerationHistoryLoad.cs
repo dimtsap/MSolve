@@ -24,6 +24,11 @@ namespace ISAAR.MSolve.FEM.Entities
         {
         }
 
+	    public MassAccelerationHistoryLoad(List<double> accelerations)
+	    {
+			accelerationLoads.AddRange(accelerations);
+	    }
+
         public MassAccelerationHistoryLoad(string fileName, double magnifier)
         {
             this.magnifier = magnifier;

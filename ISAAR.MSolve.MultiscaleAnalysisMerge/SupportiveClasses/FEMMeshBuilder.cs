@@ -19,6 +19,7 @@ using ISAAR.MSolve.Solvers.Interfaces;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.PreProcessor.Embedding;
 using ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
 {
@@ -222,7 +223,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
             int elementCounter = 0;
             int subdomainID = 1;
 
-            ElasticMaterial3D_v2 material1 = new ElasticMaterial3D_v2()
+            ElasticMaterial3D material1 = new ElasticMaterial3D()
             {
                 YoungModulus = E_disp,
                 PoissonRatio = ni_disp,
@@ -250,7 +251,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                         e1 = new Element()
                         {
                             ID = ElementID,
-                            ElementType = new Hexa8NLRAM_1(material1, 3, 3, 3) // dixws to e. exoume sfalma enw sto beambuilding oxi//edw kaleitai me ena orisma to Hexa8
+                            ElementType = new Hexa8NonLinear(material1, GaussLegendre3D.GetQuadratureWithOrder(3, 3, 3)) // dixws to e. exoume sfalma enw sto beambuilding oxi//edw kaleitai me ena orisma to Hexa8
                         };
 
                         for (int j = 0; j < 8; j++)
@@ -358,10 +359,11 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
 
 
             // perioxh orismou shell elements
-            ElasticMaterial3D_v2 material2 = new ElasticMaterial3D_v2()
+            ShellElasticMaterial material2 = new ShellElasticMaterial()
             {
                 YoungModulus = E_shell,
                 PoissonRatio = ni_shell,
+                ShearCorrectionCoefficientK = 5 / 6,
             };
 
             int elements = elem1 * elem2;
@@ -399,7 +401,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                 {
                     ID = ElementID,
                     //
-                    ElementType = new Shell8dispCopyGetRAM_1(material2, 3, 3, 3) //ElementType = new Shell8dispCopyGetRAM_1(material2, 3, 3, 3)
+                    ElementType = new Shell8NonLinear(material2, GaussLegendre3D.GetQuadratureWithOrder(3, 3, 3)) //ElementType = new Shell8dispCopyGetRAM_1(material2, 3, 3, 3)
                     {
                         //oVn_i= new double[][] { new double [] {ElementID, ElementID }, new double [] { ElementID, ElementID } },
                         oVn_i = new double[][] { new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[0] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[0] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[0] - 1) + 5] },
@@ -438,7 +440,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
             //
 
             //orismos elements katw strwshs
-            BenzeggaghKenaneCohMat material3 = new Materials.BenzeggaghKenaneCohMat()
+            BenzeggaghKenaneCohesiveMaterial material3 = new Materials.BenzeggaghKenaneCohesiveMaterial()
             {
                 T_o_3 = T_o_3,
                 D_o_3 = D_o_3,
@@ -466,7 +468,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                 e2 = new Element()
                 {
                     ID = ElementID,
-                    ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_11_tlk(material3, 3, 3) //ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_1(material3, 3, 3)
+                    ElementType = new CohesiveShell8ToHexa20(material3, GaussLegendre2D.GetQuadratureWithOrder(3, 3)) //ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_1(material3, 3, 3)
                     {
                         oVn_i = new double[][] { new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 5] },
                                                  new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 5] },
@@ -477,7 +479,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                                                  new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 5] },
                                                  new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 5] },},
                         tk = Tk_vec,
-                        endeixi_element_2 = 0,
+                        ShellElementSide = 0,
                     }
                 };
                 for (int j1 = 0; j1 < 8; j1++)
@@ -524,7 +526,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                 e2 = new Element()
                 {
                     ID = ElementID,
-                    ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_11_tlk(material3, 3, 3) //ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_1(material3, 3, 3)
+                    ElementType = new CohesiveShell8ToHexa20(material3, GaussLegendre2D.GetQuadratureWithOrder(3, 3)) //ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_1(material3, 3, 3)
                     {
                         oVn_i = new double[][] { new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 5] },
                                                  new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 5] },
@@ -535,7 +537,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                                                  new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 5] },
                                                  new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 5] },},
                         tk = Tk_vec,
-                        endeixi_element_2 = 1,
+                        ShellElementSide = 1,
                     }
                 };
                 for (int j1 = 0; j1 < 8; j1++)

@@ -40,6 +40,18 @@ namespace ISAAR.MSolve.Materials
             this.InitializeMatrices();
         }
 
+        public BondSlipCohMat(double T_o_1, double D_o_1, double k_elastic2_ratio,double T_o_3, double D_o_3, double[] s_0, double[] a_0, double tol)
+        {
+            this.k_elastic = T_o_1/D_o_1;
+            this.k_elastic2 = k_elastic2_ratio*k_elastic;
+            this.k_elastic_normal = T_o_3/D_o_3;
+            this.t_max = T_o_1; // Prosoxh exei lifthei idio koino orio diarrohs fy sunolika gia th sunistamenh ths paramorfwshs anexarthtws dieftunshs
+            this.s_0 = s_0; //length = 2
+            this.a_0 = a_0; //length = 2
+            this.tol = tol;
+            this.InitializeMatrices();
+        }
+
         ICohesiveZoneMaterial3D ICohesiveZoneMaterial3D.Clone()
         {
             return this.Clone();

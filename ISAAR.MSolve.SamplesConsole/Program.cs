@@ -151,7 +151,10 @@ namespace ISAAR.MSolve.SamplesConsole
             //FEM.Cantilever2D.Run();
             //FEM.Cantilever2DPreprocessor.Run();
             //FEM.WallWithOpenings.Run();
-            SeparateCodeCheckingClass.Check06bStressIntegration();
+            //SeparateCodeCheckingClass.Check06bStressIntegration();
+            SeparateCodeCheckingClass.Check10cStressIntegration5GrSh1RveForDemonstration();
+            //SeparateCodeCheckingClass.CheckProxeiroStressElastic();
+
 
         }
     }

@@ -129,6 +129,49 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
             return gpmp;
         }
 
+        public static Tuple<rveMatrixParameters, grapheneSheetParameters> GetReferenceKanonikhGewmetriaRveExampleParametersStiffCase(int subdiscr1, int discr1, int discr3, int subdiscr1_shell, int discr1_shell)
+        {
+            rveMatrixParameters mp;
+            mp = new rveMatrixParameters()
+            {
+                E_disp = 3.5, //Gpa
+                ni_disp = 0.4, // stather Poisson
+                L01 = 95, //150, // diastaseis
+                L02 = 95, //150,
+                L03 = 95, //40,
+                hexa1 = discr1 * subdiscr1,// diakritopoihsh
+                hexa2 = discr1 * subdiscr1,
+                hexa3 = discr3
+            };
+
+            grapheneSheetParameters gp;
+            gp = new grapheneSheetParameters()
+            {
+                // parametroi shell
+                E_shell = 27196.4146610211, // GPa = 1000Mpa = 1000N / mm2
+                ni_shell = 0.0607, // stathera poisson
+                elem1 = discr1_shell * subdiscr1_shell,
+                elem2 = discr1_shell * subdiscr1_shell,
+                L1 = 50,// nm  // DIORTHOSI 2 graphene sheets
+                L2 = 50,// nm
+                L3 = 112.5096153846, // nm
+                a1_shell = 0, // nm
+                tk = 0.0125016478913782,  // 0.0125016478913782nm //0.125*40,
+
+                //parametroi cohesive epifaneias
+                T_o_3 = 0.20, //0.05,  // 1Gpa = 1000Mpa = 1000N / mm2
+                D_o_3 = 0.25, //0.5, // nm
+                D_f_3 = 4, // nm
+                T_o_1 = 0.20, //0.05,// Gpa
+                D_o_1 = 0.25, //0.5, // nm
+                D_f_1 = 4, // nm
+                n_curve = 1.4
+            };
+
+            Tuple<rveMatrixParameters, grapheneSheetParameters> gpmp = new Tuple<rveMatrixParameters, grapheneSheetParameters>(mp, gp);
+            return gpmp;
+        }
+
         public static Tuple<rveMatrixParameters, grapheneSheetParameters> GetReferenceRveExampleParameters(int subdiscr1, int discr1, int discr3, int subdiscr1_shell, int discr1_shell)
         {
             rveMatrixParameters mp;
@@ -510,6 +553,261 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
             }
             //
             //orismos elements anw strwshs 
+            for (int nElement = 0; nElement < elements; nElement++)
+            {
+                ElementID = eswterikosElementCounter + PreviousElementsNumberValue + 1;
+                // ta dianusmata katefthunshs allazoun analoga to element 
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    midsurfaceNodeIDforlocalCohesiveNode_i[j1] = t_shell[nElement, j1]; // periexei NOT zero based 
+                    VH[j1] = new double[3];
+                    VH[j1][0] = o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[j1] - 1) + 3];
+                    VH[j1][1] = o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[j1] - 1) + 4];
+                    VH[j1][2] = o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[j1] - 1) + 5];
+                }
+
+                e2 = new Element()
+                {
+                    ID = ElementID,
+                    ElementType = new CohesiveShell8ToHexa20(material3, GaussLegendre2D.GetQuadratureWithOrder(3, 3)) //ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_1(material3, 3, 3)
+                    {
+                        oVn_i = new double[][] { new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[2] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[2] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[2] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[3] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[3] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[3] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[4] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[4] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[4] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[5] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[5] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[5] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 5] },},
+                        tk = Tk_vec,
+                        ShellElementSide = 1,
+                    }
+                };
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    e2.NodesDictionary.Add(renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue), model.NodesDictionary[renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue)]);
+                }
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    e2.NodesDictionary.Add(renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue + 2 * arithmosShmeiwnShellMidsurface),
+                        model.NodesDictionary[renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue + 2 * arithmosShmeiwnShellMidsurface)]);
+                }
+                model.ElementsDictionary.Add(e2.ID, e2);
+                model.SubdomainsDictionary[subdomainID].ElementsDictionary.Add(e2.ID, e2);
+                eswterikosElementCounter++;
+            }
+            // orismos elements anw strwshs ews edw
+
+        }
+
+        public static void AddGrapheneSheet_with_o_x_Input_withRenumberingBondSlip(Model model, grapheneSheetParameters gp, double[] ekk_xyz, o_x_parameters o_x_parameters, string renumberingVectorPath, string o_xsunol_input_path)
+        {
+            // Perioxh renumbering initialization 
+            renumbering renumbering = new renumbering(PrintUtilities.ReadIntVector(renumberingVectorPath));
+            // perioxh renumbering initialization ews edw 
+
+            // Perioxh parametroi Graphene sheet
+            // parametroi shell
+            double E_shell = gp.E_shell; // GPa = 1000Mpa = 1000N / mm2
+            double ni_shell = gp.ni_shell; // stathera poisson
+            int elem1 = gp.elem1;
+            int elem2 = gp.elem2;
+            double L1 = gp.L1;// nm
+            double L2 = gp.L2;// nm
+            double L3 = gp.L3; // nm
+            double a1_shell = gp.a1_shell; // nm
+            double tk = gp.tk;  // 0.0125016478913782nm
+
+            //parametroi cohesive epifaneias
+            //T_o_3, D_o_3,D_f_3,T_o_1,D_o_1,D_f_1,n_curve
+            double T_o_3 = gp.T_o_3;// Gpa = 1000Mpa = 1000N / mm2
+            double D_o_3 = gp.D_o_3; // nm
+            double D_f_3 = gp.D_f_3; // nm
+
+            double T_o_1 = gp.T_o_1;// Gpa
+            double D_o_1 = gp.D_o_1; // nm
+            double D_f_1 = gp.D_f_1; // nm
+
+            double n_curve = gp.n_curve;
+            // Perioxh parametroi Graphene sheet ews edw
+
+
+            int eswterikosNodeCounter = 0;
+            int eswterikosElementCounter = 0;
+            int PreviousElementsNumberValue = model.ElementsDictionary.Count();
+            int PreviousNodesNumberValue = model.NodesDictionary.Count();
+
+
+            // Perioxh gewmetrias (orismos nodes) meshs epifaneias
+            int new_rows = 2 * elem1 + 1;
+            int new_lines = 2 * elem2 + 1;
+            double[] o_xsunol;
+            int NodeID;
+            double nodeCoordX;
+            double nodeCoordY;
+            double nodeCoordZ;
+
+            //o_xsunol = ox_sunol_Builder_ekk_with_o_x_parameters(new_rows, new_lines, L1, L2, elem1, elem2, a1_shell, ekk_xyz, o_x_parameters);
+            o_xsunol = PrintUtilities.ReadVector(o_xsunol_input_path);
+
+            for (int nNode = 0; nNode < o_xsunol.GetLength(0) / 6; nNode++) //nNode einai zero based
+            {
+                NodeID = renumbering.GetNewNodeNumbering(eswterikosNodeCounter + PreviousNodesNumberValue + 1);
+                nodeCoordX = o_xsunol[6 * nNode + 0];
+                nodeCoordY = o_xsunol[6 * nNode + 1];
+                nodeCoordZ = o_xsunol[6 * nNode + 2];
+
+                model.NodesDictionary.Add(NodeID, new Node() { ID = NodeID, X = nodeCoordX, Y = nodeCoordY, Z = nodeCoordZ });
+                eswterikosNodeCounter++;
+            }
+            int arithmosShmeiwnShellMidsurface = eswterikosNodeCounter;
+            // perioxh gewmetrias meshs epifaneias ews edw
+
+
+            // perioxh orismou shell elements
+            ShellElasticMaterial material2 = new ShellElasticMaterial()
+            {
+                YoungModulus = E_shell,
+                PoissonRatio = ni_shell,
+                ShearCorrectionCoefficientK = 5 / 6,
+            };
+
+            int elements = elem1 * elem2;
+            int fdof_8 = 5 * (elem1 * (3 * elem2 + 2) + 2 * elem2 + 1);
+            int komvoi_8 = fdof_8 / 5;
+            int[,] t_shell;
+            t_shell = FEMMeshBuilder.topologia_shell_coh(elements, elem1, elem2, komvoi_8); // ta stoixeia tou einai 1 based to idio einai 0 based
+
+            double[] Tk_vec = new double[8];
+            double[][] VH = new double[8][];
+            int[] midsurfaceNodeIDforlocalShellNode_i = new int[8];
+            Element e2;
+            int ElementID;
+            int subdomainID = 1;
+
+            for (int j = 0; j < 8; j++) // paxos idio gia ola telements
+            {
+                Tk_vec[j] = tk;
+            }
+
+            for (int nElement = 0; nElement < elements; nElement++)
+            {
+                ElementID = eswterikosElementCounter + PreviousElementsNumberValue + 1;
+                // ta dianusmata katefthunshs allazoun analoga to element 
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    midsurfaceNodeIDforlocalShellNode_i[j1] = t_shell[nElement, j1]; // periexei NOT zero based 
+                    VH[j1] = new double[3];
+                    VH[j1][0] = o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[j1] - 1) + 3];
+                    VH[j1][1] = o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[j1] - 1) + 4];
+                    VH[j1][2] = o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[j1] - 1) + 5];
+                }
+
+                e2 = new Element()
+                {
+                    ID = ElementID,
+                    //
+                    ElementType = new Shell8NonLinear(material2, GaussLegendre3D.GetQuadratureWithOrder(3, 3, 3)) //ElementType = new Shell8dispCopyGetRAM_1(material2, 3, 3, 3)
+                    {
+                        //oVn_i= new double[][] { new double [] {ElementID, ElementID }, new double [] { ElementID, ElementID } },
+                        oVn_i = new double[][] { new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[0] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[0] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[0] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[1] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[1] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[1] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[2] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[2] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[2] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[3] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[3] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[3] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[4] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[4] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[4] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[5] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[5] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[5] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[6] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[6] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[6] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[7] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[7] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalShellNode_i[7] - 1) + 5] },},
+                        tk = Tk_vec,
+                    }
+                };
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    e2.NodesDictionary.Add(renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalShellNode_i[j1] + PreviousNodesNumberValue), model.NodesDictionary[renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalShellNode_i[j1] + PreviousNodesNumberValue)]);
+                }
+                model.ElementsDictionary.Add(e2.ID, e2);
+                model.SubdomainsDictionary[subdomainID].ElementsDictionary.Add(e2.ID, e2);
+                eswterikosElementCounter++;
+            }
+            int arithmosShellElements = eswterikosElementCounter;
+            // perioxh orismou shell elements ews edw
+
+            // orismos shmeiwn katw strwshs
+            for (int nNode = 0; nNode < o_xsunol.GetLength(0) / 6; nNode++) //nNode einai zero based
+            {
+                NodeID = renumbering.GetNewNodeNumbering(eswterikosNodeCounter + PreviousNodesNumberValue + 1);
+                nodeCoordX = o_xsunol[6 * nNode + 0] - 0.5 * tk * o_xsunol[6 * nNode + 3];
+                nodeCoordY = o_xsunol[6 * nNode + 1] - 0.5 * tk * o_xsunol[6 * nNode + 4];
+                nodeCoordZ = o_xsunol[6 * nNode + 2] - 0.5 * tk * o_xsunol[6 * nNode + 5];
+
+                model.NodesDictionary.Add(NodeID, new Node() { ID = NodeID, X = nodeCoordX, Y = nodeCoordY, Z = nodeCoordZ });
+                eswterikosNodeCounter++;
+            }
+            //
+
+            //orismos elements katw strwshs
+            BondSlipCohMat material3 = new Materials.BondSlipCohMat(T_o_1,D_o_1,0.1,T_o_3,D_o_3,new double[2],new double[2],1e-10);            
+
+            int[] midsurfaceNodeIDforlocalCohesiveNode_i = new int[8];
+            for (int nElement = 0; nElement < elements; nElement++)
+            {
+                ElementID = eswterikosElementCounter + PreviousElementsNumberValue + 1;
+                // ta dianusmata katefthunshs allazoun analoga to element 
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    midsurfaceNodeIDforlocalCohesiveNode_i[j1] = t_shell[nElement, j1]; // periexei NOT zero based 
+                    VH[j1] = new double[3];
+                    VH[j1][0] = o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[j1] - 1) + 3];
+                    VH[j1][1] = o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[j1] - 1) + 4];
+                    VH[j1][2] = o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[j1] - 1) + 5];
+                }
+
+                e2 = new Element()
+                {
+                    ID = ElementID,
+                    ElementType = new CohesiveShell8ToHexa20(material3, GaussLegendre2D.GetQuadratureWithOrder(3, 3)) //ElementType = new cohesive_shell_to_hexaCopyGetEmbeRAM_1(material3, 3, 3)
+                    {
+                        oVn_i = new double[][] { new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[0] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[1] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[2] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[2] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[2] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[3] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[3] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[3] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[4] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[4] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[4] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[5] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[5] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[5] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[6] - 1) + 5] },
+                                                 new double[] { o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 3], o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 4],o_xsunol[6 * (midsurfaceNodeIDforlocalCohesiveNode_i[7] - 1) + 5] },},
+                        tk = Tk_vec,
+                        ShellElementSide = 0,
+                    }
+                };
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    e2.NodesDictionary.Add(renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue), model.NodesDictionary[renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue)]);
+                }
+                for (int j1 = 0; j1 < 8; j1++)
+                {
+                    e2.NodesDictionary.Add(renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue + arithmosShmeiwnShellMidsurface),
+                        model.NodesDictionary[renumbering.GetNewNodeNumbering(midsurfaceNodeIDforlocalCohesiveNode_i[j1] + PreviousNodesNumberValue + arithmosShmeiwnShellMidsurface)]);
+                }
+                model.ElementsDictionary.Add(e2.ID, e2);
+                model.SubdomainsDictionary[subdomainID].ElementsDictionary.Add(e2.ID, e2);
+                eswterikosElementCounter++;
+            }
+            // orismos elements katw strwshs ews edw
+
+            // orismos shmeiwn anw strwshs
+            for (int nNode = 0; nNode < o_xsunol.GetLength(0) / 6; nNode++) //nNode einai zero based
+            {
+                NodeID = renumbering.GetNewNodeNumbering(eswterikosNodeCounter + PreviousNodesNumberValue + 1);
+                nodeCoordX = o_xsunol[6 * nNode + 0] + 0.5 * tk * o_xsunol[6 * nNode + 3];
+                nodeCoordY = o_xsunol[6 * nNode + 1] + 0.5 * tk * o_xsunol[6 * nNode + 4];
+                nodeCoordZ = o_xsunol[6 * nNode + 2] + 0.5 * tk * o_xsunol[6 * nNode + 5];
+
+                model.NodesDictionary.Add(NodeID, new Node() { ID = NodeID, X = nodeCoordX, Y = nodeCoordY, Z = nodeCoordZ });
+                eswterikosNodeCounter++;
+            }
+            //
+            //orismos elements anw strwshs 
+            //TODO material3 = new Materials.BondSlipCohMat(T_o_1, D_o_1, 0.1, T_o_3, D_o_3, new double[2], new double[2], 1e-10);
             for (int nElement = 0; nElement < elements; nElement++)
             {
                 ElementID = eswterikosElementCounter + PreviousElementsNumberValue + 1;

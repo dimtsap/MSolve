@@ -28,6 +28,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 {
     public class Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains : StructuralProblemsMicrostructureBase, IContinuumMaterial3DDefGrad
     {
+        
         //TODO: create base class and use it for different microstructures-scale transitions.
         private Model model { get; set; }
         //private readonly Dictionary<int, Node> nodesDictionary = new Dictionary<int, Node>();

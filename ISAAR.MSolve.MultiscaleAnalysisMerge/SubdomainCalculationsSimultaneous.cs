@@ -242,6 +242,8 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         public static (Dictionary<int, double[][]> , Dictionary<int, double[][]> ) UpdateSubdomainKffAndCalculateKfpDqAndKppDqpMultiple(Model model, IElementMatrixProvider elementProvider, IScaleTransitions scaleTransitions,
             Dictionary<int, Node> boundaryNodes, Dictionary<int, Dictionary<int, Element>> boundaryElements, Dictionary<int, ILinearSystem> linearSystems)
         {
+            //TODO: afth h methodos antikathista (mallon) tis 227-228, 232 kai 271 grammes ths Microstru3developMultipleSubdomainsUseBase
+
             //Dictionary<int, IMatrix2D>  ks = new Dictionary<int, IMatrix2D>(model.SubdomainsDictionary.Count);
             Dictionary<int, double[][]> KfpDqSubdomains = new Dictionary<int, double[][]>(model.SubdomainsDictionary.Count);
             Dictionary<int, double[][]> KppDqVectorsSubdomains = new Dictionary<int, double[][]>(model.SubdomainsDictionary.Count);

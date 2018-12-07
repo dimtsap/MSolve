@@ -149,6 +149,35 @@ namespace ISAAR.MSolve.SamplesConsole
             double[] stressesCheck4 = microstructure3.Stresses.Data;
         }
 
+        public static void Check05cStressIntegration()
+        {
+            double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
+            var material1 = new ElasticMaterial2D( StressState2D.PlaneStress ) 
+            { YoungModulus = E_disp, PoissonRatio = ni_disp, };
+            double[] GLVec = new double[3] { 0.01, 0, 0 };
+            material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            double[] stressesCheck1 = new double[3] {material1.Stresses[0], material1.Stresses[1], material1.Stresses[2]};
+            //GLVec = new double[3] { 0.01, 0, 0 };
+            //material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            //material1.SaveState();
+            //double[] stressesCheck2 = material1.Stresses.Data;
+
+            VectorExtensions.AssignTotalAffinityCount();
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheck27HexaDegenerate();
+            //IRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheckEnaHexa();
+
+            IContinuumMaterial2D microstructure3 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains(homogeneousRveBuilder1);
+            //IContinuumMaterial3DDefGrad microstructure3copyConsCheck = new Microstructure3copyConsCheckEna(homogeneousRveBuilder1);
+            double[,] consCheck1 = new double[3,3];
+            for (int i1 = 0; i1 <3 ; i1++) { for (int i2 = 0; i2 < 3; i2++) { consCheck1[i1, i2] = microstructure3.ConstitutiveMatrix[i1, i2]; } }
+
+            microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D( new double[3] { 0.010, 0, 0}));
+            double[] stressesCheck3 = microstructure3.Stresses.Data;
+            //microstructure3.SaveState();
+            //microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D(new double[3] { 0.010, 0, 0 }));
+            //double[] stressesCheck4 = microstructure3.Stresses.Data;
+        }
+
         public static void Check06bStressIntegration()
         {
             double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson

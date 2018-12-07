@@ -19,7 +19,7 @@ using ISAAR.MSolve.Solvers.Interfaces;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.PreProcessor.Embedding;
 using ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses;
-
+using ISAAR.MSolve.Discretization.Interfaces;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
@@ -46,7 +46,9 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         public Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes()
         {
            return Reference2RVEExample10_000withRenumbering_mono_hexa();
-        }        
+        }
+
+        
 
         public Tuple<Model, Dictionary<int, Node>,double> Reference2RVEExample10_000withRenumbering_mono_hexa()
         {
@@ -61,7 +63,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             //grapheneSheetParameters gp;
             //C:\Users\cluster 5\Desktop\Gerasimos\REFERENCE_Examples_me_develop\10_000_mono_hexa\REF_new_total_numbering.txt einai link sto PC LAB
             //string renumbering_vector_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_fe2_diafora_check\fe2_tax_me1_arxiko_chol_dixws_me1_OriginalRVEExampleChol_me_a1_REF2_10_000_renu_new_multiple_algorithms_check_stress_27hexa\REF_new_total_numbering27.txt";
-            renumbering_vector_path = @"C:\Users\Dimitris Giovanis\Desktop\notes_elegxoi\MSOLVE_input_2\REF_new_total_numbering27.txt";
+            renumbering_vector_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_fe2_diafora_check\fe2_tax_me1_arxiko_chol_dixws_me1_OriginalRVEExampleChol_me_a1_REF2_10_000_renu_new_multiple_algorithms_check_stress_27hexa\REF_new_total_numbering27.txt";
             //string Fxk_p_komvoi_rve_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_fe2_diafora_check\fe2_tax_me1_arxiko_chol_dixws_me1_OriginalRVEExampleChol_me_a1_REF2_10_000_renu_new_multiple_algorithms_check_stress_27hexa\Fxk_p_komvoi_rve.txt";
             string Fxk_p_komvoi_rve_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_fe2_diafora_check\fe2_tax_me1_arxiko_chol_dixws_me1_OriginalRVEExampleChol_me_a1_REF2_10_000_renu_new_multiple_algorithms_check_stress_27hexa\Fxk_p_komvoi_rve.txt";
             int subdiscr1 = 1;
@@ -127,5 +129,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             return FEMMeshBuilder.GetConstraintsOfDegenerateRVEForNonSingularStiffnessMatrix_withRenumbering(model, mp.hexa1, mp.hexa2, mp.hexa3, renumbering_vector_path);
             //TODO:  Pithanws na epistrefetai apo GetModelAndBoundaryNodes ... AndConstraints.
         }
+
+
     }
 }

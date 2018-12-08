@@ -742,6 +742,7 @@ namespace ISAAR.MSolve.SamplesConsole
         public static void HexaElementsOnlyVonMises(Model model)
         {
             //proelefsi EmbeddedexamplesBuilder ekdoshs msolve telikhs pro feat/prosthiki_allagwn
+            // allagh xrhsimopoietai to swsto linear hexa8
 
             int startX = 0;
             int startY = 0;
@@ -783,7 +784,7 @@ namespace ISAAR.MSolve.SamplesConsole
             e1 = new Element()
             {
                 ID = 1,
-                ElementType = new Hexa8(material1) // dixws to e. exoume sfalma enw sto beambuilding oxi//edw kaleitai me ena orisma to Hexa8
+                ElementType = new Hexa8Fixed(material1) // dixws to e. exoume sfalma enw sto beambuilding oxi//edw kaleitai me ena orisma to Hexa8
             };
             ID2 = 1;
             for (int j = 0; j < 2; j++)
@@ -805,7 +806,7 @@ namespace ISAAR.MSolve.SamplesConsole
             Element e2 = new Element()
             {
                 ID = 2,
-                ElementType = new Hexa8(material1) // dixws to e. exoume sfalma enw sto beambuilding oxi//edw kaleitai me ena orisma to Hexa8
+                ElementType = new Hexa8Fixed(material1) // dixws to e. exoume sfalma enw sto beambuilding oxi//edw kaleitai me ena orisma to Hexa8
             };
             ID2 = 1;
             for (int j = 0; j < 2; j++)

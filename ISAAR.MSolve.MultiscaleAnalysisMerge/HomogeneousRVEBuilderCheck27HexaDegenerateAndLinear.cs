@@ -23,7 +23,7 @@ using ISAAR.MSolve.Discretization.Interfaces;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
-    public class HomogeneousRVEBuilderCheck27HexaDegenerate : IdegenerateRVEbuilder
+    public class HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear : IdegenerateRVEbuilder
     {
         //TODOGerasimos gia na ta krataei mesa kai na kanei build model oses fores tou zhththei
         // omoiws na ginei kai to RVE me graphene sheets 
@@ -36,7 +36,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         private grapheneSheetParameters gp;
         private string renumbering_vector_path;
 
-        public HomogeneousRVEBuilderCheck27HexaDegenerate()
+        public HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear()
         {
             //TODOGerasimos
             // this.renumbering_vector_path=renumbering_vector_path,
@@ -82,7 +82,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             o_x_parameters[] model_o_x_parameteroi = new o_x_parameters[graphene_sheets_number];
 
 
-            FEMMeshBuilder.HexaElementsOnlyRVEwithRenumbering_forMS(model, mp, Dq, renumbering_vector_path, boundaryNodes);
+            FEMMeshBuilder.LinearHexaElementsOnlyRVEwithRenumbering_forMS(model, mp, Dq, renumbering_vector_path, boundaryNodes);
             double volume = mp.L01 * mp.L02 * mp.L03;
 
             // MS: oi epomenes 6 grammes aforoun embedding commented out 

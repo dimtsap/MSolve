@@ -163,7 +163,7 @@ namespace ISAAR.MSolve.SamplesConsole
             //double[] stressesCheck2 = material1.Stresses.Data;
 
             VectorExtensions.AssignTotalAffinityCount();
-            IdegenerateRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheck27HexaDegenerate();
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear();
             //IRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheckEnaHexa();
 
             IContinuumMaterial2D microstructure3 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains(homogeneousRveBuilder1);

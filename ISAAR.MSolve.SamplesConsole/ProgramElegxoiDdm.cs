@@ -33,7 +33,7 @@ namespace ISAAR.MSolve.SamplesConsole
 
             // EPILOGH MONTELOU
             int model__builder_choice;
-            model__builder_choice =31;   // 9 einai to megalo me to renumbering pou tsekaretai
+            model__builder_choice =33;   // 9 einai to megalo me to renumbering pou tsekaretai
 
 
             if (model__builder_choice == 1) // 
@@ -76,7 +76,8 @@ namespace ISAAR.MSolve.SamplesConsole
             { ParadeigmataElegxwnBuilder.HexaElementsOnlyVonMises(model); }
             if (model__builder_choice == 32) // Hexa8 kanoniko me NL analyzer paradeigma me Vasili Von mises
             { }//            IntegrationTestModelBuilders.Reference2RVEExample1000ddm_test_for_Msolve_release_version(model); } //A.3
-
+            if (model__builder_choice == 33) // Hexa8 kanoniko me NL analyzer paradeigma me Vasili Von mises
+            { ParadeigmataElegxwnBuilder.HexaElementsOnlyVonMisesHexa8NL(model); }
 
             bool use_domain_decomposer = false;
             if (use_domain_decomposer)

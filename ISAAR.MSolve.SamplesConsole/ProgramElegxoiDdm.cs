@@ -33,7 +33,7 @@ namespace ISAAR.MSolve.SamplesConsole
 
             // EPILOGH MONTELOU
             int model__builder_choice;
-            model__builder_choice =33;   // 9 einai to megalo me to renumbering pou tsekaretai
+            model__builder_choice =31;   // 9 einai to megalo me to renumbering pou tsekaretai
 
 
             if (model__builder_choice == 1) // 

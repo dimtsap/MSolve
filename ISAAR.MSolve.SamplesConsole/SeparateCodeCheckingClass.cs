@@ -179,6 +179,41 @@ namespace ISAAR.MSolve.SamplesConsole
 
         }
 
+        public static void Check05c2StressIntegration()
+        {
+            double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
+            var material1 = new ElasticMaterial2D(StressState2D.PlaneStress)
+            { YoungModulus = E_disp, PoissonRatio = ni_disp, };
+            double[] GLVec = new double[3] { 0.01, 0, 0 };
+            material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            double[] stressesCheck1 = new double[3] { material1.Stresses[0], material1.Stresses[1], material1.Stresses[2] };
+            //material1.SaveState();
+            GLVec = new double[3] { 0.02, 0, 0 };
+            material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            double[] stressesCheck2 = new double[3] { material1.Stresses[0], material1.Stresses[1], material1.Stresses[2] };
+
+            VectorExtensions.AssignTotalAffinityCount();
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheck27HexaDegenerateAndLinearPeripheral();
+            //IRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheckEnaHexa();
+
+            IContinuumMaterial2D microstructure3 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains(homogeneousRveBuilder1);
+            //IContinuumMaterial3DDefGrad microstructure3copyConsCheck = new Microstructure3copyConsCheckEna(homogeneousRveBuilder1);
+            double[,] consCheck1 = new double[3, 3];
+            for (int i1 = 0; i1 < 3; i1++) { for (int i2 = 0; i2 < 3; i2++) { consCheck1[i1, i2] = microstructure3.ConstitutiveMatrix[i1, i2]; } }
+
+            microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D(new double[3] { 0.010, 0, 0 }));
+            double[] stressesCheck3 = new double[3] { microstructure3.Stresses[0], microstructure3.Stresses[1], microstructure3.Stresses[2] };
+            microstructure3.SaveState();
+            microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D(new double[3] { 0.020, 0, 0 }));
+            double[] stressesCheck4 = new double[3] { microstructure3.Stresses[0], microstructure3.Stresses[1], microstructure3.Stresses[2] };
+
+            microstructure3.SaveState();
+            microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D(new double[3] { 0.030, 0, 0 }));
+            double[] stressesCheck5 = new double[3] { microstructure3.Stresses[0], microstructure3.Stresses[1], microstructure3.Stresses[2] };
+
+
+        }
+
         public static void Check05dStressIntegration()
         {
             double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
@@ -194,6 +229,36 @@ namespace ISAAR.MSolve.SamplesConsole
 
             VectorExtensions.AssignTotalAffinityCount();
             IdegenerateRVEbuilder homogeneousRveBuilder1 = new GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinear();
+            //IRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheckEnaHexa();
+
+            IContinuumMaterial2D microstructure3 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains(homogeneousRveBuilder1);
+            //IContinuumMaterial3DDefGrad microstructure3copyConsCheck = new Microstructure3copyConsCheckEna(homogeneousRveBuilder1);
+            double[,] consCheck1 = new double[3, 3];
+            for (int i1 = 0; i1 < 3; i1++) { for (int i2 = 0; i2 < 3; i2++) { consCheck1[i1, i2] = microstructure3.ConstitutiveMatrix[i1, i2]; } }
+
+            microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D(new double[3] { 0.010, 0, 0 }));
+            double[] stressesCheck3 = new double[3] { microstructure3.Stresses[0], microstructure3.Stresses[1], microstructure3.Stresses[2] };
+            microstructure3.SaveState();
+            microstructure3.UpdateMaterial(new StressStrainVectorContinuum2D(new double[3] { 0.020, 0, 0 }));
+            double[] stressesCheck4 = new double[3] { microstructure3.Stresses[0], microstructure3.Stresses[1], microstructure3.Stresses[2] };
+
+        }
+
+        public static void Check05d2StressIntegration()
+        {
+            double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
+            var material1 = new ElasticMaterial2D(StressState2D.PlaneStress)
+            { YoungModulus = E_disp, PoissonRatio = ni_disp, };
+            double[] GLVec = new double[3] { 0.01, 0, 0 };
+            material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            double[] stressesCheck1 = new double[3] { material1.Stresses[0], material1.Stresses[1], material1.Stresses[2] };
+            //material1.SaveState();
+            //GLVec = new double[3] { 0.02, 0, 0 };
+            //material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            //double[] stressesCheck2 = new double[3] { material1.Stresses[0], material1.Stresses[1], material1.Stresses[2] };
+
+            VectorExtensions.AssignTotalAffinityCount();
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinearPeripheral();
             //IRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheckEnaHexa();
 
             IContinuumMaterial2D microstructure3 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains(homogeneousRveBuilder1);

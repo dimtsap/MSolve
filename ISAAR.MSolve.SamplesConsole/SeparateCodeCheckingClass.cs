@@ -209,6 +209,33 @@ namespace ISAAR.MSolve.SamplesConsole
 
         }
 
+        public static void Check05eStressIntegration()
+        {
+            double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
+            var material1 = new ElasticMaterial2D(StressState2D.PlaneStress)
+            { YoungModulus = E_disp, PoissonRatio = ni_disp, };
+            double[] GLVec = new double[3] { 0.01, 0, 0 };
+            material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            double[] stressesCheck1 = new double[3] { material1.Stresses[0], material1.Stresses[1], material1.Stresses[2] };
+
+            var Vec1 = new Vector(new double[3] { 2, 0, 1 });
+            var Vec2 = new Vector(new double[3] { 1, 2, 1 });
+            var strain = new double[3] { 0.01, 0, 0 };
+
+            var material2 = new ShellElasticMaterial2D() { YoungModulus = E_disp, PoissonRatio = ni_disp, TangentVectorV1=new double[3] { Vec1[0], Vec1[1], Vec1[2] }, TangentVectorV2 = new double[3] { Vec2[0], Vec2[1], Vec2[2] } };
+            material2.UpdateMaterial(strain);
+            double[] stressesCheck2 = new double[3] { material2.Stresses[0], material2.Stresses[1], material2.Stresses[2] };
+
+            var material3 = new ShellElasticMaterial2Dtransformationb() { YoungModulus = E_disp, PoissonRatio = ni_disp, TangentVectorV1 = new double[3] { Vec1[0], Vec1[1], Vec1[2] }, TangentVectorV2 = new double[3] { Vec2[0], Vec2[1], Vec2[2] } };
+            var Matrix1 = new Matrix2D(3,3); for (int i1 = 0; i1 < 3; i1++) { for (int i2 = 0; i2 < 3; i2++) { Matrix1[i1, i2] = material3.ConstitutiveMatrix[i1, i2]; } }
+            material3.UpdateMaterial(strain);
+            double[] stressesCheck3 = new double[3] { material3.Stresses[0], material3.Stresses[1], material3.Stresses[2] };
+
+
+        }
+
+
+
         public static void Check06bStressIntegration()
         {
             double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson

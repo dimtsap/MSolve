@@ -76,7 +76,7 @@ namespace ISAAR.MSolve.Materials
 			});
 
             // Integrate over thickness takes into account multiplication *t but not (E/(1-(ni^2)) and it will be added here
-            ConstitutiveMatrix.Scale(YoungModulus / (1 - Math.Pow(PoissonRatio, 2)));
+            constitutiveMatrix.Scale(YoungModulus / (1 - Math.Pow(PoissonRatio, 2)));
 
 			 CartesianConstitutiveMatrix= constitutiveMatrix.Data;
 		}

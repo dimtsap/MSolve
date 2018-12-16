@@ -245,3 +245,6 @@ ModelManifest.xml
 .fake/
 *.iga
 *.dat
+/ISAAR.MSolve.MultiscaleAnalysis
+/ISAAR.MSolve.MultiscaleAnalysisMerge
+/ISAAR.MSolve.SamplesConsole

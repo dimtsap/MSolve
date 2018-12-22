@@ -321,6 +321,16 @@ namespace ISAAR.MSolve.IGA.Elements
 		{
 			throw new NotImplementedException();
 		}
-		#endregion
-	}
+
+        public void SaveMaterialState()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ClearMaterialStresses()
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+    }
 }

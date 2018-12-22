@@ -30,9 +30,9 @@ namespace ISAAR.MSolve.IGA.Interfaces
         double[] CalculateForces(Element element, double[] localDisplacements, double[] localdDisplacements);
         double[] CalculateForcesForLogging(Element element, double[] localDisplacements);
         //double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads);
-        //void SaveMaterialState();
+        void SaveMaterialState();
         void ClearMaterialState();
 
-        //void ClearMaterialStresses();
+        void ClearMaterialStresses();
     }
 }

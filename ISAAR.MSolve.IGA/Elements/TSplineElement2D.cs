@@ -215,5 +215,15 @@ namespace ISAAR.MSolve.IGA.Elements
                     new Knot(){ID=3,Ksi=1,Heta = 1,Zeta = 0}
                 });
 		}
-	}
+
+        public void SaveMaterialState()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ClearMaterialStresses()
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

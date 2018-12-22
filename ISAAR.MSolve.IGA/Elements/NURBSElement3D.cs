@@ -267,5 +267,15 @@ namespace ISAAR.MSolve.IGA.Problems.Structural.Elements
         {
             throw new NotSupportedException();
         }
+
+        public void SaveMaterialState()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ClearMaterialStresses()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

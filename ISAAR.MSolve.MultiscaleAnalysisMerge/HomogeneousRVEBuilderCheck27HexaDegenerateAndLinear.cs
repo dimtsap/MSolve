@@ -23,7 +23,7 @@ using ISAAR.MSolve.Discretization.Interfaces;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
-    public class HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear : IdegenerateRVEbuilder
+    public class HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear : IdegenerateRVEbuilder,IRVEbuilder
     {
         //TODOGerasimos gia na ta krataei mesa kai na kanei build model oses fores tou zhththei
         // omoiws na ginei kai to RVE me graphene sheets 

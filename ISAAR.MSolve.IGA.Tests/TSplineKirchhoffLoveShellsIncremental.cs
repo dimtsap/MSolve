@@ -6,6 +6,7 @@ using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Readers;
+using ISAAR.MSolve.LinearAlgebra.Commons;
 using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
@@ -20,35 +21,50 @@ namespace ISAAR.MSolve.IGA.Tests
 	{
         private const int pathcID = 0;
 
-        //[Fact]
-        //private static void RunTest()
-        //{
-        //    int increments = 2;
-        //    IReadOnlyList<Dictionary<int, double>> expectedDisplacements = GetExpectedDisplacements(increments);
-        //    IncrementalDisplacementsLog computedDisplacements = SolveModel(increments);
-        //    Assert.True(AreDisplacementsSame(expectedDisplacements, computedDisplacements));
-        //}
+        [Fact]
+        private static void RunTest()
+        {
+            int increments = 2;
+            IReadOnlyList<Dictionary<int, double>> expectedDisplacements = GetExpectedDisplacements(increments);
+            IncrementalDisplacementsLog computedDisplacements = SolveModel(increments);
+            Assert.True(AreDisplacementsSame(expectedDisplacements, computedDisplacements));
+        }
 
-        //private static IncrementalDisplacementsLog SolveModel(int increments)
-        //{
-        //    Model model = GetCantileverShellMaterialBenchmarkModel(); //exei assignAffinity kai model.connectDataStructures
+        private static IncrementalDisplacementsLog SolveModel(int increments)
+        {
+            Model model = GetCantileverShellMaterialBenchmarkModel(); //exei assignAffinity kai model.connectDataStructures
 
-        //    var linearSystems = new Dictionary<int, ILinearSystem>(); //I think this should be done automatically 
-        //    linearSystems[pathcID] = new SkylineLinearSystem(pathcID, model.Patches[0].Forces);
+            var linearSystems = new Dictionary<int, ILinearSystem>(); //I think this should be done automatically 
+            linearSystems[pathcID] = new SkylineLinearSystem(pathcID, model.Patches[0].Forces);
 
-        //    ProblemStructural provider = new ProblemStructural(model, linearSystems);
+            ProblemStructural provider = new ProblemStructural(model, linearSystems);
 
-        //    var solver = new SolverSkyline(linearSystems[pathcID]);
-        //    var linearSystemsArray = new[] { linearSystems[pathcID] };
-        //    var subdomainUpdaters = new[] { new NonLinearSubdomainUpdater(model.Patches[0]) };
-        //    var subdomainMappers = new[] { new SubdomainGlobalMapping(model.Subdomains[0]) };
-           
-        //    var childAnalyzer = new NewtonRaphsonNonLinearAnalyzer(solver, linearSystemsArray, subdomainUpdaters, subdomainMappers, provider, increments, model.TotalDOFs);
+            var solver = new SolverSkyline(linearSystems[pathcID]);
+            var linearSystemsArray = new[] { linearSystems[pathcID] };
+            var subdomainUpdaters = new[] { new NonLinearPatchUpdater(model.Patches[0]) };
+            var subdomainMappers = new[] { new PatchGlobalMapping(model.Patches[0]) };
+
+            var childAnalyzer = new NewtonRaphsonNonLinearAnalyzer(solver, linearSystemsArray, subdomainUpdaters, subdomainMappers, provider, increments, model.TotalDOFs);
 
 
-        //    var watchDofs = new Dictionary<int, int[]>();
+            var watchDofs = new Dictionary<int, int[]>(); //TODO
+            var subdomainDofsIDs = new int[model.TotalDOFs]; for (int i1=0; i1 < model.TotalDOFs; i1++) { subdomainDofsIDs[i1] = i1; }
+            watchDofs.Add(pathcID, subdomainDofsIDs);
+            var log1 = new IncrementalDisplacementsLog(watchDofs);
+            childAnalyzer.IncrementalDisplacementsLog = log1;
 
-        //}
+            childAnalyzer.SetMaxIterations = 100;
+            childAnalyzer.SetIterationsForMatrixRebuild = 1;
+
+            StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
+
+            parentAnalyzer.BuildMatrices();
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+
+
+            return log1;
+        }
 
         private static IReadOnlyList<Dictionary<int, double>> GetExpectedDisplacements(int increments )
         {
@@ -85,7 +101,23 @@ namespace ISAAR.MSolve.IGA.Tests
 
         }
 
-        [Fact]
+        private static bool AreDisplacementsSame(IReadOnlyList<Dictionary<int, double>> expectedDisplacements, IncrementalDisplacementsLog computedDisplacements)
+        {
+            var comparer = new ValueComparer(1E-6);
+
+            for (int iter = 0; iter < expectedDisplacements.Count; ++iter)
+            {
+                foreach (int dof in expectedDisplacements[iter].Keys)
+                {
+                    if (!comparer.AreEqual(expectedDisplacements[iter][dof], computedDisplacements.GetTotalDisplacement(iter, pathcID, dof)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
 		public static Model GetCantileverShellMaterialBenchmarkModel()
 		{
 			VectorExtensions.AssignTotalAffinityCount();

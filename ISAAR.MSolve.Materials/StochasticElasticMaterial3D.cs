@@ -108,7 +108,12 @@ namespace ISAAR.MSolve.FEM.Materials
 
         #region ICloneable Members
 
-        public object Clone()
+        object ICloneable.Clone()
+        {
+            return Clone();
+        }
+
+        public IContinuumMaterial3D Clone()
         {
             return new StochasticElasticMaterial3D(coefficientsProvider) { YoungModulus = this.YoungModulus, PoissonRatio = this.PoissonRatio };
         }

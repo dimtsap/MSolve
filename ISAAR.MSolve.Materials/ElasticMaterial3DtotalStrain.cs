@@ -5,10 +5,13 @@ using System;
 
 namespace ISAAR.MSolve.FEM.Materials
 {
-    public class ElasticMaterial3D : IIsotropicContinuumMaterial3D
+    public class ElasticMaterial3DtotalStrain : IIsotropicContinuumMaterial3D
     {
+        //proelefsi: ElasticMaterial3D
+        //allages: tropopoiithile wste na doulevei me to total strain (TODO: na diorthothei to constitutive)
+
         //private readonly double[] strains = new double[6];
-        private readonly double[] stresses = new double[6];
+        //private readonly double[] stresses = new double[6];
         private double[,] constitutiveMatrix = null;
         public double YoungModulus { get; set; }
         public double PoissonRatio { get; set; }
@@ -47,7 +50,7 @@ namespace ISAAR.MSolve.FEM.Materials
             var stressesElastic = new double[6];
             for (int i = 0; i < 6; i++)
             {
-                stressesElastic[i] = this.stresses[i];
+                //stressesElastic[i] = this.stresses[i];
                 for (int j = 0; j < 6; j++)
                     stressesElastic[i] += this.constitutiveMatrix[i, j] * this.incrementalStrains[j];
             }
@@ -97,20 +100,19 @@ namespace ISAAR.MSolve.FEM.Materials
 
         public void ClearState()
         {
-            //Array.Clear(constitutiveMatrix, 0, constitutiveMatrix.Length);
             Array.Clear(incrementalStrains, 0, incrementalStrains.Length);
-            Array.Clear(stresses, 0, stresses.Length);
+            //Array.Clear(stresses, 0, stresses.Length);
             Array.Clear(stressesNew, 0, stressesNew.Length);
         }
 
         public void SaveState()
         {
-            Array.Copy(this.stressesNew, this.stresses, 6);
+            //Array.Copy(this.stressesNew, this.stresses, 6);
         }
 
         public void ClearStresses()
         {
-            Array.Clear(this.stresses, 0, 6);
+            //Array.Clear(this.stresses, 0, 6);
             Array.Clear(this.stressesNew, 0, 6);
         }
 
@@ -125,7 +127,7 @@ namespace ISAAR.MSolve.FEM.Materials
 
         public IContinuumMaterial3D Clone()
         {
-            return new ElasticMaterial3D() { YoungModulus = this.YoungModulus, PoissonRatio = this.PoissonRatio };
+            return new ElasticMaterial3DtotalStrain() { YoungModulus = this.YoungModulus, PoissonRatio = this.PoissonRatio };
         }
 
         #endregion

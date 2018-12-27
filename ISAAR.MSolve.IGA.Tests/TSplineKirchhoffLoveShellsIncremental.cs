@@ -37,7 +37,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var linearSystems = new Dictionary<int, ILinearSystem>(); //I think this should be done automatically 
             linearSystems[pathcID] = new SkylineLinearSystem(pathcID, model.Patches[0].Forces);
 
-            ProblemStructural provider = new ProblemStructural(model, linearSystems);
+            ProblemStructuraliga provider = new ProblemStructuraliga(model, linearSystems);
 
             var solver = new SolverSkyline(linearSystems[pathcID]);
             var linearSystemsArray = new[] { linearSystems[pathcID] };

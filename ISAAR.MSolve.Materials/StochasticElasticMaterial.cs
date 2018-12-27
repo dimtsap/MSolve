@@ -55,7 +55,12 @@ namespace ISAAR.MSolve.FEM.Materials
             throw new NotImplementedException();
         }
 
-        public object Clone()
+        object ICloneable.Clone()
+        {
+            return Clone();
+        }
+
+        public IContinuumMaterial3D Clone()
         {
             return new StochasticElasticMaterial(CoefficientsProvider) { YoungModulus = this.YoungModulus, PoissonRatio = this.PoissonRatio };
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
@@ -98,27 +99,39 @@ namespace ISAAR.MSolve.IGA.Elements
 		{
 			throw new NotImplementedException();
 		}
-
+		
 		public IMatrix2D StiffnessMatrix(IElement element)
 		{
-			var shellElement = (NURBSKirchhoffLoveShellElement) element;
-			
-			IList<GaussLegendrePoint3D> gaussPoints = CreateElementGaussPoints(shellElement);
-			Matrix2D stiffnessMatrixElement = new Matrix2D(shellElement.ControlPointsDictionary.Count * 3, shellElement.ControlPointsDictionary.Count * 3);
+			var shellElement = (NURBSKirchhoffLoveShellElement)element;
+
+			GaussLegendrePoint3D[] gaussPoints = CreateElementGaussPoints(shellElement).ToArray();
 
 			NURBS2D nurbs = new NURBS2D(shellElement, shellElement.ControlPoints);
 
-			for (int j = 0; j < gaussPoints.Count; j++)
+			var bRows = 3;
+			var bCols = shellElement.ControlPoints.Count * 3;
+			var stiffnessMatrix = new double[bCols, bCols];
+			var BmTranspose = new double[bCols, bRows];
+			var BbTranspose = new double[bCols, bRows];
+			var BmTransposeMultStiffness = new double[bCols, bRows];
+			var BbTransposeMultStiffness = new double[bCols, bRows];
+
+			double ytTerm = ((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).YoungModulus * shellElement.Patch.Thickness;
+			double poissonTerm = 1d - Math.Pow(((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).PoissonRatio, 2);
+			double membraneStiffness = ytTerm / poissonTerm;
+			double bendingStiffness = 0.08333333333333333333333333333333 * membraneStiffness * shellElement.Patch.Thickness * shellElement.Patch.Thickness;
+
+			for (int j = 0; j < gaussPoints.Length; j++)
 			{
 				var jacobianMatrix = CalculateJacobian(shellElement, nurbs, j);
 
 				var hessianMatrix = CalculateHessian(shellElement, nurbs, j);
 
-				var surfaceBasisVector1 = CalculateSurfaceBasisVector1(jacobianMatrix,0);
+				var surfaceBasisVector1 = CalculateSurfaceBasisVector1(jacobianMatrix, 0);
 
 				var surfaceBasisVector2 = CalculateSurfaceBasisVector1(jacobianMatrix, 1);
 
-				var surfaceBasisVector3 = surfaceBasisVector1^surfaceBasisVector2;
+				var surfaceBasisVector3 = surfaceBasisVector1 ^ surfaceBasisVector2;
 				var J1 = surfaceBasisVector3.Norm;
 				surfaceBasisVector3.Multiply(1 / J1);
 
@@ -126,29 +139,61 @@ namespace ISAAR.MSolve.IGA.Elements
 				var surfaceBasisVectorDerivative2 = CalculateSurfaceBasisVector1(hessianMatrix, 1);
 				var surfaceBasisVectorDerivative12 = CalculateSurfaceBasisVector1(hessianMatrix, 2);
 
-				Matrix2D constitutiveMatrix = CalculateConstitutiveMatrix(shellElement, surfaceBasisVector1, surfaceBasisVector2);
+				Matrix2D cm = CalculateConstitutiveMatrix(shellElement, surfaceBasisVector1, surfaceBasisVector2);
+				var constitutiveMatrix = cm.Data;
 
-				 var Bmembrane = CalculateMembraneDeformationMatrix(nurbs, j, surfaceBasisVector1, surfaceBasisVector2,shellElement);
+				var Bmembrane = CalculateMembraneDeformationMatrix(nurbs, j, surfaceBasisVector1, surfaceBasisVector2, shellElement);
 
 				var Bbending = CalculateBendingDeformationMatrix(surfaceBasisVector3, nurbs, j, surfaceBasisVector2, surfaceBasisVectorDerivative1, surfaceBasisVector1, J1, surfaceBasisVectorDerivative2, surfaceBasisVectorDerivative12, shellElement);
 
-				double membraneStiffness = ((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).YoungModulus * shellElement.Patch.Thickness /
-				                           (1 - Math.Pow(((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).PoissonRatio, 2));
+				double wFactor = J1 * gaussPoints[j].WeightFactor;
+				double mFactor = membraneStiffness * wFactor;
+				double bFactor = bendingStiffness * wFactor;
+				double tempb = 0;
+				double tempm = 0;
+				Array.Clear(BmTranspose, 0, bRows * bCols);
+				Array.Clear(BbTranspose, 0, bRows * bCols);
+				for (int i = 0; i < bRows; i++)
+				{
+					for (int k = 0; k < bCols; k++)
+					{
+						BmTranspose[k, i] = Bmembrane[i, k] * mFactor;
+						BbTranspose[k, i] = Bbending[i, k] * bFactor;
+					}
+				}
 
-				var Kmembrane = Bmembrane.Transpose() * constitutiveMatrix * Bmembrane * membraneStiffness * J1 *
-				                gaussPoints[j].WeightFactor;
+				double tempc = 0;
+				Array.Clear(BmTransposeMultStiffness, 0, bRows * bCols);
+				Array.Clear(BbTransposeMultStiffness, 0, bRows * bCols);
+				for (int i = 0; i < bCols; i++)
+				{
+					for (int k = 0; k < bRows; k++)
+					{
+						tempm = BmTranspose[i, k];
+						tempb = BbTranspose[i, k];
+						for (int m = 0; m < bRows; m++)
+						{
+							tempc = constitutiveMatrix[k, m];
+							BmTransposeMultStiffness[i, m] += tempm * tempc;
+							BbTransposeMultStiffness[i, m] += tempb * tempc;
+						}
+					}
+				}
 
-				double bendingStiffness = ((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).YoungModulus * Math.Pow(shellElement.Patch.Thickness, 3) /
-				                          12 / (1 - Math.Pow(((IIsotropicContinuumMaterial2D)shellElement.Patch.Material).PoissonRatio, 2));
-
-				var Kbending = Bbending.Transpose() * constitutiveMatrix * Bbending * bendingStiffness * J1 *
-				               gaussPoints[j].WeightFactor;
-
-
-				stiffnessMatrixElement.Add(Kmembrane);
-				stiffnessMatrixElement.Add(Kbending);
+				for (int i = 0; i < bCols; i++)
+				{
+					for (int k = 0; k < bRows; k++)
+					{
+						tempm = BmTransposeMultStiffness[i, k];
+						tempb = BbTransposeMultStiffness[i, k];
+						for (int m = 0; m < bCols; m++)
+						{
+							stiffnessMatrix[i, m] += tempm * Bmembrane[k, m] + tempb *Bbending[k, m];
+						}
+					}
+				}
 			}
-			return stiffnessMatrixElement;
+			return new Matrix2D(stiffnessMatrix);
 		}
 
 		private Matrix2D CalculateConstitutiveMatrix(NURBSKirchhoffLoveShellElement element,Vector surfaceBasisVector1, Vector surfaceBasisVector2)
@@ -182,11 +227,11 @@ namespace ISAAR.MSolve.IGA.Elements
 			return constitutiveMatrix;
 		}
 
-		private Matrix2D CalculateBendingDeformationMatrix(Vector surfaceBasisVector3, NURBS2D nurbs, int j,
+		private double[,] CalculateBendingDeformationMatrix(Vector surfaceBasisVector3, NURBS2D nurbs, int j,
 			Vector surfaceBasisVector2, Vector surfaceBasisVectorDerivative1, Vector surfaceBasisVector1, double J1,
 			Vector surfaceBasisVectorDerivative2, Vector surfaceBasisVectorDerivative12, NURBSKirchhoffLoveShellElement element)
 		{
-			Matrix2D Bbending = new Matrix2D(3, element.ControlPoints.Count * 3);
+			double[,] Bbending = new double[3, element.ControlPoints.Count * 3];
 			for (int column = 0; column < element.ControlPoints.Count * 3; column+=3)
 			{
 				#region BI1
@@ -271,10 +316,10 @@ namespace ISAAR.MSolve.IGA.Elements
 			return Bbending;
 		}
 
-		private Matrix2D CalculateMembraneDeformationMatrix(NURBS2D nurbs, int j, Vector surfaceBasisVector1,
+		private double[,] CalculateMembraneDeformationMatrix(NURBS2D nurbs, int j, Vector surfaceBasisVector1,
 			Vector surfaceBasisVector2, NURBSKirchhoffLoveShellElement element)
 		{
-			Matrix2D dRIa = new Matrix2D(3, element.ControlPoints.Count );
+			double[,] dRIa = new double[3, element.ControlPoints.Count];
 			for (int i = 0; i < element.ControlPoints.Count ; i++)
 			{
 				for (int m = 0; m < 3; m++)
@@ -284,7 +329,7 @@ namespace ISAAR.MSolve.IGA.Elements
 				}
 			}
 
-			Matrix2D Bmembrane = new Matrix2D(3, element.ControlPoints.Count * 3);
+			double[,] Bmembrane = new double[3, element.ControlPoints.Count * 3];
 			for (int column = 0; column < element.ControlPoints.Count * 3; column+=3)
 			{
 				Bmembrane[0, column] = nurbs.NurbsDerivativeValuesKsi[column / 3, j] * surfaceBasisVector1[0];

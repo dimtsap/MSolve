@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization.Interfaces;
@@ -216,6 +217,8 @@ namespace ISAAR.MSolve.IGA.Tests
 		[Fact]
 		public void IsogeometricSquareShell()
 		{
+			var watch = Stopwatch.StartNew();
+			
 			VectorExtensions.AssignTotalAffinityCount();
 			Model model = new Model();
 			string filename = "..\\..\\..\\InputFiles\\SquareShell.txt";
@@ -272,6 +275,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			parentAnalyzer.BuildMatrices();
 			parentAnalyzer.Initialize();
+			watch.Stop();
 			parentAnalyzer.Solve();
 
 			Matrix<double> solutionVectorExpected = MatlabReader.Read<double>("..\\..\\..\\InputFiles\\SquareShell.mat", "SolutionVector");

@@ -149,7 +149,72 @@ namespace ISAAR.MSolve.IGA.Tests
 
 		}
 
-		[Fact]
+
+		[Fact] public void SquareShellMaterialBenchmark()
+		{
+			VectorExtensions.AssignTotalAffinityCount();
+			Model model = new Model();
+			string filename = "..\\..\\..\\InputFiles\\square_unstructured.iga";
+			IGAFileReader modelReader = new IGAFileReader(model, filename);
+
+			var thickness = 1.0;
+
+			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D
+			{
+				PoissonRatio = 0.3,
+				YoungModulus = 1000,
+			}, thickness);
+			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X < 1e-6))
+			{
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+			}
+			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.Y < 1e-6))
+			{
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+			}
+			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X > 1-1e-6))
+			{
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+			}
+			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.Y > 1 - 1e-6))
+			{
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+			}
+
+			foreach (var controlPoint in model.ControlPointsDictionary.Values)
+			{
+				model.Loads.Add(new Load()
+				{
+					Amount = -10,
+					ControlPoint = model.ControlPointsDictionary[controlPoint.ID],
+					DOF = DOFType.Z
+				});
+			}
+			model.ConnectDataStructures();
+
+			var linearSystems = new Dictionary<int, ILinearSystem>();
+			linearSystems[0] = new SkylineLinearSystem(0, model.PatchesDictionary[0].Forces);
+			SolverSkyline solver = new SolverSkyline(linearSystems[0]);
+			ProblemStructural provider = new ProblemStructural(model, linearSystems);
+			LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
+			StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
+
+			parentAnalyzer.BuildMatrices();
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+		}
+
+
+		//[Fact]
 		public void SimpleHoodBenchmark()
 		{
 			VectorExtensions.AssignTotalAffinityCount();

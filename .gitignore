@@ -248,3 +248,8 @@ ModelManifest.xml
 /ISAAR.MSolve.MultiscaleAnalysis
 /ISAAR.MSolve.MultiscaleAnalysisMerge
 /ISAAR.MSolve.SamplesConsole
+*.vts
+/ISAAR.MSolve.IGA.Tests/OutputFiles/SquareShellTimes.vtu
+/ISAAR.MSolve.IGA.Tests/OutputFiles/SquareShellParaview.vtu
+/ISAAR.MSolve.IGA.Tests/OutputFiles/ParaviewOutput.vtu
+/ISAAR.MSolve.IGA.Tests/OutputFiles/CantileverShellParaview.vtu

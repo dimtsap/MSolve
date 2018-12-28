@@ -28,7 +28,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 {
     public class Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShell : StructuralProblemsMicrostructureBase, IShellMaterial //A.1
     {
-        // proelefsi: Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains
+        // proelefsi: Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains2D
         // allages: transformation apo shell2D klp wste na kanei implement to Ishell
 
         //A.2

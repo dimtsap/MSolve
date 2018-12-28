@@ -24,7 +24,7 @@ using ISAAR.MSolve.Discretization.Interfaces;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
-    public class GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinear : IdegenerateRVEbuilder
+    public class GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinear : IdegenerateRVEbuilder,IRVEbuilder
     {
         //PROELEFSI GrapheneReinforcedRVEBuilderExample5GrSh1RVEstif
         // allages: opw to HomogeneousRVEBuilderCheck27Hexa ginetai-->HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear

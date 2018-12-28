@@ -7,6 +7,7 @@ using ISAAR.MSolve.FEM.Interpolation.GaussPointExtrapolation;
 using ISAAR.MSolve.FEM.Materials;
 using ISAAR.MSolve.Geometry.Shapes;
 using ISAAR.MSolve.Materials;
+using ISAAR.MSolve.Materials.Interfaces;
 
 namespace ISAAR.MSolve.FEM.Elements
 {
@@ -23,7 +24,7 @@ namespace ISAAR.MSolve.FEM.Elements
         private static readonly IReadOnlyDictionary<CellType3D, IQuadrature3D> integrationsForMass;
         private static readonly IReadOnlyDictionary<CellType3D, IIsoparametricInterpolation3D> interpolations;
 
-        private ElasticMaterial3D commonMaterial;
+        private IContinuumMaterial3D commonMaterial;
         private DynamicMaterial commonDynamicProperties;
 
         static ContinuumElement3DFactory()
@@ -115,7 +116,7 @@ namespace ISAAR.MSolve.FEM.Elements
             ContinuumElement3DFactory.extrapolations = extrapolations;
         }
 
-        public ContinuumElement3DFactory(ElasticMaterial3D commonMaterial, DynamicMaterial commonDynamicProperties)
+        public ContinuumElement3DFactory(IContinuumMaterial3D commonMaterial, DynamicMaterial commonDynamicProperties)
         {
             this.commonDynamicProperties = commonDynamicProperties;
             this.commonMaterial = commonMaterial;
@@ -127,16 +128,16 @@ namespace ISAAR.MSolve.FEM.Elements
         }
 
         public ContinuumElement3D CreateElement(CellType3D cellType, IReadOnlyList<Node3D> nodes,
-            ElasticMaterial3D commonMaterial, DynamicMaterial commonDynamicProperties)
+            IContinuumMaterial3D commonMaterial, DynamicMaterial commonDynamicProperties)
         {
             int numGPs = integrationsForStiffness[cellType].IntegrationPoints.Count;
-            var materialsAtGaussPoints = new ElasticMaterial3D[numGPs];
+            var materialsAtGaussPoints = new IContinuumMaterial3D[numGPs];
             for (int gp = 0; gp < numGPs; ++gp) materialsAtGaussPoints[gp] = commonMaterial.Clone();
             return CreateElement(cellType, nodes, materialsAtGaussPoints, commonDynamicProperties);
         }
 
         public ContinuumElement3D CreateElement(CellType3D cellType, IReadOnlyList<Node3D> nodes,
-            IReadOnlyList<ElasticMaterial3D> materialsAtGaussPoints, DynamicMaterial commonDynamicProperties)
+            IReadOnlyList<IContinuumMaterial3D> materialsAtGaussPoints, DynamicMaterial commonDynamicProperties)
         {
             return new ContinuumElement3D(nodes,interpolations[cellType],
                 integrationsForStiffness[cellType], integrationsForMass[cellType], extrapolations[cellType],

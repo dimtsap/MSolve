@@ -12,5 +12,6 @@ namespace ISAAR.MSolve.Materials.Interfaces
         void ClearState();
         void SaveState();
         void ClearStresses();
+        IContinuumMaterial3D Clone();
     }
 }

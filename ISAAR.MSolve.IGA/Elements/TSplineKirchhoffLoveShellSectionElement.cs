@@ -101,6 +101,11 @@ namespace ISAAR.MSolve.IGA.Elements
 			throw new NotImplementedException();
 		}
 
+		public void SaveMaterialState()
+		{
+			throw new NotImplementedException();
+		}
+
 		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, NeumannBoundaryCondition neumann)
 		{
 			throw new NotImplementedException();
@@ -164,6 +169,11 @@ namespace ISAAR.MSolve.IGA.Elements
 		}
 
 		public void ClearMaterialState()
+		{
+			throw new NotImplementedException();
+		}
+
+		public void ClearMaterialStresses()
 		{
 			throw new NotImplementedException();
 		}

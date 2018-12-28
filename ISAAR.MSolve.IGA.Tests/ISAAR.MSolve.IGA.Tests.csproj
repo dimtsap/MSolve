@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ISAAR.MSolve.IGA\ISAAR.MSolve.IGA.csproj" />
+    <ProjectReference Include="..\ISAAR.MSolve.MultiscaleAnalysisMerge\ISAAR.MSolve.MultiscaleAnalysisMerge.csproj" />
     <ProjectReference Include="..\ISAAR.MSolve.Problems\ISAAR.MSolve.Problems.csproj" />
   </ItemGroup>
 

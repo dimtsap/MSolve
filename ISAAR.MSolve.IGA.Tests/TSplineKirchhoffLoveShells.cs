@@ -7,6 +7,8 @@ using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.Materials;
+using ISAAR.MSolve.MultiscaleAnalysis;
+using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers.Interfaces;
@@ -213,9 +215,74 @@ namespace ISAAR.MSolve.IGA.Tests
 
 		}
 
+        [Fact]
+        public void SquareShellMaterialMultiscaleBenchmark()
+        {
+            VectorExtensions.AssignTotalAffinityCount();
+            Model model = new Model();
+            string filename = "..\\..\\..\\InputFiles\\square_unstructured.iga";
+            IGAFileReader modelReader = new IGAFileReader(model, filename);
 
-		//[Fact]
-		public void SimpleHoodBenchmark()
+            var thickness = 1.0;
+
+            //VectorExtensions.AssignTotalAffinityCount();
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheral();
+            var material1 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformation(homogeneousRveBuilder1);
+
+
+            modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, material1, thickness);
+            foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X < 1e-6))
+            {
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+            }
+            foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.Y < 1e-6))
+            {
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+            }
+            foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X > 1 - 1e-6))
+            {
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+            }
+            foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.Y > 1 - 1e-6))
+            {
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
+                model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+            }
+
+            foreach (var controlPoint in model.ControlPointsDictionary.Values)
+            {
+                model.Loads.Add(new Load()
+                {
+                    Amount = -10,
+                    ControlPoint = model.ControlPointsDictionary[controlPoint.ID],
+                    DOF = DOFType.Z
+                });
+            }
+            model.ConnectDataStructures();
+
+            var linearSystems = new Dictionary<int, ILinearSystem>();
+            linearSystems[0] = new SkylineLinearSystem(0, model.PatchesDictionary[0].Forces);
+            SolverSkyline solver = new SolverSkyline(linearSystems[0]);
+            ProblemStructural provider = new ProblemStructural(model, linearSystems);
+            LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
+            StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
+
+            parentAnalyzer.BuildMatrices();
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+
+        }
+
+
+        //[Fact]
+        public void SimpleHoodBenchmark()
 		{
 			VectorExtensions.AssignTotalAffinityCount();
 			Model model = new Model();

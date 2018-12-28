@@ -41,7 +41,7 @@ namespace ISAAR.MSolve.IGA.Readers
 	    private int controlPointIDcounter=0;
 	    private int elementIDCounter = 0;
         private int numberOfDimensions;
-	    public void CreateTSplineShellsModelFromFile(TSplineShellTypes shellType=TSplineShellTypes.LinearMaterial, ShellElasticMaterial2D shellMaterial=null, double thickness=1)
+	    public void CreateTSplineShellsModelFromFile(TSplineShellTypes shellType=TSplineShellTypes.LinearMaterial, IShellMaterial shellMaterial =null, double thickness=1)
 	    {
 		    char[] delimeters = { ' ', '=', '\t' };
 		    Attributes? name = null;
@@ -200,7 +200,7 @@ namespace ISAAR.MSolve.IGA.Readers
 	    }
 
 	    private void CreateThicknessShell(int elementDegreeKsi, int elementDegreeHeta, Matrix2D extractionOperator,
-		    int[] connectivity, ShellElasticMaterial2D shellMaterial, double thickness)
+		    int[] connectivity, IShellMaterial shellMaterial, double thickness)
 	    {
 			//TODO: Create constructor to fill section material at gauss points
 		    Element element = new TSplineKirchhoffLoveShellElementMaterial(elementIDCounter, Model.PatchesDictionary[0],

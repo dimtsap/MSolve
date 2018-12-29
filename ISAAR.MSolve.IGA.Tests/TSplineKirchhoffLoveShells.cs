@@ -214,7 +214,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		}
 
 
-		//[Fact]
+		[Fact]
 		public void SimpleHoodBenchmark()
 		{
 			VectorExtensions.AssignTotalAffinityCount();
@@ -226,8 +226,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D
 			{
-				PoissonRatio = 0.3,
-				YoungModulus = 1e5,
+				PoissonRatio = 0.4,
+				YoungModulus = 3.5,
 			}, thickness);
 
 			for (int i = 0; i < 100; i++)
@@ -261,7 +261,6 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.BuildMatrices();
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
-
 			
 		}
 	}

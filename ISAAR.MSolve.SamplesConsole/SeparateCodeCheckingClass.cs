@@ -15,6 +15,7 @@ using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses;
 using ISAAR.MSolve.FEM.Materials;
+using ISAAR.MSolve.IGA.Tests;
 
 namespace ISAAR.MSolve.SamplesConsole
 {
@@ -780,6 +781,12 @@ namespace ISAAR.MSolve.SamplesConsole
         //    microstructure3.UpdateMaterial(new double[9] { 1.10, 1, 1, 0, 0, 0, 0, 0, 0 });
         //    double[] stressesCheck4 = microstructure3.Stresses.Data;
         //}
+
+        public static void Check13RunFe2Shell()
+        {
+            var a1 = new TSplineKirchhoffLoveShells();
+            a1.SquareShellMaterialMultiscaleBenchmark();
+        }
 
         public static void CheckPartitionLimitsArray()
         {

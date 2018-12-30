@@ -9,6 +9,7 @@ using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
+using ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers.Interfaces;
@@ -278,6 +279,9 @@ namespace ISAAR.MSolve.IGA.Tests
             parentAnalyzer.Initialize();
             parentAnalyzer.Solve();
 
+            var solutionData = new double[linearSystems[0].Solution.Length];
+            linearSystems[0].Solution.CopyTo(solutionData, 0);
+            PrintUtilities.WriteToFileVector(solutionData, @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_1.txt");
         }
 
 

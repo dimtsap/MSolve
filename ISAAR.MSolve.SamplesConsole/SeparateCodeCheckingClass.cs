@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using ISAAR.MSolve.FEM.Materials;
+using ISAAR.MSolve.IGA.Tests;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Materials.Interfaces; //using ISAAR.MSolve.PreProcessor.Interfaces;
-using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces; //using ISAAR.MSolve.Matrices.Interfaces;
-using ISAAR.MSolve.Numerical.LinearAlgebra; //using ISAAR.MSolve.Matrices;
-using ISAAR.MSolve.Analyzers;
-using ISAAR.MSolve.Logging;
-using ISAAR.MSolve.PreProcessor;
-using ISAAR.MSolve.Problems;
-using ISAAR.MSolve.Solvers.Skyline;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
-using ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses;
-using ISAAR.MSolve.FEM.Materials;
-using ISAAR.MSolve.IGA.Tests;
+using ISAAR.MSolve.Numerical.LinearAlgebra; //using ISAAR.MSolve.Matrices;
+using ISAAR.MSolve.Solvers.Skyline;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ISAAR.MSolve.SamplesConsole
 {
@@ -432,6 +425,53 @@ namespace ISAAR.MSolve.SamplesConsole
             double[] stressesCheck5 = new double[3] { material4.Stresses[0], material4.Stresses[1], material4.Stresses[2] };
         }
 
+        public static void Check05hStressIntegration()
+        {
+            //proelefsi: Check05fStressIntegration
+            //uphrxan allages: pleon sugkrisi metaxu duo shell maaterials me to idio transformation apla to ena einai multiscale
+            // allages: to multiscale einai me grafenio
+
+            double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
+            //var material1 = new ElasticMaterial2D(StressState2D.PlaneStress)
+            //{ YoungModulus = E_disp, PoissonRatio = ni_disp, };
+            //double[] GLVec = new double[3] { 0.01, 0, 0 };
+            //material1.UpdateMaterial(new StressStrainVectorContinuum2D(GLVec));
+            //double[] stressesCheck1 = new double[3] { material1.Stresses[0], material1.Stresses[1], material1.Stresses[2] };
+
+            var Vec1 = new Vector(new double[3] { 1, 0, 0 });
+            var Vec2 = new Vector(new double[3] { 0.5, 2, 0 });
+            var strain = new double[3] { 0.01, 0, 0 };
+
+            //var material2 = new ShellElasticMaterial2D() { YoungModulus = E_disp, PoissonRatio = ni_disp, TangentVectorV1 = new double[3] { Vec1[0], Vec1[1], Vec1[2] }, TangentVectorV2 = new double[3] { Vec2[0], Vec2[1], Vec2[2] } };
+            //material2.UpdateMaterial(strain);
+            //double[] stressesCheck2 = new double[3] { material2.Stresses[0], material2.Stresses[1], material2.Stresses[2] };
+
+            var material3 = new ShellElasticMaterial2Dtransformationb() { YoungModulus = E_disp, PoissonRatio = ni_disp, TangentVectorV1 = new double[3] { Vec1[0], Vec1[1], Vec1[2] }, TangentVectorV2 = new double[3] { Vec2[0], Vec2[1], Vec2[2] } };
+            var Matrix1 = new Matrix2D(3, 3); for (int i1 = 0; i1 < 3; i1++) { for (int i2 = 0; i2 < 3; i2++) { Matrix1[i1, i2] = material3.ConstitutiveMatrix[i1, i2]; } }
+            material3.UpdateMaterial(strain);
+            double[] stressesCheck3 = new double[3] { material3.Stresses[0], material3.Stresses[1], material3.Stresses[2] };
+
+            VectorExtensions.AssignTotalAffinityCount();
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHost();
+            //IRVEbuilder homogeneousRveBuilder1 = new HomogeneousRVEBuilderCheckEnaHexa();
+
+            //IContinuumMaterial2D microstructure3 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrains2D(homogeneousRveBuilder1);
+            //IContinuumMaterial3DDefGrad microstructure3copyConsCheck = new Microstructure3copyConsCheckEna(homogeneousRveBuilder1);
+            double[,] consCheck1 = new double[3, 3];
+            for (int i1 = 0; i1 < 3; i1++) { for (int i2 = 0; i2 < 3; i2++) { consCheck1[i1, i2] = material3.ConstitutiveMatrix[i1, i2]; } }
+
+            var material4 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformation(homogeneousRveBuilder1) { TangentVectorV1 = new double[3] { Vec1[0], Vec1[1], Vec1[2] }, TangentVectorV2 = new double[3] { Vec2[0], Vec2[1], Vec2[2] } }; ;
+            var Matrix2 = new Matrix2D(3, 3); for (int i1 = 0; i1 < 3; i1++) { for (int i2 = 0; i2 < 3; i2++) { Matrix2[i1, i2] = material4.ConstitutiveMatrix[i1, i2]; } }
+            material4.UpdateMaterial(strain);
+            double[] stressesCheck4 = new double[3] { material4.Stresses[0], material4.Stresses[1], material4.Stresses[2] };
+
+
+            //-------------Check 2 steps savestate etc---------------
+            material4.SaveState();
+            material4.UpdateMaterial(new double[3] { 2 * strain[0], 2 * strain[1], 2 * strain[2] });
+            double[] stressesCheck5 = new double[3] { material4.Stresses[0], material4.Stresses[1], material4.Stresses[2] };
+        }
+
         //public static void Check05eCheckStressIntegration()
         //{
         //    double E_disp = 3.5; /*Gpa*/ double ni_disp = 0.4; // stather Poisson
@@ -786,6 +826,51 @@ namespace ISAAR.MSolve.SamplesConsole
         {
             var a1 = new TSplineKirchhoffLoveShells();
             a1.SquareShellMaterialMultiscaleBenchmark();
+        }
+
+        public static void Check14remainderUse()
+        {
+            double a = 15.72;
+            double b = 3.5;
+
+            var ch01 = Math.Truncate(a / b); // 'div gia double'
+            var ch02 = Math.Truncate(a / b);
+
+            var ch03 = a - (double)Math.Floor(a / b) * b; // 'mod gia double'
+            var ch04 = a - (double)Math.Truncate(a / b) * b;
+
+            var ch05 = -a + ((double)Math.Floor(a / b)+1) * b; // 'mod gia double'
+            var ch06 = -a + ((double)Math.Truncate(a / b)+1) * b;
+        }
+
+        public static void Check14b()
+        {
+            double tol = 3e-10;
+
+            double x_ek = 10.00000000015;
+            double L_1 = 5;
+
+            var nhexa_i = new int[3][];
+
+            var x_div = Math.Truncate(x_ek / L_1); // 'div gia double'                
+            var x_pres1 = x_ek - (double)x_div * L_1;
+            var x_pres2 = -x_ek + ((double)x_div + 1) * L_1;
+
+            if (x_pres1 < tol)
+            {
+                nhexa_i[0] = new int[2] { (int)x_div + 1, (int)x_div };
+            }
+            else
+            {
+                if (x_pres2 < tol)
+                {
+                    nhexa_i[0] = new int[2] { (int)x_div + 1, (int)x_div + 2 };
+                }
+                else
+                {
+                    nhexa_i[0] = new int[1] { (int)x_div + 1 };
+                }
+            }
         }
 
         public static void CheckPartitionLimitsArray()

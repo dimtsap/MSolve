@@ -45,6 +45,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         private Dictionary<int, Node> boundaryNodes { get; set; }
         Dictionary<int, Dictionary<int, Element>> boundaryElements;
         private IdegenerateRVEbuilder rveBuilder;
+        private bool EstimateOnlyLinearResponse;
         //private NewtonRaphsonNonLinearAnalyzer microAnalyzer;
         private double volume;
         Dictionary<int, Vector> uInitialFreeDOFDisplacementsPerSubdomain;
@@ -73,10 +74,15 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         //double[] Stresses { get; }
         //IMatrix2D ConstitutiveMatrix { get; } TODOGerasimos
 
-        public Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(IdegenerateRVEbuilder rveBuilder)
+        public Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(IdegenerateRVEbuilder rveBuilder,bool EstimateOnlyLinearResponse)
         {
-            this.rveBuilder = rveBuilder;
-            Tuple<Model, Dictionary<int, Node>,double> modelAndBoundaryNodes = this.rveBuilder.GetModelAndBoundaryNodes();
+            this.rveBuilder = rveBuilder;            
+            this.EstimateOnlyLinearResponse = EstimateOnlyLinearResponse;
+        }
+
+        private void InitializeData()
+        {
+            Tuple<Model, Dictionary<int, Node>, double> modelAndBoundaryNodes = this.rveBuilder.GetModelAndBoundaryNodes();
             this.model = modelAndBoundaryNodes.Item1;
             this.boundaryNodes = modelAndBoundaryNodes.Item2;
             this.boundaryElements = GetSubdomainsBoundaryFiniteElementsDictionaries(model, boundaryNodes);
@@ -113,12 +119,12 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
         public IShellMaterial Clone()
         {
-            return new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(rveBuilder);
+            return new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(rveBuilder,EstimateOnlyLinearResponse);
         }
 
         object ICloneable.Clone()
         {
-            return new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(rveBuilder);
+            return new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(rveBuilder,EstimateOnlyLinearResponse);
         }
 
         public Dictionary<int, Node> BoundaryNodesDictionary
@@ -503,6 +509,8 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
         public void CalculateOriginalConstitutiveMatrixWithoutNLAnalysis()
         {
+            InitializeData();
+
             var smallStrainVec = new double[3];
 
             if (matrices_not_initialized)
@@ -566,6 +574,23 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
             //PrintMethodsForDebug(KfpDq, f2_vectors, f3_vectors, KppDqVectors, f4_vectors, DqCondDq, d2W_dfdf, Cijrs);
             this.modified = CheckIfConstitutiveMatrixChanged();
+
+            if (EstimateOnlyLinearResponse)
+            {
+                model = null;
+                boundaryElements = null;
+                boundaryNodes = null;
+                NormalVectorV3 = null;
+                TangentVectorV1 = null;
+                TangentVectorV2 = null;
+                rveBuilder = null;
+                uInitialFreeDOFDisplacementsPerSubdomain = null;
+                initialConvergedBoundaryDisplacements = null;
+                trueStressVec = null;
+                transformationMatrix = null;
+                Cijrs_prev = null;
+            }
+
         }
 
         //todo delete when unnesessary

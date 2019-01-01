@@ -227,8 +227,8 @@ namespace ISAAR.MSolve.IGA.Tests
             var thickness = 1.0;
 
             //VectorExtensions.AssignTotalAffinityCount();
-            IdegenerateRVEbuilder homogeneousRveBuilder1 = new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheral();
-            var material1 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformation(homogeneousRveBuilder1);
+            IdegenerateRVEbuilder homogeneousRveBuilder1 = new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHost();
+            var material1 = new Microstructure3DevelopMultipleSubdomainsUseBaseSmallStrainsShelltransformationSimu(homogeneousRveBuilder1,true);
 
 
             modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, material1, thickness);

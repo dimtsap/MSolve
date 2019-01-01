@@ -419,7 +419,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         {
             get
             {
-                if (constitutiveMatrix == null) UpdateMaterial(new double[3]); // TODOGerasimos arxiko constitutive mporei na upologizetai pio efkola
+                if (constitutiveMatrix == null) CalculateOriginalConstitutiveMatrixWithoutNLAnalysis(); // TODOGerasimos arxiko constitutive mporei na upologizetai pio efkola
                 return new Matrix2D( constitutiveMatrix.Data); // TODO: apla kratame to constitutive matrix san array[,] (alla matrix mporei na xrhimopoithei gia tis peristrofes)
             }
         }
@@ -508,14 +508,6 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             if (matrices_not_initialized)
             { this.InitializeMatrices(); } // mporei na mpei kai ston constructor to initialization an exoume kai ta surface basis vectors ekei
             
-            for (int i1 = 0; i1 < 3; i1++)
-            {
-                for (int j1 = 0; j1 < 3; j1++)
-                {
-                    Cijrs_prev[i1, j1] = this.constitutiveMatrix[i1, j1];
-                }
-            }
-           
             var linearSystems = CreateNecessaryLinearSystems(model);            
             var solver = GetAppropriateSolver(linearSystems);
             var elementProvider = new ElementStructuralStiffnessProvider();

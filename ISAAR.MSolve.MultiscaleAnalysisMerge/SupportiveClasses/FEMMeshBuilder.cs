@@ -1275,7 +1275,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
                 }
 
                 //Correction
-                nhexa_i[0] = new int[3] { (int)x_div , (int)x_div + 1,(int)x_div + 2 }; nhexa_i[1] = new int[3] { (int)y_div  , (int)y_div + 1,(int)y_div + 2 }; nhexa_i[2] = new int[3] { (int)z_div , (int)z_div + 1,(int)z_div+ 2 };
+                //nhexa_i[0] = new int[3] { (int)x_div , (int)x_div + 1,(int)x_div + 2 }; nhexa_i[1] = new int[3] { (int)y_div  , (int)y_div + 1,(int)y_div + 2 }; nhexa_i[2] = new int[3] { (int)z_div , (int)z_div + 1,(int)z_div+ 2 };
 
                 for (int j1=0; j1<nhexa_i[0].GetLength(0);j1++)
                 {
@@ -1296,6 +1296,10 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
             }
 
             List<int> possibleHostIds = new List<int>(possibleHosts.Count());
+            for (int i1 = 0; i1 < possibleHosts.Count; i1++)
+            {
+                possibleHostIds.Add(possibleHosts.ElementAt(i1).ID);
+            }
             possibleHostIds.Sort();
             possibleHosts = new List<Element>(possibleHosts.Count());
             for (int k1 = 0; k1 < possibleHostIds.Count; k1++)

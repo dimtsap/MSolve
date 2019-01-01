@@ -254,10 +254,10 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             var internalKfpDq = new Dictionary<int, double[][]>[procs];
             var internalKppDq = new Dictionary<int, double[][]>[procs];
 
-            foreach (Subdomain subdomain in model.Subdomains)//TODO : or else "in model.SubdomainsDictionary.Values)" tou opoiu ta stoixeia ginontai access kai me ID
-            {
-                KfpDqSubdomains.Add(subdomain.ID, SubdomainCalculations.CalculateKfreeprescribedDqMultiplications(subdomain, elementProvider, scaleTransitions, boundaryNodes));
-            }
+            //foreach (Subdomain subdomain in model.Subdomains)//TODO : or else "in model.SubdomainsDictionary.Values)" tou opoiu ta stoixeia ginontai access kai me ID
+            //{
+            //    KfpDqSubdomains.Add(subdomain.ID, SubdomainCalculations.CalculateKfreeprescribedDqMultiplications(subdomain, elementProvider, scaleTransitions, boundaryNodes));
+            //}
 
             Parallel.ForEach(k.PartitionLimits(procs), limit =>
             {

@@ -75,12 +75,29 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public double Thickness { get; set; }
 
-		public bool MaterialModified => throw new NotImplementedException();
+		public bool MaterialModified
+		{
+			get
+			{
+				for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)
+				{
+					foreach (var keyValuePair in materialsAtThicknessGP[materialsAtThicknessGP.Keys.ToList()[j]])
+					{
+						var material = keyValuePair.Value;
+						if (material.Modified)
+						{
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+		}
 
 		public double[] CalculateForces(Element element, double[] localDisplacements, double[] localdDisplacements)
 		{
 			var shellElement = (TSplineKirchhoffLoveShellElementMaterial)element;
-			IList<GaussLegendrePoint3D> gaussPoints = CreateElementGaussPoints(shellElement);
+			var gaussPoints = materialsAtThicknessGP.Keys.ToList();
 			Vector ElementNodalForces = new Vector(shellElement.ControlPointsDictionary.Count * 3);
 			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(shellElement, shellElement.ControlPoints);
 
@@ -139,10 +156,6 @@ namespace ISAAR.MSolve.IGA.Elements
 			throw new NotImplementedException();
 		}
 
-		public void SaveMaterialState()
-		{
-			throw new NotImplementedException();
-		}
 
 		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, NeumannBoundaryCondition neumann)
 		{
@@ -204,12 +217,12 @@ namespace ISAAR.MSolve.IGA.Elements
 
 				var membraneStrain = new double[Bmembrane.GetLength(0)];
 				var bendingStrain = new double[Bmembrane.GetLength(0)];
-				for (int i = 0; i < Bmembrane.GetLength(1); i++)
+				for (int i = 0; i < Bmembrane.GetLength(0); i++)
 				{
-					for (int k = 0; k < Bmembrane.GetLength(0); k++)
+					for (int k = 0; k < Bmembrane.GetLength(1); k++)
 					{
-						membraneStrain[i] += Bmembrane[k, i] * localDisplacements[k];
-						bendingStrain[i] += Bbending[k, i] * localDisplacements[k];
+						membraneStrain[i] += Bmembrane[i,k] * localDisplacements[k];
+						bendingStrain[i] += Bbending[i,k] * localDisplacements[k];
 					}
 				}
 
@@ -218,7 +231,7 @@ namespace ISAAR.MSolve.IGA.Elements
 					var thicknessPoint = keyValuePair.Key;
 					var material = keyValuePair.Value;
 					var gpStrain = new double[bendingStrain.Length];
-					var z = -thicknessPoint.Zeta;
+					var z = thicknessPoint.Zeta;
 					for (int i = 0; i < bendingStrain.Length; i++)
 					{
 						gpStrain[i] += membraneStrain[i] + bendingStrain[i] * z;
@@ -237,9 +250,31 @@ namespace ISAAR.MSolve.IGA.Elements
 			throw new NotImplementedException();
 		}
 
+		public void SaveMaterialState()
+		{
+			for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)
+			{
+				foreach (var keyValuePair in materialsAtThicknessGP[materialsAtThicknessGP.Keys.ToList()[j]])
+				{
+					var thicknessPoint = keyValuePair.Key;
+					var material = keyValuePair.Value;
+					material.SaveState();
+				}
+			}
+		}
+
 		public void ClearMaterialStresses()
 		{
-			throw new NotImplementedException();
+			//TODO: the next throws an exception. Investigate. Possible changes in Analyzers may be the cause.
+			//for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)
+			//{
+			//    foreach (var keyValuePair in materialsAtThicknessGP[materialsAtThicknessGP.Keys.ToList()[j]])
+			//    {
+			//        var thicknessPoint = keyValuePair.Key;
+			//        var material = keyValuePair.Value;
+			//        material.ClearState();
+			//    }
+			//}
 		}
 
 		public IMatrix2D DampingMatrix(IElement element)
@@ -506,23 +541,27 @@ namespace ISAAR.MSolve.IGA.Elements
 			return g;
 		}
 
-		public (double[] MembraneForces, Double[] BendingMoments) IntegratedStressesOverThickness(
+		public (Vector MembraneForces, Vector BendingMoments) IntegratedStressesOverThickness(
 			IList<GaussLegendrePoint3D> gaussPoints, int j)
 		{
-			var MembraneForces = new double[3];
-			var BendingMoments = new double[3];
+			var MembraneForces = new Vector(3);
+			var BendingMoments = new Vector(3);
 
 			foreach (var keyValuePair in materialsAtThicknessGP[gaussPoints[j]])
 			{
 				var thicknessPoint = keyValuePair.Key;
 				var material = keyValuePair.Value;
-				var w = thicknessPoint.WeightFactor;
-				var z = thicknessPoint.Zeta;
-				for (int i = 0; i < 3; i++)
-				{
-					MembraneForces[i] += material.Stresses[i] * w * Thickness / 2;
-					BendingMoments[i] += material.Stresses[i] * w * z * z * Thickness / 2;
-				}
+				var gpForces = new Vector(material.Stresses.GetLength(0));
+				material.Stresses.CopyTo(gpForces.Data, 0);
+				gpForces.Scale(thicknessPoint.WeightFactor);
+				MembraneForces.Add(gpForces);
+
+				var gpMoments = new Vector(material.Stresses.GetLength(0));
+				material.Stresses.CopyTo(gpMoments.Data, 0);
+				gpMoments.Scale(thicknessPoint.WeightFactor *
+				                Math.Pow(thicknessPoint.Zeta, 1));
+				BendingMoments.Add(gpMoments);
+
 			}
 
 			return (MembraneForces, BendingMoments);

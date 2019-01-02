@@ -30,7 +30,7 @@ namespace ISAAR.MSolve.Materials
 			};
 		}
 
-		public void UpdateMaterial(double[] cartesianStrains)
+		public void UpdateMaterial(double[] cartesianStrains) //TODO: rename cartesian strains to strains 
 		{
 			if (CartesianConstitutiveMatrix == null)
 			{
@@ -54,27 +54,30 @@ namespace ISAAR.MSolve.Materials
 			auxMatrix1[0, 1] = surfaceBasisVector1.DotProduct(surfaceBasisVector2);
 			auxMatrix1[1, 0] = surfaceBasisVector2.DotProduct(surfaceBasisVector1);
 			auxMatrix1[1, 1] = surfaceBasisVector2.DotProduct(surfaceBasisVector2);
-			(Matrix2D inverse, double det) = auxMatrix1.Invert2x2AndDeterminant(1e-20);
+			(Matrix2D inverse, double det) = auxMatrix1.Invert2x2AndDeterminant();
 			
 			var constitutiveMatrix = new Matrix2D(new double[3, 3]
 			{
 				{
 					inverse[0,0]*inverse[0,0],
-					PoissonRatio*inverse[0,0]*inverse[1,1]+(1-PoissonRatio)*inverse[1,0]*inverse[1,0],
+					this.PoissonRatio*inverse[0,0]*inverse[1,1]+(1-this.PoissonRatio)*inverse[1,0]*inverse[1,0],
 					inverse[0,0]*inverse[1,0]
 				},
 				{
-					PoissonRatio*inverse[0,0]*inverse[1,1]+(1-PoissonRatio)*inverse[1,0]*inverse[1,0],
+					this.PoissonRatio*inverse[0,0]*inverse[1,1]+(1-this.PoissonRatio)*inverse[1,0]*inverse[1,0],
 					inverse[1,1]*inverse[1,1],
 					inverse[1,1]*inverse[1,0]
 				},
 				{
 					inverse[0,0]*inverse[1,0],
 					inverse[1,1]*inverse[1,0],
-					0.5*(1-PoissonRatio)*inverse[0,0]*inverse[1,1]+(1+PoissonRatio)*inverse[1,0]*inverse[1,0]
+					0.5*(1-this.PoissonRatio)*inverse[0,0]*inverse[1,1]+(1+this.PoissonRatio)*inverse[1,0]*inverse[1,0]
 				},
 			});
-			constitutiveMatrix.Scale(YoungModulus/(1-Math.Pow(PoissonRatio,2)));
+
+            // Integrate over thickness takes into account multiplication *t but not (E/(1-(ni^2)) and it will be added here
+            constitutiveMatrix.Scale(YoungModulus / (1 - Math.Pow(PoissonRatio, 2)));
+
 			 CartesianConstitutiveMatrix= constitutiveMatrix.Data;
 		}
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
@@ -340,38 +341,38 @@ namespace ISAAR.MSolve.FEM.Entities
             }
         }
 
-        // prosthiki print
-        int ekteleseis_counter = 0;
-        int ekteleseis_counter2 = 0;
-        string string1 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_{0}.txt";
-        string string2 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_micro_{0}.txt";
+		//// prosthiki print
+		//int ekteleseis_counter = 0;
+		//int ekteleseis_counter2 = 0;
+		//string string1 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_{0}.txt";
+		//string string2 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_micro_{0}.txt";
 
-        public IVector GetRHSFromSolution(IVector solution, IVector dSolution)
-        {
-            // prosthiki print
-            ekteleseis_counter += 1;
-            string counter_data = ekteleseis_counter.ToString();
-            string path = string.Format(string1, counter_data);
-            //solution.WriteToFile(path);
-            double[] solution_data = new double[solution.Length];
-            solution.CopyTo(solution_data, 0);
-            WriteToFileVector(solution_data, path);
-            
-            var forces = new Vector(TotalDOFs);
-            foreach (Element element in elementsDictionary.Values)
-            {
-                var localSolution = GetLocalVectorFromGlobal(element, solution);
-                var localdSolution = GetLocalVectorFromGlobal(element, dSolution);
-                element.ElementType.CalculateStresses(element, localSolution, localdSolution);
-                if (element.ElementType.MaterialModified) 
-                    element.Subdomain.MaterialsModified = true;
-                double[] f = element.ElementType.CalculateForces(element, localSolution, localdSolution);
-                AddLocalVectorToGlobal(element, f, forces.Data);
-            }
-            return forces;
-        }
+		//public IVector GetRHSFromSolution(IVectorOLD solution, IVectorOLD dSolution)
+		//{
+		//	// prosthiki print
+		//	ekteleseis_counter += 1;
+		//	string counter_data = ekteleseis_counter.ToString();
+		//	string path = string.Format(string1, counter_data);
+		//	//solution.WriteToFile(path);
+		//	double[] solution_data = new double[solution.Length];
+		//	solution.CopyTo(solution_data, 0);
+		//	WriteToFileVector(solution_data, path);
 
-        public IVectorOLD GetRHSFromSolution(IVectorOLD solution, IVectorOLD dSolution)
+		//	var forces = new VectorOLD(TotalDOFs);
+		//	foreach (Element element in elementsDictionary.Values)
+		//	{
+		//		var localSolution = GetLocalVectorFromGlobal(element, solution);
+		//		var localdSolution = GetLocalVectorFromGlobal(element, dSolution);
+		//		element.ElementType.CalculateStresses(element, localSolution, localdSolution);
+		//		if (element.ElementType.MaterialModified)
+		//			element.Subdomain.MaterialsModified = true;
+		//		double[] f = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+		//		AddLocalVectorToGlobal(element, f, forces.Data);
+		//	}
+		//	return forces;
+		//}
+
+		public IVectorOLD GetRHSFromSolution(IVectorOLD solution, IVectorOLD dSolution)
         {
            
             var forces = new VectorOLD(TotalDOFs);

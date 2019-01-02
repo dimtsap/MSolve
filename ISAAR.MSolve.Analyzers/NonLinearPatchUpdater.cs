@@ -18,6 +18,12 @@ namespace ISAAR.MSolve.Analyzers
             this.patch = patch;
         }
 
+        public void ScaleConstraints(double scalingFactor)
+        {
+	        throw new NotImplementedException();
+	        //this.patch.ScaleConstraints(scalingFactor);
+		}
+
         public IVector GetRHSFromSolution(IVector solution, IVector dSolution) //TODO leave 
         {
             return this.patch.GetRHSFromSolution(solution, dSolution);

@@ -424,16 +424,15 @@ namespace ISAAR.MSolve.IGA.Elements
 			return knotDisplacements;
 
 		}
+
+		public void SaveMaterialState()
+		{
+			throw new NotImplementedException();
+		}
+
+		public void ClearMaterialStresses()
+		{
+			throw new NotImplementedException();
+		}
 	}
-
-        public void SaveMaterialState()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void ClearMaterialStresses()
-        {
-            throw new NotImplementedException();
-        }
-    }
 }

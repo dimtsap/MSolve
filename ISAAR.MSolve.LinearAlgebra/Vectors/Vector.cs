@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using IntelMKL.LP64;
 using ISAAR.MSolve.LinearAlgebra.Commons;
 using ISAAR.MSolve.LinearAlgebra.Exceptions;
 using ISAAR.MSolve.LinearAlgebra.Reduction;
+using static ISAAR.MSolve.LinearAlgebra.LibrarySettings;
 
 //TODO: align data using mkl_malloc
 //TODO: tensor product, vector2D, vector3D
-//TODO: have an AxpyToSubvector.
-//TODO: GetSubvector, SetSubvector, AddSubvector, etc. Group them together and have a common naming/param convention.
 //TODO: remove legacy vector conversions
+//TODO: add complete error checking for CopyNonContiguouslyFrom and AddNonContiguouslyFrom. Also update the documentation.
 namespace ISAAR.MSolve.LinearAlgebra.Vectors
 {
     /// <summary>
@@ -32,10 +31,10 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         public int Length { get; }
 
         /// <summary>
-        /// The internal array that stores the entries of the vector. It should only be used for passing the raw array to linear 
-        /// algebra libraries.
+        /// The internal array that stores the entries of the vector. 
+        /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal double[] InternalData { get { return data; } }
+        internal double[] RawData => data;
 
         /// <summary>
         /// See <see cref="IIndexable1D.this[int]"/>.
@@ -64,6 +63,9 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
             }
             else return new Vector(data);
         }
+
+        public static Vector CreateFromLegacyVector(ISAAR.MSolve.Numerical.LinearAlgebra.Vector vector)
+            => CreateFromArray(vector.Data, false);
 
         /// <summary>
         /// Initializes a new instance of <see cref="Vector"/> by copying the entries of an existing vector: 
@@ -155,6 +157,43 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         #endregion
 
         /// <summary>
+        /// See <see cref="IVector.AddNonContiguouslyFrom(int[], IVectorView, int[])"/>
+        /// </summary>
+        public void AddNonContiguouslyFrom(int[] thisIndices, IVectorView otherVector, int[] otherIndices)
+        {
+            if (thisIndices.Length != otherIndices.Length) throw new NonMatchingDimensionsException(
+                "thisIndices and otherIndices must have the same length.");
+            if (otherVector is Vector casted)
+            {
+                for (int i = 0; i < thisIndices.Length; ++i)
+                {
+                    this.data[thisIndices[i]] += casted.data[otherIndices[i]];
+                }
+            }
+            else
+            {
+                for (int i = 0; i < thisIndices.Length; ++i) data[thisIndices[i]] += otherVector[otherIndices[i]];
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="IVector.AddNonContiguouslyFrom(int[], IVectorView)"/>
+        /// </summary>
+        public void AddNonContiguouslyFrom(int[] thisIndices, IVectorView otherVector)
+        {
+            if (thisIndices.Length != otherVector.Length) throw new NonMatchingDimensionsException(
+                "thisIndices and otherVector must have the same length.");
+            if (otherVector is Vector casted)
+            {
+                for (int i = 0; i < casted.Length; ++i) this.data[thisIndices[i]] += casted.data[i];
+            }
+            else
+            {
+                for (int i = 0; i < otherVector.Length; ++i) data[thisIndices[i]] += otherVector[i];
+            }
+        }
+
+        /// <summary>
         /// Performs the operation: this[<paramref name="destinationIndex"/> + i] = this[<paramref name="destinationIndex"/> + i]
         /// + <paramref name="subvector"/>[i], for 0 &lt;= i &lt; <paramref name="subvector"/>.<see cref="Length"/>.
         /// </summary>
@@ -168,7 +207,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         {
             if (destinationIndex + subvector.Length > this.Length) throw new NonMatchingDimensionsException(
                 "The entries to set exceed this vector's length");
-            CBlas.Daxpy(subvector.Length, 1.0, ref subvector.data[0], 1, ref this.data[destinationIndex], 1);
+            Blas.Daxpy(subvector.Length, 1.0, subvector.data, 0, 1, this.data, destinationIndex, 1);
         }
 
         /// <summary>
@@ -190,9 +229,18 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         /// <summary>
         /// See <see cref="IVectorView.Axpy(IVectorView, double)"/>.
         /// </summary>
-        public IVectorView Axpy(IVectorView otherVector, double otherCoefficient)
+        public IVector Axpy(IVectorView otherVector, double otherCoefficient)
         {
-            if (otherVector is Vector casted) return Axpy(casted, otherCoefficient);
+            if (otherVector is Vector dense) return Axpy(dense, otherCoefficient);
+            else if (otherVector is SparseVector sparse)
+            {
+                Preconditions.CheckVectorDimensions(this, otherVector);
+                double[] result = new double[data.Length];
+                Array.Copy(data, result, data.Length);
+                SparseBlas.Daxpyi(sparse.RawIndices.Length, otherCoefficient, sparse.RawValues,
+                    sparse.RawIndices, 0, result, 0);
+                return Vector.CreateFromArray(result, false);
+            }
             else return otherVector.LinearCombination(otherCoefficient, this, 1.0); // To avoid accessing zero entries
         }
 
@@ -211,7 +259,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
             //TODO: Perhaps this should be done using mkl_malloc and BLAS copy. 
             double[] result = new double[data.Length];
             Array.Copy(data, result, data.Length);
-            CBlas.Daxpy(Length, otherCoefficient, ref otherVector.data[0], 1, ref result[0], 1);
+            Blas.Daxpy(Length, otherCoefficient, otherVector.data, 0, 1, result, 0, 1);
             return new Vector(result);
         }
 
@@ -220,13 +268,18 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         /// </summary>
         public void AxpyIntoThis(IVectorView otherVector, double otherCoefficient)
         {
-            if (otherVector is Vector casted) AxpyIntoThis(casted, otherCoefficient);
+            if (otherVector is Vector dense) AxpyIntoThis(dense, otherCoefficient);
             else
             {
                 Preconditions.CheckVectorDimensions(this, otherVector);
-                for (int i = 0; i < Length; ++i)
+                if (otherVector is SparseVector sparse)
                 {
-                    this.data[i] += otherCoefficient * otherVector[i];
+                    SparseBlas.Daxpyi(sparse.RawIndices.Length, otherCoefficient, sparse.RawValues,
+                        sparse.RawIndices, 0, data, 0);
+                }
+                else
+                {
+                    for (int i = 0; i < Length; ++i) this.data[i] += otherCoefficient * otherVector[i];
                 }
             }
         }
@@ -243,8 +296,37 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         public void AxpyIntoThis(Vector otherVector, double otherCoefficient)
         {
             Preconditions.CheckVectorDimensions(this, otherVector);
-            CBlas.Daxpy(Length, otherCoefficient, ref otherVector.data[0], 1, ref this.data[0], 1);
+            Blas.Daxpy(Length, otherCoefficient, otherVector.data, 0, 1, this.data, 0, 1);
         }
+
+        /// <summary>
+        /// See <see cref="IVector.CopySubvectorFrom(int, IVectorView, int, int)"/>.
+        /// </summary>
+        public void AxpySubvectorIntoThis(int destinationIndex, IVectorView sourceVector, double sourceCoefficient,
+            int sourceIndex, int length)
+        {
+            Preconditions.CheckSubvectorDimensions(this, destinationIndex, length);
+            Preconditions.CheckSubvectorDimensions(sourceVector, sourceIndex, length);
+
+            if (sourceVector is Vector casted)
+            {
+                Blas.Daxpy(Length, sourceCoefficient, casted.data, sourceIndex, 1, this.data, destinationIndex, 1);
+            }
+            else
+            {
+                for (int i = 0; i < length; ++i) data[i + destinationIndex] += sourceCoefficient * sourceVector[i + sourceIndex];
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="IVector.Clear"/>.
+        /// </summary>
+        public void Clear() => Array.Clear(data, 0, Length);
+
+        /// <summary>
+        /// See <see cref="IVector.Copy(bool)"/>.
+        /// </summary>
+        public IVector Copy(bool copyIndexingData) => Copy();
 
         /// <summary>
         /// Initializes a new instance of <see cref="Vector"/> by copying the entries of this instance.
@@ -276,24 +358,94 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         }
 
         /// <summary>
-        /// Copies <paramref name="length"/> consecutive entries from <paramref name="sourceVector"/> to this 
-        /// <see cref="Vector"/> starting from the provided indices.
+        /// See <see cref="IVector.CopyFrom(IVectorView)"/>
         /// </summary>
-        /// <param name="destinationIndex">The index into this <see cref="Vector"/> where to start copying to.</param>
-        /// <param name="sourceVector">The vector containing the entries to be copied.</param>
-        /// <param name="sourceIndex">The index into this <paramref name="sourceVector"/> where to start copying from.</param>
-        /// <param name="length">The number of entries to copy.</param>
-        public void CopyFromVector(int destinationIndex, IVectorView sourceVector, int sourceIndex, int length)
+        public void CopyFrom(IVectorView sourceVector)
         {
-            //TODO: Perhaps a syntax closer to Array, 
-            // e.g. Vector.Copy(sourceVector, sourceIndex, destinationVector, destinationIndex, length)
-            for (int i = 0; i < length; ++i) data[i + destinationIndex] = sourceVector[i + sourceIndex];
+            Preconditions.CheckVectorDimensions(this, sourceVector);
+            if (sourceVector is Vector casted) Array.Copy(casted.data, this.data, this.Length);
+            else
+            {
+                for (int i = 0; i < Length; ++i) data[i] = sourceVector[i];
+            }
         }
+
+        /// <summary>
+        /// Copies all entries from <paramref name="sourceVector"/> to this <see cref="IVector"/>.
+        /// </summary>
+        /// <param name="sourceVector">The vector containing the entries to be copied.</param>
+        /// <exception cref="Exceptions.NonMatchingDimensionsException">
+        /// Thrown if <paramref name="sourceVector"/> has different <see cref="IIndexable1D.Length"/> than this.
+        /// </exception>
+        public void CopyFrom(Vector sourceVector)
+        {
+            Preconditions.CheckVectorDimensions(this, sourceVector);
+            Array.Copy(sourceVector.data, this.data, this.Length);
+        }
+
+        /// <summary>
+        /// See <see cref="IVector.CopyNonContiguouslyFrom(int[], IVectorView, int[])"/>
+        /// </summary>
+        public void CopyNonContiguouslyFrom(int[] thisIndices, IVectorView otherVector, int[] otherIndices)
+        {
+            if (thisIndices.Length != otherIndices.Length) throw new NonMatchingDimensionsException(
+                "thisIndices and otherIndices must have the same length.");
+            if (otherVector is Vector casted)
+            {
+                for (int i = 0; i < thisIndices.Length; ++i)
+                {
+                    this.data[thisIndices[i]] = casted.data[otherIndices[i]];
+                }
+            }
+            else
+            {
+                for (int i = 0; i < thisIndices.Length; ++i) data[thisIndices[i]] = otherVector[otherIndices[i]];
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="IVector.CopyNonContiguouslyFrom(IVectorView, int[])"/>
+        /// </summary>
+        public void CopyNonContiguouslyFrom(IVectorView otherVector, int[] otherIndices)
+        {
+            if (otherIndices.Length != this.Length) throw new NonMatchingDimensionsException(
+                "otherIndices and this vector must have the same length.");
+            if (otherVector is Vector casted)
+            {
+                for (int i = 0; i < this.Length; ++i) this.data[i] = casted.data[otherIndices[i]];
+            }
+            else
+            {
+                for (int i = 0; i < this.Length; ++i) data[i] = otherVector[otherIndices[i]];
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="IVector.CopySubvectorFrom(int, IVectorView, int, int)"/>
+        /// </summary>
+        public void CopySubvectorFrom(int destinationIndex, IVectorView sourceVector, int sourceIndex, int length)
+        {
+            //TODO: Perhaps a syntax closer to Array: 
+            // e.g. Vector.Copy(sourceVector, sourceIndex, destinationVector, destinationIndex, length)
+
+            Preconditions.CheckSubvectorDimensions(this, destinationIndex, length);
+            Preconditions.CheckSubvectorDimensions(sourceVector, sourceIndex, length);
+            if (sourceVector is Vector casted) Array.Copy(casted.data, sourceIndex, this.data, destinationIndex, length);
+            else
+            {
+                for (int i = 0; i < length; ++i) data[i + destinationIndex] = sourceVector[i + sourceIndex];
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="IVectorView.CreateZeroVectorWithSameFormat"/>
+        /// </summary>
+        public IVector CreateZeroVectorWithSameFormat() => new Vector(new double[Length]);
 
         /// <summary>
         /// See <see cref="IVectorView.DoEntrywise(IVectorView, Func{double, double, double})"/>.
         /// </summary>
-        public IVectorView DoEntrywise(IVectorView vector, Func<double, double, double> binaryOperation)
+        public IVector DoEntrywise(IVectorView vector, Func<double, double, double> binaryOperation)
         {
             if (vector is Vector casted) return DoEntrywise(vector, binaryOperation);
             else return vector.DoEntrywise(this, binaryOperation);
@@ -347,7 +499,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         /// <summary>
         /// See <see cref="IVectorView.DoToAllEntries(Func{double, double})"/>.
         /// </summary>
-        IVectorView IVectorView.DoToAllEntries(Func<double, double> unaryOperation) => DoToAllEntries(unaryOperation);
+        IVector IVectorView.DoToAllEntries(Func<double, double> unaryOperation) => DoToAllEntries(unaryOperation);
 
         /// <summary>
         /// Performs a unary operation on each entry: result[i] = <paramref name="unaryOperation"/>(this[i]), for 0 &lt;=
@@ -393,7 +545,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         public double DotProduct(Vector vector)
         {
             Preconditions.CheckVectorDimensions(this, vector);
-            return CBlas.Ddot(Length, ref this.data[0], 1, ref vector.data[0], 1);
+            return Blas.Ddot(Length, this.data, 0, 1, vector.data, 0, 1);
         }
 
         /// <summary>
@@ -451,7 +603,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         /// <summary>
         /// See <see cref="IVectorView.LinearCombination(double, IVectorView, double)"/>.
         /// </summary>
-        public IVectorView LinearCombination(double thisCoefficient, IVectorView otherVector, double otherCoefficient)
+        public IVector LinearCombination(double thisCoefficient, IVectorView otherVector, double otherCoefficient)
         {
             if (otherVector is Vector casted) return LinearCombination(thisCoefficient, casted, otherCoefficient);
             else return otherVector.LinearCombination(otherCoefficient, this, thisCoefficient); // To avoid accessing zero entries
@@ -473,7 +625,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
             //TODO: Perhaps this should be done using mkl_malloc and BLAS copy. 
             double[] result = new double[data.Length];
             Array.Copy(data, result, data.Length);
-            CBlas.Daxpby(Length, otherCoefficient, ref otherVector.data[0], 1, thisCoefficient, ref result[0], 1);
+            BlasExtensions.Daxpby(Length, otherCoefficient, otherVector.data, 0, 1, thisCoefficient, result, 0, 1);
             return new Vector(result);
         }
 
@@ -506,7 +658,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         public void LinearCombinationIntoThis(double thisCoefficient, Vector otherVector, double otherCoefficient)
         {
             Preconditions.CheckVectorDimensions(this, otherVector);
-            CBlas.Daxpby(Length, otherCoefficient, ref otherVector.data[0], 1, thisCoefficient, ref this.data[0], 1);
+            BlasExtensions.Daxpby(Length, otherCoefficient, otherVector.data, 0, 1, thisCoefficient, this.data, 0, 1);
         }
 
         /// <summary>
@@ -540,7 +692,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         /// Calculates the Euclidian norm or 2-norm of this vector. For more see 
         /// https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm.
         /// </summary>
-        public double Norm2() => CBlas.Dnrm2(Length, ref data[0], 1);
+        public double Norm2() => Blas.Dnrm2(Length, data, 0, 1);
 
         /// <summary>
         /// This method is used to remove duplicate values of a Knot Value Vector and return the multiplicity up to
@@ -645,7 +797,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         /// <summary>
         /// See <see cref="IVectorView.Scale(double)"/>.
         /// </summary>
-        IVectorView IVectorView.Scale(double scalar) => Scale(scalar);
+        IVector IVectorView.Scale(double scalar) => Scale(scalar);
 
         /// <summary>
         /// Performs the following operation for 0 &lt;= i &lt; this.<see cref="Length"/>: 
@@ -658,14 +810,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
             //TODO: Perhaps this should be done using mkl_malloc and BLAS copy. 
             double[] result = new double[data.Length];
             Array.Copy(data, result, data.Length);
-            CBlas.Dscal(Length, scalar, ref result[0], 1);
+            Blas.Dscal(Length, scalar, result, 0, 1);
             return new Vector(result);
         }
 
         /// <summary>
         /// See <see cref="IVector.ScaleIntoThis(double)"/>.
         /// </summary>
-        public void ScaleIntoThis(double scalar) => CBlas.Dscal(Length, scalar, ref data[0], 1);
+        public void ScaleIntoThis(double scalar) => Blas.Dscal(Length, scalar, data, 0, 1);
 
         /// <summary>
         /// Sets all entries of this vector to be equal to <paramref name="value"/>.
@@ -677,31 +829,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Vectors
         }
 
         /// <summary>
-        /// See <see cref="IVector.SetEntryRespectingPattern(int, double)"/>.
+        /// See <see cref="IVector.Set(int, double)"/>.
         /// </summary>
-        public void SetEntryRespectingPattern(int index, double value) => data[index] = value;
-
-        /// <summary>
-        /// Performs the operation: this[<paramref name="destinationIndex"/> + i] = <paramref name="subvector"/>[i], for
-        /// 0 &lt;= i &lt; <paramref name="subvector"/>.<see cref="Length"/>.
-        /// </summary>
-        /// <param name="subvector">The vector that will be copied to a part of this <see cref="Vector"/> instance.</param>
-        /// <param name="destinationIndex">The index into this <see cref="Vector"/> instance, at which to start the vector 
-        ///     copying. Constraints: 0 &lt;= <paramref name="destinationIndex"/>, <paramref name="destinationIndex"/> + 
-        ///     <paramref name="subvector"/>.<see cref="Length"/> &lt;= this.<see cref="Length"/>.</param>
-        /// <exception cref="NonMatchingDimensionsException">Thrown if the <paramref name="destinationIndex"/> violates the 
-        ///     described constraint.</exception>
-        public void SetSubvector(Vector subvector, int destinationIndex) //TODO: this has common functionality with CopyFromVector
-        {
-            if (destinationIndex + subvector.Length > this.Length) throw new NonMatchingDimensionsException(
-                "The entries to set exceed this vector's length");
-            Array.Copy(subvector.data, 0, this.data, destinationIndex, subvector.Length);
-        }
+        public void Set(int index, double value) => data[index] = value;
 
         /// <summary>
         /// Creates a new instance of the legacy vector class <see cref="Numerical.LinearAlgebra.Vector"/> with the same internal
         /// array as this <see cref="Vector"/> instance. Doesn't copy anything.
         /// </summary>
-        public Numerical.LinearAlgebra.Interfaces.IVector ToLegacyVector() => new Numerical.LinearAlgebra.Vector(data);
+        public Numerical.LinearAlgebra.Vector ToLegacyVector() => new Numerical.LinearAlgebra.Vector(data);
     }
 }

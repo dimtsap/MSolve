@@ -1,22 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using IntelMKL.LP64;
-using ISAAR.MSolve.LinearAlgebra.Exceptions;
 using ISAAR.MSolve.LinearAlgebra.Commons;
+using ISAAR.MSolve.LinearAlgebra.Exceptions;
 using ISAAR.MSolve.LinearAlgebra.Factorizations;
+using ISAAR.MSolve.LinearAlgebra.Providers;
 using ISAAR.MSolve.LinearAlgebra.Reduction;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
+using static ISAAR.MSolve.LinearAlgebra.LibrarySettings;
 
 //TODO: align data using mkl_malloc
 namespace ISAAR.MSolve.LinearAlgebra.Matrices
 {
     /// <summary>
     /// Symmetric matrix. Only the upper triangle is stored in Packed format (only stores the n*(n+1)/2 non zeros) and column 
-    /// major order. Uses Intel MKL. Do not use this, since it is an experimantal class, which will probably be removed.
+    /// major order. Uses LAPACK. Do not use this, since it is an experimantal class, which will probably be removed.
     /// Authors: Serafeim Bakalakos
     /// </summary>
     public class SymmetricMatrix: IMatrix, ISymmetricMatrix
@@ -61,7 +58,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// </summary>
         public int Order { get; }
 
-        public int NumNonZeros => throw new NotImplementedException();
+        /// <summary>
+        /// The internal array that stores the entries of the upper triangle (packed storage format) in column major layout. 
+        /// It should only be used for passing the raw array to linear algebra libraries.
+        /// </summary>
+        internal double[] RawData => data;
 
         /// <summary>
         /// The entry with row index = i and column index = j. Setting an entry A[i, j] = value, will also set A[j, i] = value. Therefore the matrix will stay symmetric 
@@ -139,7 +140,8 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <returns></returns>
         public static SymmetricMatrix CreateFromMatrix(Matrix originalMatrix)
         {
-            double[] data = Conversions.FullColMajorToPackedUpperColMajor(originalMatrix.InternalData, originalMatrix.NumColumns);
+            double[] data = Conversions.FullColMajorToPackedUpperColMajor(originalMatrix.NumColumns, 
+                originalMatrix.RawData);
             return new SymmetricMatrix(data, originalMatrix.NumColumns, DefiniteProperty.Unknown);
         }
 
@@ -175,14 +177,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             => matrixRight.MultiplyLeft(matrixLeft, false, false);
 
         public static Vector operator *(SymmetricMatrix matrixLeft, Vector vectorRight)
-            => matrixLeft.MultiplyRight(vectorRight, false);
+            => matrixLeft.Multiply(vectorRight);
 
         public static Vector operator *(Vector vectorLeft, SymmetricMatrix matrixRight)
-            => matrixRight.MultiplyRight(vectorLeft, true);
+            => matrixRight.Multiply(vectorLeft);
 
         #endregion
 
-        public IMatrixView Axpy(IMatrixView otherMatrix, double otherCoefficient)
+        public IMatrix Axpy(IMatrixView otherMatrix, double otherCoefficient)
         {
             if (otherMatrix is SymmetricMatrix casted) return Axpy(casted, otherCoefficient);
             else return DoEntrywise(otherMatrix, (x1, x2) => x1 + otherCoefficient * x2); //TODO: optimize this
@@ -194,7 +196,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             //TODO: Perhaps this should be done using mkl_malloc and BLAS copy. 
             double[] result = new double[data.Length];
             Array.Copy(this.data, result, data.Length);
-            CBlas.Daxpy(data.Length, otherCoefficient, ref otherMatrix.data[0], 1, ref result[0], 1);
+            Blas.Daxpy(data.Length, otherCoefficient, otherMatrix.data, 0, 1, result, 0, 1);
             return new SymmetricMatrix(result, NumColumns, DefiniteProperty.Unknown);
         }
 
@@ -221,7 +223,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         public void AxpyIntoThis(SymmetricMatrix otherMatrix, double otherCoefficient)
         {
             Preconditions.CheckSameMatrixDimensions(this, otherMatrix);
-            CBlas.Daxpy(data.Length, otherCoefficient, ref otherMatrix.data[0], 1, ref this.data[0], 1);
+            Blas.Daxpy(data.Length, otherCoefficient, otherMatrix.data, 0, 1, this.data, 0, 1);
             this.Definiteness = DefiniteProperty.Unknown;
         }
 
@@ -244,6 +246,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
                 return CopyToGeneralMatrix().FactorLU().CalcDeterminant(); //TODO: Find how to do it with Bunch-Kaufman
             }
         }
+
+        /// <summary>
+        /// See <see cref="IMatrix.Clear"/>.
+        /// </summary>
+        public void Clear() => Array.Clear(data, 0, data.Length);
 
         public SymmetricMatrix Copy()
         {
@@ -269,7 +276,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             return Matrix.CreateFromArray(fullData, Order, Order, false);
         }
 
-        public IMatrixView DoEntrywise(IMatrixView other, Func<double, double, double> binaryOperation)
+        public IMatrix DoEntrywise(IMatrixView other, Func<double, double, double> binaryOperation)
         {
             if (other is SymmetricMatrix casted) return DoEntrywise(casted, binaryOperation);
             else return DenseStrategies.DoEntrywise(this, other, binaryOperation); //TODO: optimize this
@@ -311,7 +318,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             Definiteness = DefiniteProperty.Unknown;
         }
 
-        IMatrixView IMatrixView.DoToAllEntries(Func<double, double> unaryOperation)
+        IMatrix IMatrixView.DoToAllEntries(Func<double, double> unaryOperation)
         {
             return DoToAllEntries(unaryOperation);
         }
@@ -386,7 +393,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             return factor;
         }
 
-        public IMatrixView LinearCombination(double thisCoefficient, IMatrixView otherMatrix, double otherCoefficient)
+        public IMatrix LinearCombination(double thisCoefficient, IMatrixView otherMatrix, double otherCoefficient)
         {
             if (otherMatrix is SymmetricMatrix casted) return LinearCombination(thisCoefficient, casted, otherCoefficient);
             else return DoEntrywise(otherMatrix, (x1, x2) => thisCoefficient * x1 + otherCoefficient * x2); //TODO: optimize this
@@ -398,7 +405,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             //TODO: Perhaps this should be done using mkl_malloc and BLAS copy. 
             double[] result = new double[data.Length];
             Array.Copy(this.data, result, data.Length);
-            CBlas.Daxpby(data.Length, otherCoefficient, ref otherMatrix.data[0], 1, thisCoefficient, ref result[0], 1);
+            BlasExtensions.Daxpby(data.Length, otherCoefficient, otherMatrix.data, 0, 1, thisCoefficient, result, 0, 1);
             return new SymmetricMatrix(result, NumColumns, DefiniteProperty.Unknown);
         }
 
@@ -417,16 +424,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
                     }
                 }
             }
-            else
-            {
-                throw new SymmetricPatternModifiedException("This operation is legal only if the other matrix is also symmetric.");
-            }
+            else throw new SymmetricPatternModifiedException(
+                "This operation is legal only if the other matrix is also symmetric.");
         }
 
         public void LinearCombinationIntoThis(double thisCoefficient, SymmetricMatrix otherMatrix, double otherCoefficient)
         {
             Preconditions.CheckSameMatrixDimensions(this, otherMatrix);
-            CBlas.Daxpby(data.Length, otherCoefficient, ref otherMatrix.data[0], 1, thisCoefficient, ref this.data[0], 1);
+            BlasExtensions.Daxpby(data.Length, otherCoefficient, otherMatrix.data, 0, 1, thisCoefficient, this.data, 0, 1);
             this.Definiteness = DefiniteProperty.Unknown;
         }
 
@@ -440,9 +445,9 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             return DenseStrategies.Multiply(this, other, transposeThis, transposeOther);
         }
 
-        public Vector MultiplyRight(IVectorView vector, bool transposeThis = false)
+        public IVector Multiply(IVectorView vector, bool transposeThis = false)
         {
-            if (vector is Vector) return MultiplyRight((Vector)vector, transposeThis);
+            if (vector is Vector dense) return Multiply(dense, transposeThis);
             else throw new NotImplementedException();
         }
 
@@ -451,13 +456,51 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// </summary>
         /// <param name="vector">A vector with length equal to <see cref="NumColumns"/>.</param>
         /// <returns></returns>
-        public Vector MultiplyRight(Vector vector)
+        public Vector Multiply(Vector vector)
         {
-            Preconditions.CheckMultiplicationDimensions(this.NumColumns, vector.Length);
-            double[] result = new double[NumRows];
-            CBlas.Dspmv(CBLAS_LAYOUT.CblasColMajor, CBLAS_UPLO.CblasUpper, Order,
-                1.0, ref data[0], ref vector.InternalData[0], 1, 0.0, ref result[0], 1);
-            return Vector.CreateFromArray(result, false);
+            //TODO: this performs redundant dimension checks
+            var result = Vector.CreateZero(Order);
+            MultiplyIntoResult(vector, result);
+            return result;
+        }
+
+        /// <summary>
+        /// See <see cref="IMatrixView.MultiplyIntoResult(IVectorView, IVector, bool)"/>.
+        /// </summary>
+        public void MultiplyIntoResult(IVectorView lhsVector, IVector rhsVector, bool transposeThis = false)
+        {
+            if ((lhsVector is Vector lhsDense) && (rhsVector is Vector rhsDense))
+            {
+                MultiplyIntoResult(lhsDense, rhsDense);
+            }
+            else throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Performs the matrix-vector multiplication: <paramref name="rhsVector"/> = this * <paramref name="vector"/>.
+        /// The resulting vector will overwrite the entries of <paramref name="rhsVector"/>.
+        /// </summary>
+        /// <param name="lhsVector">
+        /// The vector that will be multiplied by this matrix. It sits on the left hand side of the equation y = A * x.
+        /// Constraints: <paramref name="lhsVector"/>.<see cref="IIndexable1D.Length"/> 
+        /// == this.<see cref="IIndexable2D.NumColumns"/>.
+        /// </param>
+        /// <param name="rhsVector">
+        /// The vector that will be overwritten by the result of the multiplication. It sits on the right hand side of the 
+        /// equation y = A * x. Constraints: <paramref name="lhsVector"/>.<see cref="IIndexable1D.Length"/> 
+        /// == this.<see cref="IIndexable2D.NumRows"/>.
+        /// </param>
+        /// <exception cref="NonMatchingDimensionsException">
+        /// Thrown if the <see cref="IIndexable1D.Length"/> of <paramref name="lhsVector"/> or <paramref name="rhsVector"/> 
+        /// violate the described contraints.
+        /// </exception>
+        public void MultiplyIntoResult(Vector lhsVector, Vector rhsVector)
+        {
+            Preconditions.CheckMultiplicationDimensions(this.NumColumns, lhsVector.Length);
+            Preconditions.CheckSystemSolutionDimensions(this.NumRows, rhsVector.Length);
+            Blas.Dspmv(StoredTriangle.Upper, Order,
+                1.0, this.data, 0, lhsVector.RawData, 0, 1,
+                0.0, rhsVector.RawData, 0, 1);
         }
 
         public double Reduce(double identityValue, ProcessEntry processEntry, ProcessZeros processZeros, Finalize finalize)
@@ -478,7 +521,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             return finalize(aggregator);
         }
 
-        IMatrixView IMatrixView.Scale(double scalar) => Scale(scalar);
+        IMatrix IMatrixView.Scale(double scalar) => Scale(scalar);
 
         /// <summary>
         /// result = scalar * this
@@ -489,11 +532,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             int numStoredEntries = this.data.Length;
             double[] result = new double[numStoredEntries];
             Array.Copy(this.data, result, numStoredEntries);
-            CBlas.Dscal(numStoredEntries, scalar, ref result[0], 1);
+            Blas.Dscal(numStoredEntries, scalar, result, 0, 1);
             return new SymmetricMatrix(result, this.Order, this.Definiteness);
         }
 
-        public void ScaleIntoThis(double scalar) => CBlas.Dscal(data.Length, scalar, ref data[0], 1);
+        public void ScaleIntoThis(double scalar) => Blas.Dscal(data.Length, scalar, data, 0, 1);
 
         // Not very efficient
         public void SetEntryRespectingPattern(int rowIdx, int colIdx, double value)
@@ -507,7 +550,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             else data[Find1DIndex(colIdx, rowIdx)] = value;
         }
 
-        public IMatrixView Transpose()
+        public IMatrix Transpose()
         {
             return Transpose(true);
         }
@@ -515,19 +558,6 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         public SymmetricMatrix Transpose(bool copyInternalArray)
         {
             return SymmetricMatrix.CreateFromArray(data, Order, Definiteness, copyInternalArray);
-        }
-
-
-        public void WriteToFile(string path, bool append = false)
-        {
-            using (var writer = new System.IO.StreamWriter(path, append))
-            {
-#if DEBUG
-                writer.AutoFlush = true; // To look at intermediate output at certain breakpoints
-#endif
-                for (int i = 0; i < data.Length; ++i)
-                    writer.WriteLine(data[i].ToString("g17", new System.Globalization.CultureInfo("en-US", false).NumberFormat));
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

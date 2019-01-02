@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using ISAAR.MSolve.Analyzers;
+using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.FEM.Entities;
@@ -97,8 +98,8 @@ namespace ISAAR.MSolve.SamplesConsole.FEM
             Node2D[] constrainedNodes = nodes.Where(node => Math.Abs(node.Y) <= tol).ToArray();
             for (int i = 0; i < constrainedNodes.Length; i++)
             {
-                constrainedNodes[i].Constraints.Add(DOFType.X);
-                constrainedNodes[i].Constraints.Add(DOFType.Y);
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.X });
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.Y });
             }
 
             // Loads

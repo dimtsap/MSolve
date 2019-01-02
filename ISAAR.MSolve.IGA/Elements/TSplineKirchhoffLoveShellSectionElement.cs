@@ -456,21 +456,9 @@ namespace ISAAR.MSolve.IGA.Elements
                 });
 		}
 
-        public void SaveMaterialState()
-        {            
-            //for (int j = 0; j < gaussPoints.Count; j++)
-            //{
-            //    materialsAtGaussPoints[j].SaveState();
-            //}
-        }
-
-        public void ClearMaterialStresses()
-        {
-            //TODO: the next throws an exception. Investigate. Possible changes in Analyzers may be the cause.
-            //for (int j = 0; j < gaussPoints.Count; j++)
-            //{
-            //    materialsAtGaussPoints[j].ClearState();
-            //}
-        }
-    }
+		public double[,] CalculateDisplacementsForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			throw new NotImplementedException();
+		}
+	}
 }

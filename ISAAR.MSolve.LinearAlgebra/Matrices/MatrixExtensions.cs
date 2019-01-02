@@ -122,24 +122,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             return true;
         }
 
-        /// <summary>
-        /// Performs the matrix-vector multiplication: oper(<paramref name="matrix"/>) * <paramref name="vector"/>.
-        /// To multiply <paramref name="matrix"/> * columnVector, set <paramref name="transposeThis"/> to false.
-        /// To multiply rowVector * <paramref name="matrix"/>, set <paramref name="transposeThis"/> to true.
-        /// </summary>
-        /// <param name="matrix">The matrix to multiply.</param>
-        /// <param name="vector">A vector with <see cref="IIndexable1D.Length"/> being equal to the 
-        ///     <see cref="IIndexable2D.NumColumns"/> of oper(<paramref name="matrix"/>).</param>
-        /// <param name="transposeThis">If true, oper(<paramref name="matrix"/>) = transpose(<paramref name="matrix"/>). 
-        ///     Otherwise oper(<paramref name="matrix"/>) = <paramref name="matrix"/>.</param>
-        /// <exception cref="NonMatchingDimensionsException">Thrown if the <see cref="IIndexable1D.Length"/> of
-        ///     <paramref name="vector"/> is different than the <see cref="NumColumns"/> of 
-        ///     oper(<paramref name="matrix"/>).</exception>
-        public static double[] MultiplyRight(this CscMatrix matrix, double[] vector, bool transposeThis)
-        { //TODO: delete this once legacy vectors, matrices are no longer used.
-            var asVector = Vector.CreateFromArray(vector, false);
-            return matrix.MultiplyRight(asVector, transposeThis).InternalData;
-        }
+        
 
         /// <summary>
         /// Performs the multiplication operation: 
@@ -156,10 +139,8 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             Numerical.LinearAlgebra.Matrix2D other)
         { //TODO: delete this once legacy vectors, matrices are no longer used.
             var otherCopy = Matrix.CreateFromLegacyMatrix(other);
-            Matrix transposeThisTimesOther = csc.MultiplyRight(otherCopy, true, false);
-            Matrix result = csc.MultiplyLeft(transposeThisTimesOther, false, false);
-            //Matrix otherTimesThis = csc.MultiplyLeft(otherCopy, false, false);
-            //Matrix result = csc.MultiplyRight(otherTimesThis, true, false);
+            Matrix otherTimesThis = csc.MultiplyLeft(otherCopy, false, false);
+            Matrix result = csc.MultiplyRight(otherTimesThis, true, false);
             return new Numerical.LinearAlgebra.Matrix2D(result.CopyToArray2D());
         }
 
@@ -235,5 +216,45 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <exception cref="PatternModifiedException">Thrown if an <paramref name="matrix1"/>[i, j] needs to be 
         ///     overwritten, but that is not permitted by the matrix storage format.</exception>
         public static void SubtractIntoThis(this IMatrix matrix1, IMatrixView matrix2) => matrix1.AxpyIntoThis(matrix2, -1.0);
+
+        
+        #region legacy linear algebra classes conversions
+
+        /// <summary>
+        /// Warning: This method will copy the internal array, since e.g. <see cref="Numerical.LinearAlgebra.Matrix2D"/> uses
+        /// a double[,] and <see cref="Matrix"/> uses a column major double[].
+        /// </summary>
+        public static Matrix LegacyToNewMatrix(this Numerical.LinearAlgebra.Interfaces.IMatrix2D oldMatrix)
+        {
+            if (oldMatrix is Numerical.LinearAlgebra.Matrix2D dense) return Matrix.CreateFromArray(dense.Data);
+            //else if (oldMatrix is Numerical.LinearAlgebra.SymmetricMatrix2D packed)
+            //{
+            //    double[] full = Conversions.PackedUpperColMajorToFullSymmColMajor(packed.Data);
+            //    return Matrix.CreateFromArray(full, oldMatrix.Rows, oldMatrix.Columns, false); //Doesn't work
+            //}
+            else
+            {
+                int m = oldMatrix.Rows;
+                int n = oldMatrix.Columns;
+                var newMatrix = Matrix.CreateZero(m, n);
+                for (int i = 0; i < m; ++i)
+                {
+                    for (int j = 0; j < n; ++j)
+                    {
+                        newMatrix[i, j] = oldMatrix[i, j];
+                    }
+                }
+                return newMatrix;
+            }
+        }
+
+        /// <summary>
+        /// Warning: This method will copy the internal array, since e.g. <see cref="Numerical.LinearAlgebra.Matrix2D"/> uses
+        /// a double[,] and <see cref="Matrix"/> uses a column major double[].
+        /// </summary>
+        public static Numerical.LinearAlgebra.Matrix2D NewToLegacyMatrix(Matrix newMatrix) 
+            => new Numerical.LinearAlgebra.Matrix2D(newMatrix.CopyToArray2D());
+
+        #endregion
     }
 }

@@ -36,6 +36,7 @@ namespace ISAAR.MSolve.IGA.Entities
 		    }
 	    }
 
+	    public Patch Patch { get; set; }
 
 		public Dictionary<int, Knot> KnotsDictionary
         {
@@ -58,9 +59,10 @@ namespace ISAAR.MSolve.IGA.Entities
 			get => ElementType;
 		}
 
-        public Patch Patch { get; set; }
+        //public Patch Patch { get; set; }
+		
 
-        public int[] DOFs { get; set; }
+		public int[] DOFs { get; set; }
 
         public void AddControlPoint(ControlPoint controlPoint)
         {

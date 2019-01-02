@@ -11,6 +11,7 @@ using ISAAR.MSolve.Solvers.Skyline;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
 using Xunit;
 
@@ -24,7 +25,12 @@ namespace ISAAR.MSolve.Tests
             var m = new Model();
             m.NodesDictionary.Add(1, new Node() { ID = 1, X = 0, Y = 0, Z = 0 });
             m.NodesDictionary.Add(2, new Node() { ID = 2, X = 5, Y = 0, Z = 0 });
-            m.NodesDictionary[1].Constraints.AddRange(new[] { DOFType.X, DOFType.Y, DOFType.Z, DOFType.RotX, DOFType.RotY, DOFType.RotZ });
+            m.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.X });
+            m.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.Y });
+            m.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.Z });
+            m.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotX });
+            m.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotY });
+            m.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotZ });
             m.ElementsDictionary.Add(1, new Element()
             {
                 ID = 1,
@@ -106,12 +112,12 @@ namespace ISAAR.MSolve.Tests
             }
 
             // Constrain bottom nodes of the model
-            model.NodesDictionary[1].Constraints.Add(DOFType.X);
-            model.NodesDictionary[1].Constraints.Add(DOFType.Y);
-            model.NodesDictionary[1].Constraints.Add(DOFType.Z);
-            model.NodesDictionary[1].Constraints.Add(DOFType.RotX);
-            model.NodesDictionary[1].Constraints.Add(DOFType.RotY);
-            model.NodesDictionary[1].Constraints.Add(DOFType.RotZ);  
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.X });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.Y });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.Z });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotX });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotY });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotZ });  
 
             // Generate elements of the structure
             int iNode = 1;
@@ -229,18 +235,18 @@ namespace ISAAR.MSolve.Tests
             }
 
             // Constrain first and last nodes of the model
-            model.NodesDictionary[1].Constraints.Add(DOFType.X);
-            model.NodesDictionary[1].Constraints.Add(DOFType.Y);
-            model.NodesDictionary[1].Constraints.Add(DOFType.Z);
-            model.NodesDictionary[1].Constraints.Add(DOFType.RotX);
-            model.NodesDictionary[1].Constraints.Add(DOFType.RotY);
-            model.NodesDictionary[1].Constraints.Add(DOFType.RotZ);
-            model.NodesDictionary[4].Constraints.Add(DOFType.X);
-            model.NodesDictionary[4].Constraints.Add(DOFType.Y);
-            model.NodesDictionary[4].Constraints.Add(DOFType.Z);
-            model.NodesDictionary[4].Constraints.Add(DOFType.RotX);
-            model.NodesDictionary[4].Constraints.Add(DOFType.RotY);
-            model.NodesDictionary[4].Constraints.Add(DOFType.RotZ);
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.X });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.Y });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.Z });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotX });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotY });
+            model.NodesDictionary[1].Constraints.Add(new Constraint { DOF = DOFType.RotZ });
+            model.NodesDictionary[4].Constraints.Add(new Constraint { DOF = DOFType.X });
+            model.NodesDictionary[4].Constraints.Add(new Constraint { DOF = DOFType.Y });
+            model.NodesDictionary[4].Constraints.Add(new Constraint { DOF = DOFType.Z });
+            model.NodesDictionary[4].Constraints.Add(new Constraint { DOF = DOFType.RotX });
+            model.NodesDictionary[4].Constraints.Add(new Constraint { DOF = DOFType.RotY });
+            model.NodesDictionary[4].Constraints.Add(new Constraint { DOF = DOFType.RotZ });
 
             // Generate elements of the structure
             int iNode = 1;

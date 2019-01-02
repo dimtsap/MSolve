@@ -170,7 +170,7 @@ namespace ISAAR.MSolve.IGA.Elements
 			auxMatrix1[0, 1] = surfaceBasisVector1.DotProduct(surfaceBasisVector2);
 			auxMatrix1[1, 0] = surfaceBasisVector2.DotProduct(surfaceBasisVector1);
             auxMatrix1[1, 1] = surfaceBasisVector2.DotProduct(surfaceBasisVector2);
-            (Matrix2D inverse, double det) = auxMatrix1.Invert2x2AndDeterminant();
+            (Matrix2D inverse, double det) = auxMatrix1.Invert2x2AndDeterminant(1e-20);
 
 			var material = ((IContinuumMaterial2D)element.Patch.Material);
 			var constitutiveMatrix = new Matrix2D(new double[3, 3]
@@ -370,6 +370,61 @@ namespace ISAAR.MSolve.IGA.Elements
                     new Knot(){ID=3,Ksi=1,Heta = 1,Zeta = 0}
                 });
 		}
+
+		public double[,] CalculateDisplacementsForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			var tsplineElement = (TSplineKirchhoffLoveShellElement)element;
+			var knotParametricCoordinatesKsi = new Vector(new double[] { -1, 1 });
+			var knotParametricCoordinatesHeta = new Vector(new double[] { -1, 1 });
+
+			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(tsplineElement, tsplineElement.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
+
+			var knotDisplacements = new double[4, 3];
+			var paraviewKnotRenumbering = new int[] { 0, 3, 1, 2 };
+			for (int j = 0; j < knotDisplacements.GetLength(0); j++)
+			{
+				for (int i = 0; i < element.ControlPoints.Count; i++)
+				{
+					knotDisplacements[paraviewKnotRenumbering[j], 0] += tsplines.TSplineValues[i, j] * localDisplacements[i, 0];
+					knotDisplacements[paraviewKnotRenumbering[j], 1] += tsplines.TSplineValues[i, j] * localDisplacements[i, 1];
+					knotDisplacements[paraviewKnotRenumbering[j], 2] += tsplines.TSplineValues[i, j] * localDisplacements[i, 2];
+				}
+			}
+
+			return knotDisplacements;
+		}
+
+		public double[,] CalculatePointsForPostProcessing(TSplineKirchhoffLoveShellElement element)
+		{
+			var localCoordinates = new double[4, 2]
+			{
+				{-1, -1},
+				{-1, 1},
+				{1, -1},
+				{1, 1}
+			};
+
+			var knotParametricCoordinatesKsi = new Vector(new double[] { -1, 1 });
+			var knotParametricCoordinatesHeta = new Vector(new double[] { -1, 1 });
+
+			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(element, element.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
+
+			var knotDisplacements = new double[4, 3];
+			var paraviewKnotRenumbering = new int[] { 0, 3, 1, 2 };
+			for (int j = 0; j < localCoordinates.GetLength(0); j++)
+			{
+				for (int i = 0; i < element.ControlPoints.Count; i++)
+				{
+					knotDisplacements[paraviewKnotRenumbering[j], 0] += tsplines.TSplineValues[i, j] * element.ControlPoints[i].X;
+					knotDisplacements[paraviewKnotRenumbering[j], 1] += tsplines.TSplineValues[i, j] * element.ControlPoints[i].Y;
+					knotDisplacements[paraviewKnotRenumbering[j], 2] += tsplines.TSplineValues[i, j] * element.ControlPoints[i].Z;
+				}
+			}
+
+			return knotDisplacements;
+
+		}
+	}
 
         public void SaveMaterialState()
         {

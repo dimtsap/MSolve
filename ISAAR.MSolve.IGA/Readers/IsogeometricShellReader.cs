@@ -72,17 +72,14 @@ namespace ISAAR.MSolve.IGA.Readers
 						Model.PatchesDictionary[patchID].Thickness = Double.Parse(line[1], CultureInfo.InvariantCulture);
 						break;
 					case IsogeometricShellReader.Attributes.numberofpatches:
-						Model.NumberOfPatches = Int32.Parse(line[1]);
+						//Model.NumberOfPatches = Int32.Parse(line[1]);
 						break;
 					case IsogeometricShellReader.Attributes.material:
 						Model.PatchesDictionary[patchID].Material = new ElasticMaterial2D(StressState2D.PlaneStrain) { YoungModulus = Double.Parse(line[2], CultureInfo.InvariantCulture), PoissonRatio = Double.Parse(line[3], CultureInfo.InvariantCulture) };
 						break;
 					case IsogeometricShellReader.Attributes.patchid:
 						patchID = Int32.Parse(line[1]);
-						Model.PatchesDictionary.Add(patchID,new Patch()
-						{
-							ID = patchID
-						});
+						Model.PatchesDictionary.Add(patchID,new Patch());
 						break;
 					case IsogeometricShellReader.Attributes.degreeksi:
 						if (patchID == -1)
@@ -156,10 +153,10 @@ namespace ISAAR.MSolve.IGA.Readers
 						break;
 					case IsogeometricShellReader.Attributes.end:
 						for (int j = 0; j < ControlPointIDsDictionary[patchID].Length; j++)
-							Model.PatchesDictionary[patchID].ControlPointsDictionary.Add(j, Model.ControlPointsDictionary[ControlPointIDsDictionary[patchID][j]]);
+							((List<ControlPoint>)Model.PatchesDictionary[patchID].ControlPoints).Add( Model.ControlPointsDictionary[ControlPointIDsDictionary[patchID][j]]);
 
 						Model.PatchesDictionary[patchID].CreateNurbsShell();
-						foreach (var element in Model.PatchesDictionary[patchID].ElementsDictionary.Values)
+						foreach (var element in Model.PatchesDictionary[patchID].Elements)
 							Model.ElementsDictionary.Add(counterElementID++, element);
 						return;
 				}

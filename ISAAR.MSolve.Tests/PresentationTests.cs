@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 using System.Linq;
+using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Logging.VTK;
 using ISAAR.MSolve.Preprocessor.Meshes;
 using ISAAR.MSolve.Preprocessor.Meshes.GMSH;
@@ -281,8 +282,8 @@ namespace ISAAR.MSolve.Tests
             var constrainedNodes = new int[] { 0, 1, 3, 4, 5, 6, 7, 8, 9 };
             for (int i = 0; i < constrainedNodes.Length; i++)
             {
-                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(DOFType.X);
-                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(DOFType.Y);
+                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(new Constraint { DOF = DOFType.X });
+                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(new Constraint { DOF = DOFType.Y });
             }
 
             #endregion
@@ -661,8 +662,8 @@ namespace ISAAR.MSolve.Tests
             var constrainedNodes = new int[] { 0, 1, 3, 4, 5, 6, 7, 8, 9 };
             for (int i = 0; i < constrainedNodes.Length; i++)
             {
-                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(DOFType.X);
-                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(DOFType.Y);
+                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(new Constraint { DOF = DOFType.X });
+                model.NodesDictionary[constrainedNodes[i]].Constraints.Add(new Constraint { DOF = DOFType.Y });
             }
 
             #endregion
@@ -763,8 +764,8 @@ namespace ISAAR.MSolve.Tests
             Node2D[] constrainedNodes = nodes.Where(node => Math.Abs(node.Y) <= tol).ToArray();
             for (int i = 0; i < constrainedNodes.Length; i++)
             {
-                constrainedNodes[i].Constraints.Add(DOFType.X);
-                constrainedNodes[i].Constraints.Add(DOFType.Y);
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.X });
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.Y });
             }
 
             // Loads
@@ -862,8 +863,8 @@ namespace ISAAR.MSolve.Tests
             Node2D[] constrainedNodes = nodes.Where(node => Math.Abs(node.Y) <= tol).ToArray();
             for (int i = 0; i < constrainedNodes.Length; i++)
             {
-                constrainedNodes[i].Constraints.Add(DOFType.X);
-                constrainedNodes[i].Constraints.Add(DOFType.Y);
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.X });
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.Y });
             }
 
             // Loads
@@ -961,8 +962,8 @@ namespace ISAAR.MSolve.Tests
             Node2D[] constrainedNodes = nodes.Where(node => Math.Abs(node.Y) <= tol).ToArray();
             for (int i = 0; i < constrainedNodes.Length; i++)
             {
-                constrainedNodes[i].Constraints.Add(DOFType.X);
-                constrainedNodes[i].Constraints.Add(DOFType.Y);
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.X });
+                constrainedNodes[i].Constraints.Add(new Constraint { DOF = DOFType.Y });
             }
 
             // Loads
@@ -1040,19 +1041,22 @@ namespace ISAAR.MSolve.Tests
             var material = new ElasticMaterial2D(StressState2D.PlaneStress);
             material.YoungModulus = 3e7;
             material.PoissonRatio = 0.2;
+
+            double thickness = 0.3;
             #endregion
 
             #region elements
-            var element0 = new Element { ID = 0, ElementType = new Quad4(material) };
+
+            var element0 = new Element { ID = 0, ElementType = new Quad4(material) { Thickness = thickness } };
             element0.AddNodes(new[] { node0, node1, node4, node3 });
 
-            var element1 = new Element { ID = 1, ElementType = new Quad4(material) };
+            var element1 = new Element { ID = 1, ElementType = new Quad4(material) { Thickness = thickness } };
             element1.AddNodes(new[] { node1, node2, node5, node4 });
 
-            var element2 = new Element { ID = 2, ElementType = new Quad4(material) };
+            var element2 = new Element { ID = 2, ElementType = new Quad4(material) { Thickness = thickness } };
             element2.AddNodes(new[] { node3, node4, node7, node6 });
 
-            var element3 = new Element { ID = 3, ElementType = new Quad4(material) };
+            var element3 = new Element { ID = 3, ElementType = new Quad4(material) { Thickness = thickness } };
             element3.AddNodes(new[] { node4, node5, node8, node7 });
             #endregion
 
@@ -1061,11 +1065,11 @@ namespace ISAAR.MSolve.Tests
             #endregion
 
             #region constraints
-            node0.Constraints.Add(DOFType.X);
-            node0.Constraints.Add(DOFType.Y);
+            node0.Constraints.Add(new Constraint { DOF = DOFType.X });
+            node0.Constraints.Add(new Constraint { DOF = DOFType.Y });
 
-            node2.Constraints.Add(DOFType.X);
-            node2.Constraints.Add(DOFType.Y);
+            node2.Constraints.Add(new Constraint { DOF = DOFType.X });
+            node2.Constraints.Add(new Constraint { DOF = DOFType.Y });
             #endregion
 
             #region subdomains

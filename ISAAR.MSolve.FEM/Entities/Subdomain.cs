@@ -341,6 +341,35 @@ namespace ISAAR.MSolve.FEM.Entities
             }
         }
 
+        public IVectorOLD GetRHSFromSolutionWithInitialDisplacemntsEffect(IVectorOLD solution, IVectorOLD dSolution, Dictionary<int, Node> boundaryNodes,
+	        Dictionary<int, Dictionary<DOFType, double>> initialConvergedBoundaryDisplacements, Dictionary<int, Dictionary<DOFType, double>> totalBoundaryDisplacements,
+	        int nIncrement, int totalIncrements)
+        {
+	        // prosthiki print
+	        //ekteleseis_counter2 += 1;
+	        //string counter_data = ekteleseis_counter2.ToString();
+	        //string path = string.Format(string2, counter_data);
+	        ////solution.WriteToFile(path);
+	        //double[] solution_data = new double[solution.Length];
+	        //solution.CopyTo(solution_data, 0);
+	        //WriteToFileVector(solution_data, path);
+
+	        var forces = new VectorOLD(TotalDOFs);
+	        foreach (Element element in elementsDictionary.Values)
+	        {
+		        var localSolution = GetLocalVectorFromGlobal(element, solution);
+		        ImposePrescribedDisplacementsWithInitialConditionSEffect(element, localSolution, boundaryNodes, initialConvergedBoundaryDisplacements, totalBoundaryDisplacements, nIncrement, totalIncrements);
+		        var localdSolution = GetLocalVectorFromGlobal(element, dSolution);
+		        ImposePrescribed_d_DisplacementsWithInitialConditionSEffect(element, localdSolution, boundaryNodes, initialConvergedBoundaryDisplacements, totalBoundaryDisplacements, nIncrement, totalIncrements);
+		        element.ElementType.CalculateStresses(element, localSolution, localdSolution);
+		        if (element.ElementType.MaterialModified)
+			        element.Subdomain.MaterialsModified = true;
+		        double[] f = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+		        AddLocalVectorToGlobal(element, f, forces.Data);
+	        }
+	        return forces;
+        }
+
 		//// prosthiki print
 		//int ekteleseis_counter = 0;
 		//int ekteleseis_counter2 = 0;

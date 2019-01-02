@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using ISAAR.MSolve.Analyzers;
+using ISAAR.MSolve.Analyzers.Interfaces;
+using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Readers;
@@ -11,7 +14,10 @@ using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Problems;
+using ISAAR.MSolve.Solvers.Direct;
 using ISAAR.MSolve.Solvers.Interfaces;
+using ISAAR.MSolve.Solvers.Ordering;
+using ISAAR.MSolve.Solvers.Ordering.Reordering;
 using ISAAR.MSolve.Solvers.Skyline;
 using Xunit;
 
@@ -26,45 +32,66 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             int increments = 2;
             IReadOnlyList<Dictionary<int, double>> expectedDisplacements = GetExpectedDisplacements(increments);
-            IncrementalDisplacementsLog computedDisplacements = SolveModel(increments);
+            TotalDisplacementsPerIterationLog computedDisplacements = SolveModel(increments);
             Assert.True(AreDisplacementsSame(expectedDisplacements, computedDisplacements));
         }
 
-        private static IncrementalDisplacementsLog SolveModel(int increments)
+        private static TotalDisplacementsPerIterationLog SolveModel(int increments)
         {
             Model model = GetCantileverShellMaterialBenchmarkModel(); //exei assignAffinity kai model.connectDataStructures
 
-            var linearSystems = new Dictionary<int, ILinearSystem>(); //I think this should be done automatically 
-            linearSystems[pathcID] = new SkylineLinearSystem(pathcID, model.Patches[0].Forces);
+            var solverBuilder = new DenseMatrixSolver.Builder();
+            solverBuilder.DofOrderer = new DofOrderer(
+	            new NodeMajorDofOrderingStrategy(), new NullReordering());
+            ISolver_v2 solver = solverBuilder.BuildSolver(model);
 
-            ProblemStructuraliga provider = new ProblemStructuraliga(model, linearSystems);
+            var provider = new ProblemStructural_v2(model, solver);
+			
+			var childAnalyzer = new LoadControlAnalyzer_v2.Builder(model,solver,provider,2).Build();
 
-            var solver = new SolverSkyline(linearSystems[pathcID]);
-            var linearSystemsArray = new[] { linearSystems[pathcID] };
-            var subdomainUpdaters = new[] { new NonLinearPatchUpdater(model.Patches[0]) };
-            var subdomainMappers = new[] { new PatchGlobalMapping(model.Patches[0]) };
+			var watchDofs = new Dictionary<int, int[]>(); //TODO
+			var subdomainDofsIDs = new int[model.GlobalDofOrdering.NumGlobalFreeDofs]; for (int i1 = 0; i1 < model.GlobalDofOrdering.NumGlobalFreeDofs; i1++) { subdomainDofsIDs[i1] = i1; }
+			watchDofs.Add(pathcID, subdomainDofsIDs);
+			var log1= new TotalDisplacementsPerIterationLog(watchDofs);
+			childAnalyzer.TotalDisplacementsPerIterationLog = log1;
+            var parentAnalyzer = new StaticAnalyzer_v2(model, solver, provider, childAnalyzer);
 
-            var childAnalyzer = new NewtonRaphsonNonLinearAnalyzer(solver, linearSystemsArray, subdomainUpdaters, subdomainMappers, provider, increments, model.TotalDOFs);
-
-
-            var watchDofs = new Dictionary<int, int[]>(); //TODO
-            var subdomainDofsIDs = new int[model.TotalDOFs]; for (int i1=0; i1 < model.TotalDOFs; i1++) { subdomainDofsIDs[i1] = i1; }
-            watchDofs.Add(pathcID, subdomainDofsIDs);
-            var log1 = new IncrementalDisplacementsLog(watchDofs);
-            childAnalyzer.IncrementalDisplacementsLog = log1;
-
-            childAnalyzer.SetMaxIterations = 100;
-            childAnalyzer.SetIterationsForMatrixRebuild = 1;
-
-            StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
-
-            parentAnalyzer.BuildMatrices();
             parentAnalyzer.Initialize();
             parentAnalyzer.Solve();
 
-
             return log1;
-        }
+
+			//var linearSystems = new Dictionary<int, ILinearSystem>(); //I think this should be done automatically 
+			//linearSystems[pathcID] = new SkylineLinearSystem(pathcID, model.Patches[0].Forces);
+
+			//ProblemStructural provider = new ProblemStructural(model, linearSystems);
+
+			//var solver = new SolverSkyline(linearSystems[pathcID]);
+			//var linearSystemsArray = new[] { linearSystems[pathcID] };
+			//var subdomainUpdaters = new[] { new NonLinearPatchUpdater(model.Patches[0]) };
+			//var subdomainMappers = new[] { new PatchGlobalMapping(model.Patches[0]) };
+
+			//var childAnalyzer = new NewtonRaphsonNonLinearAnalyzer(solver, linearSystemsArray, subdomainUpdaters, subdomainMappers, provider, increments, model.TotalDOFs);
+
+
+			//var watchDofs = new Dictionary<int, int[]>(); //TODO
+			//var subdomainDofsIDs = new int[model.TotalDOFs]; for (int i1=0; i1 < model.TotalDOFs; i1++) { subdomainDofsIDs[i1] = i1; }
+			//watchDofs.Add(pathcID, subdomainDofsIDs);
+			//var log1 = new TotalDisplacementsPerIterationLog(watchDofs);
+			//childAnalyzer.IncrementalDisplacementsLog = log1;
+
+			//childAnalyzer.SetMaxIterations = 100;
+			//childAnalyzer.SetIterationsForMatrixRebuild = 1;
+
+			//StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
+
+			//parentAnalyzer.BuildMatrices();
+			//parentAnalyzer.Initialize();
+			//parentAnalyzer.Solve();
+
+
+
+		}
 
         private static IReadOnlyList<Dictionary<int, double>> GetExpectedDisplacements(int increments )
         {
@@ -101,7 +128,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
         }
 
-        private static bool AreDisplacementsSame(IReadOnlyList<Dictionary<int, double>> expectedDisplacements, IncrementalDisplacementsLog computedDisplacements)
+        private static bool AreDisplacementsSame(IReadOnlyList<Dictionary<int, double>> expectedDisplacements, TotalDisplacementsPerIterationLog computedDisplacements)
         {
             var comparer = new ValueComparer(1E-6);
 
@@ -134,9 +161,9 @@ namespace ISAAR.MSolve.IGA.Tests
 			}, thickness);
 			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X < 3))
 			{
-				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.X);
-				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Y);
-				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(DOFType.Z);
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF=DOFType.X});
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() { DOF = DOFType.Y });
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() { DOF = DOFType.Z });
 			}
 
 			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X > 49.8))

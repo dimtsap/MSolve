@@ -868,96 +868,96 @@ namespace ISAAR.MSolve.IGA.Entities
 
         }
 
-		public IVector GetRHSFromSolution(IVector solution, IVector dSolution)
-		{
-			//TODO: print methods can be used suvdomain.cs
-
-			var forces = new Vector(TotalDOFs);
-			foreach (Element element in elementsDictionary.Values)
-			{
-				var localSolution = GetLocalVectorFromGlobal(element, solution);
-				var localdSolution = GetLocalVectorFromGlobal(element, dSolution);
-				element.ElementType.CalculateStresses(element, localSolution, localdSolution);
-				if (element.ElementType.MaterialModified)
-					element.Patch.MaterialsModified = true;
-				double[] f = element.ElementType.CalculateForces(element, localSolution, localdSolution);
-				AddLocalVectorToGlobal(element, f, forces.Data);
-			}
-			return forces;
-		}
-
-		public double[] GetLocalVectorFromGlobal(Element element, IVector globalVector)
-		{
-			int localDOFs = 0;
-			foreach (IList<DOFType> dofs in element.ElementType.DOFEnumerator.GetDOFTypes(element)) localDOFs += dofs.Count;
-			var localVector = new double[localDOFs];
-
-			int pos = 0;
-			for (int i = 0; i < element.ElementType.DOFEnumerator.GetDOFTypes(element).Count; i++)
-			{
-				ControlPoint controlPoint = element.ControlPoints[i];
-				foreach (DOFType dofType in element.ElementType.DOFEnumerator.GetDOFTypes(element)[i])
-				{
-					int dof = ControlPointDOFsDictionary[controlPoint.ID][dofType];
-					if (dof != -1) localVector[pos] = globalVector[dof];
-					pos++;
-				}
-			}
-			return localVector;
-		}
-
-		public void AddLocalVectorToGlobal(Element element, double[] localVector, double[] globalVector)
-		{
-			int pos = 0;
-			IList<IList<DOFType>> nodalDofs = element.ElementType.DOFEnumerator.GetDOFTypes(element);
-			IList<INode> nodes = element.ElementType.DOFEnumerator.GetNodesForMatrixAssembly(element);
-			for (int i = 0; i < nodes.Count; i++)
-			{
-				foreach (DOFType dofType in nodalDofs[i])
-				{
-					int dof = NodalDOFsDictionary[nodes[i].ID][dofType];
-					if (dof != -1) globalVector[dof] += localVector[pos];
-					pos++;
-				}
-			}
-		}
-
-		//public void ClearMaterialStresses()
+		//public IVector GetRHSFromSolution(IVector solution, IVector dSolution)
 		//{
-		//    foreach (Element element in elementsDictionary.Values) element.ElementType.ClearMaterialStresses();
+		//	//TODO: print methods can be used suvdomain.cs
+
+		//	var forces = new Vector(TotalDOFs);
+		//	foreach (Element element in elementsDictionary.Values)
+		//	{
+		//		var localSolution = GetLocalVectorFromGlobal(element, solution);
+		//		var localdSolution = GetLocalVectorFromGlobal(element, dSolution);
+		//		element.ElementType.CalculateStresses(element, localSolution, localdSolution);
+		//		if (element.ElementType.MaterialModified)
+		//			element.Patch.MaterialsModified = true;
+		//		double[] f = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+		//		AddLocalVectorToGlobal(element, f, forces.Data);
+		//	}
+		//	return forces;
 		//}
 
-		//public void SaveMaterialState()
+		//public double[] GetLocalVectorFromGlobal(Element element, IVector globalVector)
 		//{
-		//    foreach (Element element in elementsDictionary.Values) element.ElementType.SaveMaterialState();
+		//	int localDOFs = 0;
+		//	foreach (IList<DOFType> dofs in element.ElementType.DOFEnumerator.GetDOFTypes(element)) localDOFs += dofs.Count;
+		//	var localVector = new double[localDOFs];
+
+		//	int pos = 0;
+		//	for (int i = 0; i < element.ElementType.DOFEnumerator.GetDOFTypes(element).Count; i++)
+		//	{
+		//		ControlPoint controlPoint = element.ControlPoints[i];
+		//		foreach (DOFType dofType in element.ElementType.DOFEnumerator.GetDOFTypes(element)[i])
+		//		{
+		//			int dof = ControlPointDOFsDictionary[controlPoint.ID][dofType];
+		//			if (dof != -1) localVector[pos] = globalVector[dof];
+		//			pos++;
+		//		}
+		//	}
+		//	return localVector;
 		//}
 
-		public void SplitGlobalVectorToSubdomain(double[] vIn, double[] vOut)
-		{
-			foreach (int nodeID in GlobalNodalDOFsDictionary.Keys)
-			{
-				Dictionary<DOFType, int> dofTypes = NodalDOFsDictionary[nodeID];
-				foreach (DOFType dofType in dofTypes.Keys)
-				{
-					int localDOF = NodalDOFsDictionary[nodeID][dofType];
-					int globalDOF = GlobalNodalDOFsDictionary[nodeID][dofType];
-					if (localDOF > -1 && globalDOF > -1) vOut[localDOF] = vIn[globalDOF];
-				}
-			}
-		}
+		//public void AddLocalVectorToGlobal(Element element, double[] localVector, double[] globalVector)
+		//{
+		//	int pos = 0;
+		//	IList<IList<DOFType>> nodalDofs = element.ElementType.DOFEnumerator.GetDOFTypes(element);
+		//	IList<INode> nodes = element.ElementType.DOFEnumerator.GetNodesForMatrixAssembly(element);
+		//	for (int i = 0; i < nodes.Count; i++)
+		//	{
+		//		foreach (DOFType dofType in nodalDofs[i])
+		//		{
+		//			int dof = NodalDOFsDictionary[nodes[i].ID][dofType];
+		//			if (dof != -1) globalVector[dof] += localVector[pos];
+		//			pos++;
+		//		}
+		//	}
+		//}
 
-		public void SubdomainToGlobalVector(double[] vIn, double[] vOut)
-		{
-			foreach (int nodeID in GlobalNodalDOFsDictionary.Keys)
-			{
-				Dictionary<DOFType, int> dofTypes = NodalDOFsDictionary[nodeID];
-				foreach (DOFType dofType in dofTypes.Keys)
-				{
-					int localDOF = NodalDOFsDictionary[nodeID][dofType];
-					int globalDOF = GlobalNodalDOFsDictionary[nodeID][dofType];
-					if (localDOF > -1 && globalDOF > -1) vOut[globalDOF] += vIn[localDOF];
-				}
-			}
-		}
+		////public void ClearMaterialStresses()
+		////{
+		////    foreach (Element element in elementsDictionary.Values) element.ElementType.ClearMaterialStresses();
+		////}
+
+		////public void SaveMaterialState()
+		////{
+		////    foreach (Element element in elementsDictionary.Values) element.ElementType.SaveMaterialState();
+		////}
+
+		//public void SplitGlobalVectorToSubdomain(double[] vIn, double[] vOut)
+		//{
+		//	foreach (int nodeID in GlobalNodalDOFsDictionary.Keys)
+		//	{
+		//		Dictionary<DOFType, int> dofTypes = NodalDOFsDictionary[nodeID];
+		//		foreach (DOFType dofType in dofTypes.Keys)
+		//		{
+		//			int localDOF = NodalDOFsDictionary[nodeID][dofType];
+		//			int globalDOF = GlobalNodalDOFsDictionary[nodeID][dofType];
+		//			if (localDOF > -1 && globalDOF > -1) vOut[localDOF] = vIn[globalDOF];
+		//		}
+		//	}
+		//}
+
+		//public void SubdomainToGlobalVector(double[] vIn, double[] vOut)
+		//{
+		//	foreach (int nodeID in GlobalNodalDOFsDictionary.Keys)
+		//	{
+		//		Dictionary<DOFType, int> dofTypes = NodalDOFsDictionary[nodeID];
+		//		foreach (DOFType dofType in dofTypes.Keys)
+		//		{
+		//			int localDOF = NodalDOFsDictionary[nodeID][dofType];
+		//			int globalDOF = GlobalNodalDOFsDictionary[nodeID][dofType];
+		//			if (localDOF > -1 && globalDOF > -1) vOut[globalDOF] += vIn[localDOF];
+		//		}
+		//	}
+		//}
 	}
 }

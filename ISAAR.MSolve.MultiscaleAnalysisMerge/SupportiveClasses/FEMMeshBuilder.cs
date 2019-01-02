@@ -403,7 +403,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
 
 
             // perioxh orismou shell elements
-            ShellElasticMaterial material2 = new ShellElasticMaterial()
+            ShellElasticMaterial3D material2 = new ShellElasticMaterial3D()
             {
                 YoungModulus = E_shell,
                 PoissonRatio = ni_shell,
@@ -698,7 +698,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses
 
 
             // perioxh orismou shell elements
-            ShellElasticMaterial material2 = new ShellElasticMaterial()
+            ShellElasticMaterial3D material2 = new ShellElasticMaterial3D()
             {
                 YoungModulus = E_shell,
                 PoissonRatio = ni_shell,

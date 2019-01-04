@@ -245,11 +245,5 @@ ModelManifest.xml
 .fake/
 *.iga
 *.dat
-/ISAAR.MSolve.MultiscaleAnalysis
-/ISAAR.MSolve.MultiscaleAnalysisMerge
-/ISAAR.MSolve.SamplesConsole
+*.vtu
 *.vts
-/ISAAR.MSolve.IGA.Tests/OutputFiles/SquareShellTimes.vtu
-/ISAAR.MSolve.IGA.Tests/OutputFiles/SquareShellParaview.vtu
-/ISAAR.MSolve.IGA.Tests/OutputFiles/ParaviewOutput.vtu
-/ISAAR.MSolve.IGA.Tests/OutputFiles/CantileverShellParaview.vtu

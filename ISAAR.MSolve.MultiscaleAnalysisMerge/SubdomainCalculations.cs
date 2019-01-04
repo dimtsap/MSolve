@@ -522,9 +522,9 @@ namespace ISAAR.MSolve.FEM
                 foreach (DOFType dofType in nodalDOFTypesDictionary[node.ID].Distinct<DOFType>())
                 {
                     int dofID = -1;
-                    foreach (DOFType constraint in node.Constraints) // ean uparxei enas periorismos estw tha bei sto dofsdictionary den tha vrethoun duo
+                    foreach (var constraint in node.Constraints) // ean uparxei enas periorismos estw tha bei sto dofsdictionary den tha vrethoun duo
                     {                                                // mporei na ginei me boundary nodes kai constrained dofs per boundary
-                        if (constraint == dofType)
+                        if (constraint.DOF == dofType)
                         {
                             dofID = 0;
                             break;
@@ -559,10 +559,10 @@ namespace ISAAR.MSolve.FEM
                 double[,] DqNodal = new double[3, 9] { { boundaryNode.X, 0, 0, boundaryNode.Y, 0, 0, boundaryNode.Z,0,0 },
                 {0,boundaryNode.Y,0,0,boundaryNode.Z,0,0,boundaryNode.X,0 }  , {0,0,boundaryNode.Z,0,0,boundaryNode.X,0,0,boundaryNode.Y }};
 
-                foreach (DOFType constraint in boundaryNode.Constraints)
+                foreach (var constraint in boundaryNode.Constraints)
                 {
-                    int DqLine = constrainedNodalDOFsDictionary[boundaryNode.ID][constraint];
-                    int DqnodalLine = dofsOrder[constraint];
+                    int DqLine = constrainedNodalDOFsDictionary[boundaryNode.ID][constraint.DOF];
+                    int DqnodalLine = dofsOrder[constraint.DOF];
 
                     for(int column=0; column<9; column++)
                     {

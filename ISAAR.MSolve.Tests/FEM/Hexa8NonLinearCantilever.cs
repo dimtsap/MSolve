@@ -1,19 +1,17 @@
-﻿using ISAAR.MSolve.Analyzers;
+﻿using System.Collections.Generic;
+using ISAAR.MSolve.Analyzers;
+using ISAAR.MSolve.Discretization;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.FEM.Materials;
-using ISAAR.MSolve.LinearAlgebra.Commons;
 using ISAAR.MSolve.Logging;
-using ISAAR.MSolve.Numerical.LinearAlgebra;//using ISAAR.MSolve.Matrices;
-//using ISAAR.MSolve.PreProcessor;
+using ISAAR.MSolve.Numerical.Commons;
+using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Problems;
-//using ISAAR.MSolve.SamplesConsole;
 using ISAAR.MSolve.Solvers.Interfaces;
 using ISAAR.MSolve.Solvers.Skyline;
-using ISAAR.MSolve.FEM.Interpolation;
-using ISAAR.MSolve.Discretization.Integration.Quadratures;
-using System.Collections.Generic;
 using Xunit;
 
 namespace ISAAR.MSolve.Tests.FEM
@@ -26,11 +24,11 @@ namespace ISAAR.MSolve.Tests.FEM
         private static void RunTest()
         {
             IReadOnlyList<Dictionary<int, double>> expectedDisplacements = GetExpectedDisplacements();
-            IncrementalDisplacementsLog computedDisplacements = SolveModel();
+            TotalDisplacementsPerIterationLog computedDisplacements = SolveModel();
             Assert.True(AreDisplacementsSame(expectedDisplacements, computedDisplacements));
         }
 
-        private static bool AreDisplacementsSame(IReadOnlyList<Dictionary<int, double>> expectedDisplacements, IncrementalDisplacementsLog computedDisplacements)
+        private static bool AreDisplacementsSame(IReadOnlyList<Dictionary<int, double>> expectedDisplacements, TotalDisplacementsPerIterationLog computedDisplacements)
         {
             var comparer = new ValueComparer(1E-13);
             for (int iter = 0; iter < expectedDisplacements.Count; ++iter)
@@ -81,7 +79,7 @@ namespace ISAAR.MSolve.Tests.FEM
             return expectedDisplacements;
         }
 
-        private static IncrementalDisplacementsLog SolveModel()
+        private static TotalDisplacementsPerIterationLog SolveModel()
         {
             VectorExtensions.AssignTotalAffinityCount();
             Model model = new Model();
@@ -106,7 +104,7 @@ namespace ISAAR.MSolve.Tests.FEM
 
             var watchDofs = new Dictionary<int, int[]>();
             watchDofs.Add(subdomainID, new int[5] { 0, 11, 23, 35, 47 });
-            var log1 = new IncrementalDisplacementsLog(watchDofs);
+            var log1 = new TotalDisplacementsPerIterationLog(watchDofs);
             childAnalyzer.IncrementalDisplacementsLog = log1;
 
 
@@ -192,9 +190,9 @@ namespace ISAAR.MSolve.Tests.FEM
             // constraint vashh opou z=-1
             for (int k = 1; k < 5; k++)
             {
-                model.NodesDictionary[k].Constraints.Add(DOFType.X);
-                model.NodesDictionary[k].Constraints.Add(DOFType.Y);
-                model.NodesDictionary[k].Constraints.Add(DOFType.Z);
+                model.NodesDictionary[k].Constraints.Add(new Constraint { DOF = DOFType.X });
+                model.NodesDictionary[k].Constraints.Add(new Constraint { DOF = DOFType.Y });
+                model.NodesDictionary[k].Constraints.Add(new Constraint { DOF = DOFType.Z });
             }
 
             // fortish korufhs

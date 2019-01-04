@@ -13,14 +13,14 @@ namespace ISAAR.MSolve.FEM
     public class EquivalentContributionsAssebler
     {
         private Subdomain subdomain;
-        private Discretization.Providers.ElementStructuralStiffnessProvider elementProvider;
+        private IElementMatrixProvider elementProvider;
         /// <summary>
         /// ELEMENT provider tha perastei profanws o ElementStructuralStiffnessProvider elementProvider = new ElementStructuralStiffnessProvider();
         /// kai subdomain prosoxh sta ID idia me ta linearsystems
         /// </summary>
         /// <param name="subdomain"></param>
         /// <param name="elementProvider"></param>
-        public EquivalentContributionsAssebler(Subdomain subdomain, Discretization.Providers.ElementStructuralStiffnessProvider elementProvider)
+        public EquivalentContributionsAssebler(Subdomain subdomain, IElementMatrixProvider elementProvider)
         {
             this.subdomain = subdomain;
             this.elementProvider = elementProvider;

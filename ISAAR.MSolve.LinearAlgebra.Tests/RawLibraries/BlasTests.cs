@@ -1,10 +1,11 @@
 ﻿using System;
 using IntelMKL.LP64;
 using ISAAR.MSolve.LinearAlgebra.Commons;
-using ISAAR.MSolve.LinearAlgebra.MKL;
+using ISAAR.MSolve.LinearAlgebra.Providers.MKL;
 using ISAAR.MSolve.LinearAlgebra.Tests.TestData;
 using ISAAR.MSolve.LinearAlgebra.Tests.Utilities;
 using Xunit;
+
 
 namespace ISAAR.MSolve.LinearAlgebra.Tests.RawLibraries
 {
@@ -12,13 +13,15 @@ namespace ISAAR.MSolve.LinearAlgebra.Tests.RawLibraries
     /// Tests for Intel MKL library's BLAS functions.
     /// Authors: Serafeim Bakalakos
     /// </summary>
-    public static class BlasTests
+    public static class MklBlasTests
     {
         private static readonly MatrixComparer comparer = new MatrixComparer(1E-13);
 
-        [Fact]
+        [SkippableFact]
         private static void RunComputeNetExample()
         {
+            Skip.IfNot(TestSettings.TestMkl, TestSettings.MessageWhenSkippingMKL);
+
             //Variable typeA is not used and it triggers a warning
 #pragma warning disable CS0219
 
@@ -89,9 +92,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Tests.RawLibraries
             CBlas.Ssymm(layout, side, uplo, m, n, alpha, ref a[0], lda, ref b[0], ldb, beta, ref c[0], ldc);
         }
 
-        [Fact]
+        [SkippableFact]
         private static void TestAxpy()
         {
+            Skip.IfNot(TestSettings.TestMkl, TestSettings.MessageWhenSkippingMKL);
+
             int n = 5;
             double[] a = { 1, 2, 3, 4, 5 };
             double[] b = { 10, 20, 30, 40, 50 };
@@ -104,9 +109,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Tests.RawLibraries
             comparer.AssertEqual(cExpected, cComputed);
         }
 
-        [Fact]
+        [SkippableFact]
         private static void TestDdot()
         {
+            Skip.IfNot(TestSettings.TestMkl, TestSettings.MessageWhenSkippingMKL);
+
             int n = 5;
             double[] a = { 1, 2, 3, 4, 5 };
             double[] b = { 10, 20, 30, 40, 50 };
@@ -115,24 +122,26 @@ namespace ISAAR.MSolve.LinearAlgebra.Tests.RawLibraries
             comparer.AssertEqual(dotExpected, dotComputed);
         }
 
-        [Fact]
+        [SkippableFact]
         private static void TestDgemv()
         {
+            Skip.IfNot(TestSettings.TestMkl, TestSettings.MessageWhenSkippingMKL);
+
             CBLAS_LAYOUT layout = CBLAS_LAYOUT.CblasColMajor;
             CBLAS_TRANSPOSE transA = CBLAS_TRANSPOSE.CblasNoTrans;
             double alpha = 1.0;
             double beta = 0.0;
             int incX = 1;
             int incY = 1;
-            int m = RectangularFullRank10by5.numRows;
-            int n = RectangularFullRank10by5.numCols;
+            int m = RectangularFullRank10by5.NumRows;
+            int n = RectangularFullRank10by5.NumCols;
             int ldA = m;
-            double[] A = Conversions.Array2DToFullColMajor(RectangularFullRank10by5.matrix);
-            double[] X = RectangularFullRank10by5.lhs5;
+            double[] A = Conversions.Array2DToFullColMajor(RectangularFullRank10by5.Matrix);
+            double[] X = RectangularFullRank10by5.Lhs5;
             double[] Y = new double[m];
-            LAPACKE.Dgemv(layout, transA, m, n, alpha, A, ldA, X, incX, beta, Y, incY);
+            LapackePInvokes.Dgemv(layout, transA, m, n, alpha, A, ldA, X, incX, beta, Y, incY);
 
-            comparer.AssertEqual(RectangularFullRank10by5.rhs10, Y);
+            comparer.AssertEqual(RectangularFullRank10by5.Rhs10, Y);
         }
     }
 }

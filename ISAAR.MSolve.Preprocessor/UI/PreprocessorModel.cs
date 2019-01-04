@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ISAAR.MSolve.Discretization;
 
 namespace ISAAR.MSolve.Preprocessor.UI
 {
@@ -171,7 +172,7 @@ namespace ISAAR.MSolve.Preprocessor.UI
         {
             if (signedMagnitude == 0.0)
             {
-                node.Constraints.Add(freedomDegree);
+                node.Constraints.Add(new Constraint() { DOF = freedomDegree, Amount = 0.0 });
             }
             else throw new NotImplementedException("For now only 0 displacements are supported");
         }

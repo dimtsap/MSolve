@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using IntelMKL.LP64;
 using ISAAR.MSolve.LinearAlgebra.Commons;
 using ISAAR.MSolve.LinearAlgebra.Exceptions;
 using ISAAR.MSolve.LinearAlgebra.Factorizations;
 using ISAAR.MSolve.LinearAlgebra.Output.Formatting;
+using ISAAR.MSolve.LinearAlgebra.Providers.Managed;
 using ISAAR.MSolve.LinearAlgebra.Reduction;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
+using static ISAAR.MSolve.LinearAlgebra.LibrarySettings;
 
 //TODO: Also linear combinations with other matrix types may be useful, e.g. Skyline (K) with diagonal (M), but I think 
 //      that for global matrices, this should be done through concrete class to use DoEntrywiseIntoThis methods. 
@@ -23,8 +23,8 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
     public class SkylineMatrix: IMatrix, ISparseMatrix, ISymmetricMatrix
     {
         /// <summary>
-        /// Contains the non zero superdiagonal entries of the matrix in column major order, starting from the diagonal and going
-        /// upwards. Its length is nnz.
+        /// Contains the non-zero entries of the matrix's upper triangle in column major order, starting from the diagonal and 
+        /// going upwards. Its length is nnz.
         /// </summary>
         private double[] values;
 
@@ -50,6 +50,20 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// The number of rows of the matrix.
         /// </summary>
         public int NumRows { get { return NumColumns; } }
+
+        /// <summary>
+        /// The internal array that stores the non-zero entries of the matrix's upper triangle in column major order, 
+        /// starting from the diagonal and going upwards. Its length is equal to the number of non-zero entries. 
+        /// It should only be used for passing the raw array to linear algebra libraries.
+        /// </summary>
+        internal double[] RawValues => values;
+
+        /// <summary>
+        /// The internal array that stores the indices into <see cref="RawValues"/> of the diagonal entries of the matrix. 
+        /// Its length = order + 1, with the last entry being equal to nnz.
+        /// It should only be used for passing the raw array to linear algebra libraries.
+        /// </summary>
+        internal int[] RawDiagOffsets => diagOffsets;
 
         /// <summary>
         /// See <see cref="IIndexable2D.this[int, int]"/>.
@@ -145,7 +159,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.Axpy(IMatrixView, double)"/>.
         /// </summary>
-        public IMatrixView Axpy(IMatrixView otherMatrix, double otherCoefficient)
+        public IMatrix Axpy(IMatrixView otherMatrix, double otherCoefficient)
         {
             if (otherMatrix is SkylineMatrix otherSKY) // In case both matrices have the exact same index arrays
             {
@@ -154,7 +168,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
                     // Do not copy the index arrays, since they are already spread around. TODO: is this a good idea?
                     double[] resultValues = new double[values.Length];
                     Array.Copy(this.values, resultValues, values.Length);
-                    CBlas.Daxpy(values.Length, otherCoefficient, ref otherSKY.values[0], 1, ref resultValues[0], 1);
+                    Blas.Daxpy(values.Length, otherCoefficient, otherSKY.values, 0, 1, resultValues, 0, 1);
                     return new SkylineMatrix(NumColumns, resultValues, this.diagOffsets);
                 }
             }
@@ -182,7 +196,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             //TODO: Perhaps this should be done using mkl_malloc and BLAS copy. 
             double[] resultValues = new double[values.Length];
             Array.Copy(this.values, resultValues, values.Length);
-            CBlas.Daxpy(values.Length, otherCoefficient, ref otherMatrix.values[0], 1, ref resultValues[0], 1);
+            Blas.Daxpy(values.Length, otherCoefficient, otherMatrix.values, 0, 1, resultValues, 0, 1);
             // Do not copy the index arrays, since they are already spread around. TODO: is this a good idea?
             return new SkylineMatrix(NumColumns, resultValues, this.diagOffsets);
         }
@@ -212,7 +226,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         {
             if (HasSameIndexer(otherMatrix)) // no need to check dimensions if the indexing arrays are the same
             {
-                CBlas.Daxpy(values.Length, otherCoefficient, ref otherMatrix.values[0], 1, ref this.values[0], 1);
+                Blas.Daxpy(values.Length, otherCoefficient, otherMatrix.values, 0, 1, this.values, 0, 1);
             }
             else
             {
@@ -236,6 +250,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
                 }
             }
         }
+
+        /// <summary>
+        /// See <see cref="IMatrix.Clear"/>.
+        /// </summary>
+        public void Clear() => Array.Clear(values, 0, values.Length);
 
         /// <summary>
         /// Initializes a new <see cref="SkylineMatrix"/> instance by copying the entries of this <see cref="SkylineMatrix"/>. 
@@ -266,6 +285,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
 
         /// <summary>
         /// Initializes a new <see cref="Matrix"/> instance by copying the entries of this <see cref="SkylineMatrix"/>. 
+        /// Warning: there may not be enough memory.
         /// </summary>
         public Matrix CopyToFullMatrix()
         {
@@ -293,7 +313,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.DoEntrywise(IMatrixView, Func{double, double, double})"/>.
         /// </summary>
-        public IMatrixView DoEntrywise(IMatrixView other, Func<double, double, double> binaryOperation)
+        public IMatrix DoEntrywise(IMatrixView other, Func<double, double, double> binaryOperation)
         {
             if (other is SkylineMatrix otherSKY) // In case both matrices have the exact same index arrays
             {
@@ -371,7 +391,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.DoToAllEntries(Func{double, double})"/>.
         /// </summary>
-        public IMatrixView DoToAllEntries(Func<double, double> unaryOperation)
+        public IMatrix DoToAllEntries(Func<double, double> unaryOperation)
         {
             // Only apply the operation on non zero entries
             double[] newValues = new double[values.Length];
@@ -509,10 +529,50 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             return format;
         }
 
+        //TODO: Copied from Stavroulakis code. Find out what the purpose of this is
+        public void LessenAccuracy(double tolerance)
+        {
+            var valueDictionary = new SortedDictionary<double, List<int>>();
+            for (int i = 0; i < values.Length; i++)
+            {
+                double difference = Double.MaxValue;
+                double targetValue = values[i];
+                int index = 0;
+                int count = 0;
+                foreach (var v in valueDictionary.Keys)
+                {
+                    if (Math.Abs(values[i] - v) < difference)
+                    {
+                        difference = Math.Abs(values[i] - v);
+                        // Minimize error by taking mean value of these values?
+                        targetValue = v;
+                        index = count;
+                    }
+                    count++;
+                }
+                if (difference > tolerance)
+                    valueDictionary.Add(values[i], new List<int>(new[] { i }));
+                else
+                    valueDictionary[targetValue].Add(i);
+            }
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                foreach (var v in valueDictionary.Keys)
+                {
+                    if (Math.Abs(values[i] - v) < tolerance)
+                    {
+                        values[i] = v;
+                        break;
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// See <see cref="IMatrixView.LinearCombination(double, IMatrixView, double)"/>.
         /// </summary>
-        public IMatrixView LinearCombination(double thisCoefficient, IMatrixView otherMatrix, double otherCoefficient)
+        public IMatrix LinearCombination(double thisCoefficient, IMatrixView otherMatrix, double otherCoefficient)
         {
             if (otherMatrix is SkylineMatrix otherSKY) // In case both matrices have the exact same index arrays
             {
@@ -521,7 +581,8 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
                     // Do not copy the index arrays, since they are already spread around. TODO: is this a good idea?
                     double[] resultValues = new double[values.Length];
                     Array.Copy(this.values, resultValues, values.Length);
-                    CBlas.Daxpby(values.Length, otherCoefficient, ref otherSKY.values[0], 1, thisCoefficient, ref this.values[0], 1);
+                    BlasExtensions.Daxpby(values.Length, otherCoefficient, otherSKY.values, 0, 1, 
+                        thisCoefficient, this.values, 0, 1);
                     return new SkylineMatrix(NumColumns, resultValues, this.diagOffsets);
                 }
             }
@@ -556,7 +617,8 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         {
             if (HasSameIndexer(otherMatrix)) // no need to check dimensions if the indexing arrays are the same
             {
-                CBlas.Daxpby(values.Length, otherCoefficient, ref otherMatrix.values[0], 1, thisCoefficient, ref this.values[0], 1);
+                BlasExtensions.Daxpby(values.Length, otherCoefficient, otherMatrix.values, 0, 1, 
+                    thisCoefficient, this.values, 0, 1);
             }
             else
             {
@@ -610,14 +672,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         }
 
         /// <summary>
-        /// See <see cref="IMatrixView.MultiplyRight(IVectorView, bool)"/>.
+        /// See <see cref="IMatrixView.Multiply(IVectorView, bool)"/>.
         /// </summary>
         /// <remarks>
         /// <paramref name="transposeThis"/> does not affect the result, as a <see cref="SkylineMatrix"/> is symmetric.
         /// </remarks>
-        public Vector MultiplyRight(IVectorView vector, bool transposeThis = false)
+        public IVector Multiply(IVectorView vector, bool transposeThis = false)
         {
-            if (vector is Vector casted) return MultiplyRight(casted);
+            if (vector is Vector casted) return Multiply(casted);
             else throw new NotImplementedException();
         }
 
@@ -628,42 +690,52 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         ///     this.<see cref="NumColumns"/>.</param>
         /// <exception cref="NonMatchingDimensionsException">Thrown if the <see cref="IIndexable1D.Length"/> of
         ///     <paramref name="vector"/> is different than the <see cref="NumColumns"/> of this.</exception>
-        public Vector MultiplyRight(Vector vector)
+        public Vector Multiply(Vector vector)
         {
-            int n = vector.Length;
-            Preconditions.CheckMultiplicationDimensions(NumColumns, n);
-            double[] result = new double[n];
-            // A*x = (L+D)*x + U*x
-            // (L+D)*x is easy, since the non zero entries of row i left of the diagonal are stored contiguously in column i and
-            // we can easily take its dot product with the vector.
-            // U*x is trickier, since we cannot access contiguously the non zero entries of row i. Instead think of it as
-            // U*x = linear combination of columns of U (accessed contiguously) with the entries of vector as coefficients. Then 
-            // we can deal with them while we process the next columns (i, n-1]. This way the matrix is only indexed once, but 
-            // not the result vector entry result[i].
-            for (int j = 0; j < NumColumns; ++j)
+            //TODO: this performs redundant dimension checks
+            var result = Vector.CreateZero(NumColumns);
+            MultiplyIntoResult(vector, result);
+            return result;
+        }
+
+        /// <summary>
+        /// See <see cref="IMatrixView.MultiplyIntoResult(IVectorView, IVector, bool)"/>.
+        /// </summary>
+        public void MultiplyIntoResult(IVectorView lhsVector, IVector rhsVector, bool transposeThis = false)
+        {
+            if ((lhsVector is Vector lhsDense) && (rhsVector is Vector rhsDense))
             {
-                int diagOffset = diagOffsets[j];
-                int columnTop = j - diagOffsets[j + 1] + diagOffset + 1;
-                double linearCombinationCoeff = vector[j];
-                // Dot product of the (L+D) part of the row * vector
-                double dotLower = values[diagOffset] * linearCombinationCoeff; // Contribution of diagonal entry: A[j,j] * x[j]
-                for (int i = j - 1; i >= columnTop; --i) // Process the rest of the non zero entries of the column
-                {
-                    double aij = values[diagOffset + j - i]; // Thus the matrix is only indexed once
-
-                    // Contribution of the L part of the row, which is identical to the stored column j.
-                    // Thus A[j,i]=A[i,j] and sum(A[i,j]*x[j]) = sum(A[i,j]*x[i])
-                    dotLower += aij * vector[i];
-
-                    // Contribution of the U part of the column: result += coefficient * column j of U. This will update all rows
-                    // [columnTop, j) of the result vector need to be updated to account for the current column j. 
-                    result[i] += aij * linearCombinationCoeff;
-                }
-                // Column j alters rows [0,j) of the result vector, thus this should be the 1st time result[j] is written.
-                Debug.Assert(result[j] == 0);
-                result[j] = dotLower; // contribution of the (L+D) part of the row. 
+                MultiplyIntoResult(lhsDense, rhsDense);
             }
-            return Vector.CreateFromArray(result, false);
+            else throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Performs the matrix-vector multiplication: <paramref name="rhsVector"/> = this * <paramref name="vector"/>.
+        /// To multiply this * columnVector, set <paramref name="transposeThis"/> to false.
+        /// To multiply rowVector * this, set <paramref name="transposeThis"/> to true.
+        /// The resulting vector will overwrite the entries of <paramref name="rhsVector"/>.
+        /// </summary>
+        /// <param name="lhsVector">
+        /// The vector that will be multiplied by this matrix. It sits on the left hand side of the equation y = A * x.
+        /// Constraints: <paramref name="lhsVector"/>.<see cref="IIndexable1D.Length"/> 
+        /// == this.<see cref="IIndexable2D.NumColumns"/>.
+        /// </param>
+        /// <param name="rhsVector">
+        /// The vector that will be overwritten by the result of the multiplication. It sits on the right hand side of the 
+        /// equation y = A * x. Constraints: <paramref name="lhsVector"/>.<see cref="IIndexable1D.Length"/> 
+        /// == this.<see cref="IIndexable2D.NumRows"/>.
+        /// </param>
+        /// <exception cref="NonMatchingDimensionsException">
+        /// Thrown if the <see cref="IIndexable1D.Length"/> of <paramref name="lhsVector"/> or <paramref name="rhsVector"/> 
+        /// violate the described contraints.
+        /// </exception>
+        public void MultiplyIntoResult(Vector lhsVector, Vector rhsVector)
+        {
+            Preconditions.CheckMultiplicationDimensions(NumColumns, lhsVector.Length);
+            Preconditions.CheckSystemSolutionDimensions(NumRows, rhsVector.Length);
+            ManagedSparseBlasProvider.UniqueInstance.Dskymv(
+                NumColumns, values, diagOffsets, lhsVector.RawData, rhsVector.RawData);
         }
 
         /// <summary>
@@ -681,7 +753,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.Scale(double)"/>.
         /// </summary>
-        IMatrixView IMatrixView.Scale(double scalar) => Scale(scalar);
+        IMatrix IMatrixView.Scale(double scalar) => Scale(scalar);
 
         /// <summary>
         /// Performs the following operation for the non-zero entries (i, j), such that 0 &lt;= j &lt; <see cref="NumColumns"/>,
@@ -694,14 +766,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
             int nnz = this.values.Length;
             double[] resultValues = new double[nnz];
             Array.Copy(this.values, resultValues, nnz); //TODO: perhaps I should also copy the indexers
-            CBlas.Dscal(nnz, scalar, ref resultValues[0], 1);
+            Blas.Dscal(nnz, scalar, resultValues, 0, 1);
             return new SkylineMatrix(this.NumColumns, resultValues, this.diagOffsets);
         }
 
         /// <summary>
         /// See <see cref="IMatrix.ScaleIntoThis(double)"/>.
         /// </summary>
-        public void ScaleIntoThis(double scalar) => CBlas.Dscal(values.Length, scalar, ref values[0], 1);
+        public void ScaleIntoThis(double scalar) => Blas.Dscal(values.Length, scalar, values, 0, 1);
 
         /// <summary>
         /// See <see cref="IMatrix.SetEntryRespectingPattern(int, int, double)"/>.
@@ -711,7 +783,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.Transpose"/>.
         /// </summary>
-        public IMatrixView Transpose() => Copy();
+        public IMatrix Transpose() => Copy();
 
         /// <summary>
         /// Perhaps this should be manually inlined. Testing needed.

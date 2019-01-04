@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.FEM.Entities;
@@ -27,9 +28,9 @@ namespace ISAAR.MSolve.Tests
                 {
                     model.NodesDictionary.Add(nodeID, new Node() { ID = nodeID, X = startX, Y = startY, Z = startZ + 0.25 * (j / 2) });
                 }
-                model.NodesDictionary[nodeID].Constraints.Add(DOFType.X);
-                model.NodesDictionary[nodeID].Constraints.Add(DOFType.Y);
-                model.NodesDictionary[nodeID].Constraints.Add(DOFType.Z);
+                model.NodesDictionary[nodeID].Constraints.Add(new Constraint { DOF = DOFType.X });
+                model.NodesDictionary[nodeID].Constraints.Add(new Constraint { DOF = DOFType.Y });
+                model.NodesDictionary[nodeID].Constraints.Add(new Constraint { DOF = DOFType.Z });
 
                 nodeID++;
             }
@@ -57,7 +58,7 @@ namespace ISAAR.MSolve.Tests
                 YoungModulus = 2.0e7,
                 PoissonRatio = 0.3
             };
-            
+
             for (int i = 0; i < 4; i++)
             {
 

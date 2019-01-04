@@ -168,7 +168,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <param name="vectorRight">The <see cref="Vector3"/> operand on the right. It can be considered as a column 
         ///     vector.</param>
         public static Vector3 operator *(Matrix3by3 matrixLeft, Vector3 vectorRight)
-            => matrixLeft.MultiplyRight(vectorRight, false);
+            => matrixLeft.Multiply(vectorRight, false);
 
         /// <summary>
         /// Performs the matrix-vector multiplication: result = <paramref name="vectorLeft"/> * <paramref name="matrixRight"/>.
@@ -176,13 +176,13 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <param name="vectorLeft">The <see cref="Vector3"/> operand on the left. It can be considered as a row vector.</param>
         /// <param name="matrixRight">The <see cref="Matrix3by3"/> operand on the right.</param>
         public static Vector3 operator *(Vector3 vectorLeft, Matrix3by3 matrixRight)
-            => matrixRight.MultiplyRight(vectorLeft, true);
+            => matrixRight.Multiply(vectorLeft, true);
         #endregion
 
         /// <summary>
         /// See <see cref="IMatrixView.Axpy(IMatrixView, double)"/>.
         /// </summary>
-        public IMatrixView Axpy(IMatrixView otherMatrix, double otherCoefficient)
+        public IMatrix Axpy(IMatrixView otherMatrix, double otherCoefficient)
         {
             if (otherMatrix is Matrix3by3 casted) return Axpy(casted, otherCoefficient);
             else
@@ -293,6 +293,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         }
 
         /// <summary>
+        /// See <see cref="IMatrix.Clear"/>.
+        /// </summary>
+        public void Clear() => Array.Clear(data, 0, 9); //TODO: would it be faster to do it myself?
+
+        /// <summary>
         /// Initializes a new instance of <see cref="Matrix3by3"/> by copying the entries of this instance.
         /// </summary>
         public Matrix3by3 Copy()
@@ -325,7 +330,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// </summary>
         /// <param name="matrix">A matrix with 3 rows and 3 columns.</param>
         /// <param name="binaryOperation">A method that takes 2 arguments and returns 1 result.</param>
-        public IMatrixView DoEntrywise(IMatrixView matrix, Func<double, double, double> binaryOperation)
+        public IMatrix DoEntrywise(IMatrixView matrix, Func<double, double, double> binaryOperation)
         {
             if (matrix is Matrix3by3 casted) return DoEntrywise(casted, binaryOperation);
             else
@@ -421,7 +426,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.DoToAllEntries(Func{double, double})"/>.
         /// </summary>
-        IMatrixView IMatrixView.DoToAllEntries(Func<double, double> unaryOperation) => DoToAllEntries(unaryOperation);
+        IMatrix IMatrixView.DoToAllEntries(Func<double, double> unaryOperation) => DoToAllEntries(unaryOperation);
 
         /// <summary>
         /// Performs the following operation for 0 &lt;= i, j &lt; 3:
@@ -534,7 +539,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.LinearCombination(double, IMatrixView, double)"/>.
         /// </summary>
-        public IMatrixView LinearCombination(double thisCoefficient, IMatrixView otherMatrix, double otherCoefficient)
+        public IMatrix LinearCombination(double thisCoefficient, IMatrixView otherMatrix, double otherCoefficient)
         {
             if (otherMatrix is Matrix3by3 casted) return LinearCombination(thisCoefficient, casted, otherCoefficient);
             else
@@ -723,10 +728,12 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         }
 
         /// <summary>
-        /// See <see cref="IMatrixView.MultiplyRight(IVectorView, bool)"/>.
+        /// See <see cref="IMatrixView.Multiply(IVectorView, bool)"/>.
         /// </summary>
-        public Vector MultiplyRight(IVectorView vector, bool transposeThis = false)
+        public IVector Multiply(IVectorView vector, bool transposeThis = false)
         {
+            if (vector is Vector3 casted) return Multiply(casted, transposeThis);
+
             Preconditions.CheckMultiplicationDimensions(2, vector.Length);
             if (transposeThis)
             {
@@ -755,21 +762,83 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// </summary>
         /// <param name="vector">A vector with 3 entries.</param>
         /// <param name="transposeThis">If true, oper(this) = transpose(this). Otherwise oper(this) = this.</param>
-        public Vector3 MultiplyRight(Vector3 vector, bool transposeThis = false)
+        public Vector3 Multiply(Vector3 vector, bool transposeThis = false)
         {
+            double[] x = vector.InternalData;
             if (transposeThis)
             {
                 return Vector3.Create(
-                    data[0, 0] * vector[0] + data[1, 0] * vector[1] + data[2, 0] * vector[2],
-                    data[0, 1] * vector[0] + data[1, 1] * vector[1] + data[2, 1] * vector[2],
-                    data[0, 2] * vector[0] + data[1, 2] * vector[1] + data[2, 2] * vector[2]);
+                    data[0, 0] * x[0] + data[1, 0] * x[1] + data[2, 0] * x[2],
+                    data[0, 1] * x[0] + data[1, 1] * x[1] + data[2, 1] * x[2],
+                    data[0, 2] * x[0] + data[1, 2] * x[1] + data[2, 2] * x[2]);
             }
             else
             {
                 return Vector3.Create(
-                    data[0, 0] * vector[0] + data[0, 1] * vector[1] + data[0, 2] * vector[2],
-                    data[1, 0] * vector[0] + data[1, 1] * vector[1] + data[1, 2] * vector[2],
-                    data[2, 0] * vector[0] + data[2, 1] * vector[1] + data[2, 2] * vector[2]);
+                    data[0, 0] * x[0] + data[0, 1] * x[1] + data[0, 2] * x[2],
+                    data[1, 0] * x[0] + data[1, 1] * x[1] + data[1, 2] * x[2],
+                    data[2, 0] * x[0] + data[2, 1] * x[1] + data[2, 2] * x[2]);
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="IMatrixView.MultiplyIntoResult(IVectorView, IVector, bool)"/>.
+        /// </summary>
+        public void MultiplyIntoResult(IVectorView lhsVector, IVector rhsVector, bool transposeThis = false)
+        {
+            if ((lhsVector is Vector2 lhsDense) && (rhsVector is Vector2 rhsDense))
+            {
+                MultiplyIntoResult(lhsDense, rhsDense, transposeThis);
+            }
+
+            Preconditions.CheckMultiplicationDimensions(2, lhsVector.Length);
+            Preconditions.CheckSystemSolutionDimensions(2, rhsVector.Length);
+            if (transposeThis)
+            {
+                rhsVector.Set(0, data[0, 0] * lhsVector[0] + data[1, 0] * lhsVector[1] + data[2, 0] * lhsVector[2]);
+                rhsVector.Set(1, data[0, 1] * lhsVector[0] + data[1, 1] * lhsVector[1] + data[2, 1] * lhsVector[2]);
+                rhsVector.Set(2, data[0, 2] * lhsVector[0] + data[1, 2] * lhsVector[1] + data[2, 2] * lhsVector[2]);
+            }
+            else
+            {
+                rhsVector.Set(0, data[0, 0] * lhsVector[0] + data[0, 1] * lhsVector[1] + data[0, 2] * lhsVector[2]);
+                rhsVector.Set(1, data[1, 0] * lhsVector[0] + data[1, 1] * lhsVector[1] + data[1, 2] * lhsVector[2]);
+                rhsVector.Set(2, data[2, 0] * lhsVector[0] + data[2, 1] * lhsVector[1] + data[2, 2] * lhsVector[2]);
+            }
+        }
+
+        /// <summary>
+        /// Performs the matrix-vector multiplication: <paramref name="rhsVector"/> = oper(this) * <paramref name="vector"/>.
+        /// To multiply this * columnVector, set <paramref name="transposeThis"/> to false.
+        /// To multiply rowVector * this, set <paramref name="transposeThis"/> to true.
+        /// The resulting vector will overwrite the entries of <paramref name="rhsVector"/>.
+        /// </summary>
+        /// <param name="lhsVector">
+        /// The vector that will be multiplied by this matrix. It sits on the left hand side of the equation y = oper(A) * x.
+        /// Constraints: <paramref name="lhsVector"/>.<see cref="IIndexable1D.Length"/> 
+        /// == oper(this).<see cref="IIndexable2D.NumColumns"/>.
+        /// </param>
+        /// <param name="rhsVector">
+        /// The vector that will be overwritten by the result of the multiplication. It sits on the right hand side of the 
+        /// equation y = oper(A) * x. Constraints: <paramref name="lhsVector"/>.<see cref="IIndexable1D.Length"/> 
+        /// == oper(this).<see cref="IIndexable2D.NumRows"/>.
+        /// </param>
+        /// <param name="transposeThis">If true, oper(this) = transpose(this). Otherwise oper(this) = this.</param>
+        public void MultiplyIntoResult(Vector3 lhsVector, Vector3 rhsVector, bool transposeThis = false)
+        {
+            double[] x = lhsVector.InternalData;
+            double[] y = rhsVector.InternalData;
+            if (transposeThis)
+            {
+                y[0] = data[0, 0] * x[0] + data[1, 0] * x[1] + data[2, 0] * x[2];
+                y[1] = data[0, 1] * x[0] + data[1, 1] * x[1] + data[2, 1] * x[2];
+                y[2] = data[0, 2] * x[0] + data[1, 2] * x[1] + data[2, 2] * x[2];
+            }
+            else
+            {
+                y[0] = data[0, 0] * x[0] + data[0, 1] * x[1] + data[0, 2] * x[2];
+                y[1] = data[1, 0] * x[0] + data[1, 1] * x[1] + data[1, 2] * x[2];
+                y[2] = data[2, 0] * x[0] + data[2, 1] * x[1] + data[2, 2] * x[2];
             }
         }
 
@@ -789,7 +858,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.Scale(double)"/>.
         /// </summary>
-        IMatrixView IMatrixView.Scale(double scalar) => Scale(scalar);
+        IMatrix IMatrixView.Scale(double scalar) => Scale(scalar);
 
         /// <summary>
         /// Performs the following operation for 0 &lt;= i, j &lt; 2:
@@ -843,7 +912,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <summary>
         /// See <see cref="IMatrixView.Transpose"/>.
         /// </summary>
-        IMatrixView IMatrixView.Transpose() => Transpose();
+        IMatrix IMatrixView.Transpose() => Transpose();
 
         /// <summary>
         /// Initializes a new <see cref="Matrix3by3"/> instance, that is transpose to this: result[i, j] = this[j, i].  

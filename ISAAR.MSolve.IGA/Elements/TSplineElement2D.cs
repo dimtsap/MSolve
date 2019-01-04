@@ -17,31 +17,23 @@ namespace ISAAR.MSolve.IGA.Elements
 {
 	public class TSplineElement2D : Element, IStructuralIsogeometricElement
 	{
-		protected readonly static DOFType[] controlPointDOFTypes = new DOFType[] { DOFType.X, DOFType.Y };
+		protected readonly static DOFType[] controlPointDOFTypes = new DOFType[] {DOFType.X, DOFType.Y};
 		protected DOFType[][] dofTypes;
 		private IReadOnlyList<IContinuumMaterial2D> materialsAtGaussPoints;
 		private DynamicMaterial dynamicProperties;
 
 		protected IElementDOFEnumerator dofEnumerator = new GenericDOFEnumerator();
+
 		public IElementDOFEnumerator DOFEnumerator
 		{
-			get
-			{
-				return dofEnumerator;
-			}
+			get { return dofEnumerator; }
 
-			set
-			{
-				this.dofEnumerator = value;
-			}
+			set { this.dofEnumerator = value; }
 		}
 
 		public ElementDimensions ElementDimensions
 		{
-			get
-			{
-				return ElementDimensions.TwoD;
-			}
+			get { return ElementDimensions.TwoD; }
 		}
 
 		public bool MaterialModified => throw new NotImplementedException();
@@ -50,6 +42,7 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public int DegreeKsi { get; set; }
 		public int DegreeHeta { get; set; }
+
 		public double[] CalculateForces(Element element, double[] localDisplacements, double[] localdDisplacements)
 		{
 			throw new NotImplementedException();
@@ -60,27 +53,32 @@ namespace ISAAR.MSolve.IGA.Elements
 			throw new NotImplementedException();
 		}
 
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, NeumannBoundaryCondition neumann)
+		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge,
+			NeumannBoundaryCondition neumann)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, NeumannBoundaryCondition neumann)
+		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face,
+			NeumannBoundaryCondition neumann)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, PressureBoundaryCondition pressure)
+		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge,
+			PressureBoundaryCondition pressure)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, PressureBoundaryCondition pressure)
+		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face,
+			PressureBoundaryCondition pressure)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Tuple<double[], double[]> CalculateStresses(Element element, double[] localDisplacements, double[] localdDisplacements)
+		public Tuple<double[], double[]> CalculateStresses(Element element, double[] localDisplacements,
+			double[] localdDisplacements)
 		{
 			throw new NotImplementedException();
 		}
@@ -97,12 +95,13 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public IList<IList<DOFType>> GetElementDOFTypes(IElement element)
 		{
-			var nurbsElement = (TSplineElement2D)element;
+			var nurbsElement = (TSplineElement2D) element;
 			dofTypes = new DOFType[nurbsElement.ControlPoints.Count][];
 			for (int i = 0; i < nurbsElement.ControlPoints.Count; i++)
 			{
 				dofTypes[i] = controlPointDOFTypes;
 			}
+
 			return dofTypes;
 		}
 
@@ -118,11 +117,13 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public IMatrix2D StiffnessMatrix(IElement element)
 		{
-			var tsplineElement = (TSplineElement2D)element;
+			var tsplineElement = (TSplineElement2D) element;
 			IList<GaussLegendrePoint3D> gaussPoints = CreateElementGaussPoints(tsplineElement);
-			Matrix2D stiffnessMatrixElement = new Matrix2D(tsplineElement.ControlPointsDictionary.Count * 2, tsplineElement.ControlPointsDictionary.Count * 2);
+			Matrix2D stiffnessMatrixElement = new Matrix2D(tsplineElement.ControlPointsDictionary.Count * 2,
+				tsplineElement.ControlPointsDictionary.Count * 2);
 
-			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(tsplineElement, tsplineElement.ControlPoints);
+			ShapeTSplines2DFromBezierExtraction tsplines =
+				new ShapeTSplines2DFromBezierExtraction(tsplineElement, tsplineElement.ControlPoints);
 
 			for (int j = 0; j < gaussPoints.Count; j++)
 			{
@@ -138,7 +139,8 @@ namespace ISAAR.MSolve.IGA.Elements
 				Matrix2D ElasticityMatrix = materialsAtGaussPoints[j].ConstitutiveMatrix;
 				Matrix2D stiffnessMatrixGaussPoint = B.Transpose() * ElasticityMatrix;
 				stiffnessMatrixGaussPoint = stiffnessMatrixGaussPoint * B;
-				stiffnessMatrixGaussPoint = stiffnessMatrixGaussPoint * (jacdet * gaussPoints[j].WeightFactor * tsplineElement.Patch.Thickness);
+				stiffnessMatrixGaussPoint = stiffnessMatrixGaussPoint *
+				                            (jacdet * gaussPoints[j].WeightFactor * tsplineElement.Patch.Thickness);
 
 				for (int m = 0; m < tsplineElement.ControlPoints.Count * 2; m++)
 				{
@@ -148,6 +150,7 @@ namespace ISAAR.MSolve.IGA.Elements
 					}
 				}
 			}
+
 			return stiffnessMatrixElement;
 		}
 
@@ -208,22 +211,83 @@ namespace ISAAR.MSolve.IGA.Elements
 		{
 			GaussQuadrature gauss = new GaussQuadrature();
 			return gauss.CalculateElementGaussPoints(element.DegreeKsi, element.DegreeHeta, new List<Knot>
-                {
-                    new Knot(){ID=0,Ksi=-1,Heta = -1,Zeta = 0},
-                    new Knot(){ID=1,Ksi=-1,Heta = 1,Zeta = 0},
-                    new Knot(){ID=2,Ksi=1,Heta = -1,Zeta = 0},
-                    new Knot(){ID=3,Ksi=1,Heta = 1,Zeta = 0}
-                });
+			{
+				new Knot() {ID = 0, Ksi = -1, Heta = -1, Zeta = 0},
+				new Knot() {ID = 1, Ksi = -1, Heta = 1, Zeta = 0},
+				new Knot() {ID = 2, Ksi = 1, Heta = -1, Zeta = 0},
+				new Knot() {ID = 3, Ksi = 1, Heta = 1, Zeta = 0}
+			});
 		}
 
-        public void SaveMaterialState()
-        {
-            throw new NotImplementedException();
-        }
+		public void SaveMaterialState()
+		{
+			throw new NotImplementedException();
+		}
 
-        public void ClearMaterialStresses()
-        {
-            throw new NotImplementedException();
-        }
-    }
+		public void ClearMaterialStresses()
+		{
+			throw new NotImplementedException();
+		}
+
+		public double[,] CalculateDisplacementsForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			var tsplineElement = (TSplineElement2D) element;
+			var knotParametricCoordinatesKsi = new Vector(new double[] {-1, 1});
+			var knotParametricCoordinatesHeta = new Vector(new double[] {-1, 1});
+
+			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(tsplineElement,
+				tsplineElement.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
+
+			var knotDisplacements = new double[4, 3];
+			var paraviewKnotRenumbering = new int[] {0, 3, 1, 2};
+			for (int j = 0; j < knotDisplacements.GetLength(0); j++)
+			{
+				for (int i = 0; i < element.ControlPoints.Count; i++)
+				{
+					knotDisplacements[paraviewKnotRenumbering[j], 0] +=
+						tsplines.TSplineValues[i, j] * localDisplacements[i, 0];
+					knotDisplacements[paraviewKnotRenumbering[j], 1] +=
+						tsplines.TSplineValues[i, j] * localDisplacements[i, 1];
+					knotDisplacements[paraviewKnotRenumbering[j], 2] +=
+						tsplines.TSplineValues[i, j] * localDisplacements[i, 2];
+				}
+			}
+
+			return knotDisplacements;
+		}
+
+		public double[,] CalculatePointsForPostProcessing(TSplineElement2D element)
+		{
+			var localCoordinates = new double[4, 2]
+			{
+				{-1, -1},
+				{-1, 1},
+				{1, -1},
+				{1, 1}
+			};
+
+			var knotParametricCoordinatesKsi = new Vector(new double[] {-1, 1});
+			var knotParametricCoordinatesHeta = new Vector(new double[] {-1, 1});
+
+			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(element,
+				element.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
+
+			var knotDisplacements = new double[4, 3];
+			var paraviewKnotRenumbering = new int[] {0, 3, 1, 2};
+			for (int j = 0; j < localCoordinates.GetLength(0); j++)
+			{
+				for (int i = 0; i < element.ControlPoints.Count; i++)
+				{
+					knotDisplacements[paraviewKnotRenumbering[j], 0] +=
+						tsplines.TSplineValues[i, j] * element.ControlPoints[i].X;
+					knotDisplacements[paraviewKnotRenumbering[j], 1] +=
+						tsplines.TSplineValues[i, j] * element.ControlPoints[i].Y;
+					knotDisplacements[paraviewKnotRenumbering[j], 2] +=
+						tsplines.TSplineValues[i, j] * element.ControlPoints[i].Z;
+				}
+			}
+
+			return knotDisplacements;
+		}
+	}
 }

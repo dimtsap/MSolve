@@ -3,6 +3,7 @@ using ISAAR.MSolve.LinearAlgebra.Exceptions;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
+//TODO: These should be Debug only
 namespace ISAAR.MSolve.LinearAlgebra.Commons
 {
     /// <summary>
@@ -151,6 +152,18 @@ namespace ISAAR.MSolve.LinearAlgebra.Commons
                 $"The matrix must be square, but was {matrix.NumRows}-by-{matrix.NumColumns}");
         }
 
+        public static void CheckSquare(int numRows, int numColumns)
+        {
+            if (numRows != numColumns) throw new NonMatchingDimensionsException(
+                $"The matrix must be square, but was {numRows}-by-{numColumns}");
+        }
+
+        public static void CheckSubvectorDimensions(IIndexable1D vector, int startIndex, int subvectorLength)
+        {
+            if (startIndex + vector.Length > vector.Length) throw new NonMatchingDimensionsException(
+                "The entries to access exceed the vector's length");
+        }
+
         public static void CheckSystemSolutionDimensions(IIndexable2D matrix, IVectorView rhsVector)
         {
             if (matrix.NumRows != rhsVector.Length)
@@ -162,11 +175,11 @@ namespace ISAAR.MSolve.LinearAlgebra.Commons
             }
         }
 
-        public static void CheckSystemSolutionDimensions(int matrixRows, int matrixColumns, int rhsVectorLength)
+        public static void CheckSystemSolutionDimensions(int matrixRows, int rhsVectorLength) //TODO: this should be deleted
         {
             if (matrixRows != rhsVectorLength)
             {
-                string message = $"Matrix has dimensions ({matrixRows}x{matrixColumns}), while the right hand side vector has"
+                string message = $"Matrix has {matrixRows} rows, while the right hand side vector has"
                     + $" dimensions ({rhsVectorLength}x1)";
                 throw new NonMatchingDimensionsException(message);
             }

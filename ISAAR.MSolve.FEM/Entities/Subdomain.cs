@@ -345,16 +345,17 @@ namespace ISAAR.MSolve.FEM.Entities
 	        Dictionary<int, Dictionary<DOFType, double>> initialConvergedBoundaryDisplacements, Dictionary<int, Dictionary<DOFType, double>> totalBoundaryDisplacements,
 	        int nIncrement, int totalIncrements)
         {
-	        // prosthiki print
-	        //ekteleseis_counter2 += 1;
-	        //string counter_data = ekteleseis_counter2.ToString();
-	        //string path = string.Format(string2, counter_data);
-	        ////solution.WriteToFile(path);
-	        //double[] solution_data = new double[solution.Length];
-	        //solution.CopyTo(solution_data, 0);
-	        //WriteToFileVector(solution_data, path);
+            //prosthiki print
 
-	        var forces = new VectorOLD(TotalDOFs);
+            ekteleseis_counter2 += 1;
+            string counter_data = ekteleseis_counter2.ToString();
+            string path = string.Format(string2, counter_data);
+            //solution.WriteToFile(path);
+            double[] solution_data = new double[solution.Length];
+            solution.CopyTo(solution_data, 0);
+            WriteToFileVector(solution_data, path);
+
+            var forces = new VectorOLD(TotalDOFs);
 	        foreach (Element element in elementsDictionary.Values)
 	        {
 		        var localSolution = GetLocalVectorFromGlobal(element, solution);
@@ -372,9 +373,9 @@ namespace ISAAR.MSolve.FEM.Entities
 
 		//// prosthiki print
 		//int ekteleseis_counter = 0;
-		//int ekteleseis_counter2 = 0;
+		int ekteleseis_counter2 = 0;
 		//string string1 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_{0}.txt";
-		//string string2 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_micro_{0}.txt";
+		string string2 = @"C:\Users\turbo-x\Desktop\notes_elegxoi\MSOLVE_output_2\U_sunol_micro_{0}.txt";
 
 		//public IVector GetRHSFromSolution(IVectorOLD solution, IVectorOLD dSolution)
 		//{

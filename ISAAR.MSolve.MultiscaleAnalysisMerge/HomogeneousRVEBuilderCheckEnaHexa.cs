@@ -37,6 +37,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             // this.renumbering_vector_path=renumbering_vector_path,
             // this.subdiscr1=subdiscr1
         }
+        public IRVEbuilder Clone(int a) => new HomogeneousRVEBuilderCheckEnaHexa();
 
         public Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes()
         {

@@ -24,12 +24,10 @@ using ISAAR.MSolve.Discretization.Interfaces;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
-    public class GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheral : IdegenerateRVEbuilder
+    public class GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData : IdegenerateRVEbuilder
     {
-        //PROELEFSI GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinearPeripheral
-        //opou uphrxan allages: opws to HomogeneousRVEBuilderCheck27Hexa ginetai-->HomogeneousRVEBuilderCheck27HexaDegenerateAndLinear 
-        // kai ennoeitai kai pio stiff kai gia uliko bond slip
-        // allages: 3 graphene sheets 
+        //PROELEFSI GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPost
+        // allages: input to path id
 
 
 
@@ -37,11 +35,15 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         rveMatrixParameters mp;
         grapheneSheetParameters gp;
         string renumbering_vector_path;
+        int RVE_id;
 
-        public GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheral()
-        { }
-        public IRVEbuilder Clone(int a) => new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheral();       
-            
+        public GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData(int RVE_id)
+        {
+            this.RVE_id = RVE_id;
+        }
+
+        public IRVEbuilder Clone(int a) => new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData(a);
+    
         public Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes()
         {
             return Reference2RVEExample10000withRenumberingwithInput_forMS();
@@ -59,9 +61,13 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             //Tuple<rveMatrixParameters, grapheneSheetParameters> mpgp;
             //rveMatrixParameters mp;
             //grapheneSheetParameters gp;
-            renumbering_vector_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs\REF_new_total_numbering.txt";
-            string Fxk_p_komvoi_rve_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs\Fxk_p_komvoi_rve.txt";
-            string o_xsunol_input_path_gen = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs\o_xsunol_gs_{0}.txt";
+            var rve_id_data = RVE_id.ToString();
+            renumbering_vector_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_{0}\REF_new_total_numbering.txt";
+            renumbering_vector_path = string.Format(renumbering_vector_path, rve_id_data);
+            string Fxk_p_komvoi_rve_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_{0}\Fxk_p_komvoi_rve.txt";
+            Fxk_p_komvoi_rve_path = string.Format(Fxk_p_komvoi_rve_path, rve_id_data);
+            string o_xsunol_input_path_gen = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_{0}\o_xsunol_gs_{0}.txt";
+            o_xsunol_input_path_gen = string.Format(o_xsunol_input_path_gen, rve_id_data);
             int subdiscr1 = 2;
             int discr1 = 4;
             // int discr2 dn xrhsimopoieitai
@@ -85,7 +91,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
             int hexaElementsNumber = model.ElementsDictionary.Count();
 
-            IEnumerable<Element> hostGroup = model.ElementsDictionary.Where(x => (x.Key < hexaElementsNumber + 1)).Select(kv => kv.Value);
+            //IEnumerable<Element> hostGroup = model.ElementsDictionary.Where(x => (x.Key < hexaElementsNumber + 1)).Select(kv => kv.Value);
             List<int> EmbeddedElementsIDs = new List<int>();
             int element_counter_after_Adding_sheet;
             element_counter_after_Adding_sheet = hexaElementsNumber; // initial value before adding first graphene sheet
@@ -97,8 +103,6 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
                 string ox_sunol_input_path = string.Format(o_xsunol_input_path_gen, file_no);
                 FEMMeshBuilder.AddGrapheneSheet_with_o_x_Input_withRenumberingBondSlip(model, gp, ekk_xyz[j], model_o_x_parameteroi[j], renumbering_vector_path, ox_sunol_input_path);
                 shellElementsNumber = (model.ElementsDictionary.Count() - element_counter_after_Adding_sheet) / 3; //tha xrhsimefsei
-                //embdeddedGroup_adittion= model.ElementsDictionary.Where(x => (x.Key >= shellElementsNumber + element_counter_after_Adding_sheet + 1)).Select(kv => kv.Value);
-                //embdeddedGroup.Concat(embdeddedGroup_adittion);
                 for (int k = shellElementsNumber + element_counter_after_Adding_sheet + 1; k < model.ElementsDictionary.Count() + 1; k++)
                 {
                     EmbeddedElementsIDs.Add(model.ElementsDictionary[k].ID);
@@ -117,7 +121,19 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
             int[] EmbElementsIds = EmbeddedElementsIDs.ToArray();
             IEnumerable<Element> embdeddedGroup = model.ElementsDictionary.Where(x => (Array.IndexOf(EmbElementsIds, x.Key) > -1)).Select(kv => kv.Value); // dld einai null afth th stigmh
-            var embeddedGrouping = new EmbeddedCohesiveGrouping(model, hostGroup, embdeddedGroup);
+            //var embeddedGrouping = new EmbeddedCohesiveGrouping(model, hostGroup, embdeddedGroup);
+
+            //var CohesiveGroupings = new EmbeddedCohesiveGrouping[EmbElementsIds.GetLength(0)];
+
+            var hostSubGroups = new Dictionary<int, IEnumerable<Element>>();
+            for (int i1 = 0; i1 < EmbElementsIds.GetLength(0); i1++)
+            {
+                hostSubGroups.Add(EmbElementsIds[i1], FEMMeshBuilder.GetHostGroupForCohesiveElement(model.ElementsDictionary[EmbElementsIds[i1]], mp, model, renumbering_vector_path));
+                //var embeddedGroup_i1 = new List<Element>(1) { model.ElementsDictionary[EmbElementsIds[i1]] };
+                //CohesiveGroupings[i1] = new EmbeddedCohesiveGrouping(model, hostGroup_i1, embeddedGroup_i1);
+            }
+
+            var CohesiveGroupping = new EmbeddedCohesiveSubGrouping(model, hostSubGroups, embdeddedGroup);
 
             return new Tuple<Model, Dictionary<int, Node>,double>(model, boundaryNodes,volume);
 
@@ -127,7 +143,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         {
             return FEMMeshBuilder.GetConstraintsOfDegenerateRVEForNonSingularStiffnessMatrix_withRenumbering(model, mp.hexa1, mp.hexa2, mp.hexa3, renumbering_vector_path);
             //TODO:  Pithanws na epistrefetai apo GetModelAndBoundaryNodes ... AndConstraints.
-        }        
+        }
 
     }
 }

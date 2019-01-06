@@ -9,5 +9,6 @@ namespace ISAAR.MSolve.MultiscaleAnalysis.Interfaces
     public interface IRVEbuilder
     {
         Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes();
+        IRVEbuilder Clone(int a);
     }
 }

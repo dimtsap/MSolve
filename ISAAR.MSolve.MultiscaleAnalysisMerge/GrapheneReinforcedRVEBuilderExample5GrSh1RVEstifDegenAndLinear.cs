@@ -38,6 +38,8 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         public GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinear()
         { }
 
+        public IRVEbuilder Clone(int a) => new GrapheneReinforcedRVEBuilderExample5GrSh1RVEstifDegenAndLinear();
+
         public Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes()
         {
             return Reference2RVEExample10000withRenumberingwithInput_forMS();

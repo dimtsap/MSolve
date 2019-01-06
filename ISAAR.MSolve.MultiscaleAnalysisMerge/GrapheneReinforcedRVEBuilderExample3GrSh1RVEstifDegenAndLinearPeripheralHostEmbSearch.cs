@@ -38,6 +38,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
         public GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostEmbSearch()
         { }
+        public IRVEbuilder Clone(int a) => new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostEmbSearch();
 
         public Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes()
         {

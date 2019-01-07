@@ -12,6 +12,7 @@ using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.MultiscaleAnalysis.SupportiveClasses;
+using ISAAR.MSolve.MultiscaleAnalysisMerge;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers.Direct;
@@ -316,23 +317,22 @@ namespace ISAAR.MSolve.IGA.Tests
 			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
 			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
-			//var thickness = 1.0;
+            //var thickness = 1.0;
+            //modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.LinearMaterial,new ShellElasticMaterial2D
+            //{
+            //	PoissonRatio = 0.3,
+            //	YoungModulus = 1e5,
+            //}, thickness);
 
-			//modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.LinearMaterial,new ShellElasticMaterial2D
-			//{
-			//	PoissonRatio = 0.3,
-			//	YoungModulus = 1e5,
-			//}, thickness);
-			modelReader.CreateTSplineShellsModelFromFile();
+            modelReader.CreateTSplineShellsModelFromFile();
+            model.PatchesDictionary[0].Material = new ElasticMaterial2D(StressState2D.PlaneStress)
+            {
+                PoissonRatio = 0.3,
+                YoungModulus = 10000 //PROSOXH: na antikatastathei me to kanoniko material
+            };
+            model.PatchesDictionary[0].Thickness = 1;
 
-			model.PatchesDictionary[0].Material = new ElasticMaterial2D(StressState2D.PlaneStress)
-			{
-				PoissonRatio = 0.3,
-				YoungModulus = 10000
-			};
-			model.PatchesDictionary[0].Thickness = 1;
-
-			for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 100; i++)
 			{
 				var id = model.ControlPoints[i].ID;
 				model.ControlPointsDictionary[id].Constrains.Add(new Constraint(){DOF = DOFType.X});
@@ -380,14 +380,24 @@ namespace ISAAR.MSolve.IGA.Tests
 			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
 			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
-			var thickness = 1.0;
-			
-			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial,new ShellElasticMaterial2D()
-			{
-				PoissonRatio = 0.3,
-				YoungModulus = 10000
-			}, thickness);
-			
+            var runMs = false;
+
+            if (runMs)
+            {
+                IdegenerateRVEbuilder RveBuilder3 = new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData(1);
+                var BasicMaterial = new Shell2dRVEMaterialHost(2, 2, 0, RveBuilder3);
+                var thickness = 1.0;
+                modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, BasicMaterial, thickness);
+            }
+            else
+            {
+                var thickness = 1.0;
+                modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
+                {
+                    PoissonRatio = 0.3,
+                    YoungModulus = 10000
+                }, thickness);
+            }
 
 			for (int i = 0; i < 100; i++)
 			{

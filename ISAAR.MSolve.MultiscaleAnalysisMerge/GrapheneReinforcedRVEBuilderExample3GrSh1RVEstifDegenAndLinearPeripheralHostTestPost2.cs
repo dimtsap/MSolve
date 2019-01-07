@@ -24,10 +24,10 @@ using ISAAR.MSolve.Discretization.Interfaces;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
-    public class GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData : IdegenerateRVEbuilder
+    public class GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPost2 : IdegenerateRVEbuilder
     {
-        //PROELEFSI GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPost
-        // allages: input to path id
+        //PROELEFSI GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHost
+        // allages: path gia ta 3 graphene sheets 
 
 
 
@@ -35,15 +35,11 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         rveMatrixParameters mp;
         grapheneSheetParameters gp;
         string renumbering_vector_path;
-        int RVE_id;
 
-        public GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData(int RVE_id)
-        {
-            this.RVE_id = RVE_id;
-        }
+        public GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPost2()
+        { }
+        public IRVEbuilder Clone(int a) => new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPost2();
 
-        public IRVEbuilder Clone(int a) => new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData(a);
-    
         public Tuple<Model, Dictionary<int, Node>,double> GetModelAndBoundaryNodes()
         {
             return Reference2RVEExample10000withRenumberingwithInput_forMS();
@@ -61,14 +57,9 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             //Tuple<rveMatrixParameters, grapheneSheetParameters> mpgp;
             //rveMatrixParameters mp;
             //grapheneSheetParameters gp;
-            var rve_id_data = RVE_id.ToString();
-            renumbering_vector_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_{0}\REF_new_total_numbering.txt";
-            renumbering_vector_path = string.Format(renumbering_vector_path, rve_id_data);
-            string Fxk_p_komvoi_rve_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_{0}\Fxk_p_komvoi_rve.txt";
-            Fxk_p_komvoi_rve_path = string.Format(Fxk_p_komvoi_rve_path, rve_id_data);
-            string o_xsunol_input_path_gen = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_{0}\o_xsunol_gs_";
-            o_xsunol_input_path_gen = string.Format(o_xsunol_input_path_gen, rve_id_data);
-            o_xsunol_input_path_gen = o_xsunol_input_path_gen + "{0}.txt";
+            renumbering_vector_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_2\REF_new_total_numbering.txt";
+            string Fxk_p_komvoi_rve_path = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_2\Fxk_p_komvoi_rve.txt";
+            string o_xsunol_input_path_gen = @"C:\Users\turbo-x\Desktop\notes_elegxoi\REFERENCE_kanonikh_gewmetria_fe2_post\REF2_10__000_renu_new_multiple_algorithms_check_develop_gia_fe2_3grsh_4182dofs_multiple\RVE_database\rve_no_2\o_xsunol_gs_{0}.txt";
             int subdiscr1 = 2;
             int discr1 = 4;
             // int discr2 dn xrhsimopoieitai

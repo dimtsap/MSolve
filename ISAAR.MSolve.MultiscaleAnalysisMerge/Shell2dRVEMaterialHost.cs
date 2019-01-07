@@ -33,12 +33,13 @@ namespace ISAAR.MSolve.MultiscaleAnalysisMerge
 
         private Dictionary<int, IShellMaterial> coreMaterials;
 
-        public Shell2dRVEMaterialHost(int rveDatabaseSize, int gpsPerRve, IdegenerateRVEbuilder rVEbuilder)
+        public Shell2dRVEMaterialHost(int rveDatabaseSize, int gpsPerRve, int gpCounter, IdegenerateRVEbuilder rVEbuilder)
         {
             this.rveDatabaseSize = rveDatabaseSize;
             this.gpsPerRve = gpsPerRve;
-            this.gpCounter = 0;
-            coreMaterials = new Dictionary<int, IShellMaterial>();            
+            this.gpCounter = gpCounter;
+            coreMaterials = new Dictionary<int, IShellMaterial>();
+            this.rveBuilderToClone = rVEbuilder;
         }
 
         private Shell2dRVEMaterialHost(IShellMaterial coreMaterial)
@@ -50,12 +51,12 @@ namespace ISAAR.MSolve.MultiscaleAnalysisMerge
         {
             gpCounter += 1;
 
-            if (gpCounter/ (rveDatabaseSize*gpsPerRve)==1)
+            if ((gpCounter/ (rveDatabaseSize*gpsPerRve)==1)&&(gpCounter% (rveDatabaseSize * gpsPerRve)==1))
             {
                 gpCounter += -(rveDatabaseSize * gpsPerRve);
             }
 
-            int rve_id = (gpCounter / gpsPerRve) + 1;
+            int rve_id = ((gpCounter-1) / gpsPerRve) + 1;
 
             if(!coreMaterials.ContainsKey(rve_id))
             {

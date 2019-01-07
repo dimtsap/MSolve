@@ -101,7 +101,7 @@ namespace ISAAR.MSolve.MultiscaleAnalysisMerge
             auxMatrix1[0, 1] = surfaceBasisVector1.DotProduct(surfaceBasisVector2);
             auxMatrix1[1, 0] = surfaceBasisVector2.DotProduct(surfaceBasisVector1);
             auxMatrix1[1, 1] = surfaceBasisVector2.DotProduct(surfaceBasisVector2);
-            (Matrix2D inverse, double det) = auxMatrix1.Invert2x2AndDeterminant(); //inverse: contravariant metric coefficients g_ab (ekthetis ta a,b)
+            (Matrix2D inverse, double det) = auxMatrix1.Invert2x2AndDeterminant(1e-20); //inverse: contravariant metric coefficients g_ab (ekthetis ta a,b)
 
             //Contravariant base vectors
             double[][] G_i = new double[2][];

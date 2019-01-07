@@ -8,6 +8,7 @@ using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Readers;
+using ISAAR.MSolve.LinearAlgebra;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
@@ -371,16 +372,17 @@ namespace ISAAR.MSolve.IGA.Tests
 			paraview.CreateParaviewFile();
 		}
 
-		[Fact]
+		[Fact] //commented out: requires mkl and suitesparse can't be test
 		public void SimpleHoodBenchmarkMKL()
 		{
+            //LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
 			VectorExtensions.AssignTotalAffinityCount();
 			Model model = new Model();
 			var filename = "attempt2";
 			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
 			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
-            var runMs = false;
+            var runMs = true;
 
             if (runMs)
             {
@@ -433,8 +435,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 
-			//var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-			//paraview.CreateParaviewFile();
-		}
+            var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
+            paraview.CreateParaviewFile();
+        }
 	}
 }

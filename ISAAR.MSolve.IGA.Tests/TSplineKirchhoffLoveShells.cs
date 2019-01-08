@@ -383,6 +383,7 @@ namespace ISAAR.MSolve.IGA.Tests
 			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
             var runMs = true;
+            var transformationA = false;
 
             if (runMs)
             {
@@ -393,12 +394,24 @@ namespace ISAAR.MSolve.IGA.Tests
             }
             else
             {
-                var thickness = 1.0;
-                modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
+                if (transformationA)
                 {
-                    PoissonRatio = 0.3,
-                    YoungModulus = 10000
-                }, thickness);
+                    var thickness = 1.0;
+                    modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
+                    {
+                        PoissonRatio = 0.4,
+                        YoungModulus = 3.5
+                    }, thickness);
+                }
+                else
+                {
+                    var thickness = 1.0;
+                    modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2Dtransformationb()
+                    {
+                        PoissonRatio = 0.4,
+                        YoungModulus = 3.5
+                    }, thickness);
+                }
             }
 
 			for (int i = 0; i < 100; i++)
@@ -437,6 +450,9 @@ namespace ISAAR.MSolve.IGA.Tests
 
             var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
             paraview.CreateParaviewFile();
+
+            double[] solutiondata =solver.LinearSystems[0].Solution.CopyToArray();
+            PrintUtilities.WriteToFileVector(new double[1] { new Vector(solutiondata).Norm }, $"..\\..\\..\\OutputFiles\\{filename}SolutionNorm.txt");
         }
 	}
 }

@@ -525,7 +525,10 @@ namespace ISAAR.MSolve.IGA.Tests
                 var solverBuilder = new SuiteSparseSolver.Builder();
                 solverBuilder.DofOrderer = new DofOrderer(
                     new NodeMajorDofOrderingStrategy(), AmdReordering.CreateWithSuiteSparseAmd());
-                ISolver_v2 solver = solverBuilder.BuildSolver(model);
+                SuiteSparseSolver solver = solverBuilder.BuildSolver(model);
+
+                //var solverBuilder = new SkylineSolver.Builder();
+                //SkylineSolver solver = solverBuilder2.BuildSolver(model);
 
                 // Structural problem provider
                 var provider = new ProblemStructural_v2(model, solver);
@@ -551,7 +554,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 model = null;
                 modelReader = null;
                 solverBuilder = null;
-                solver = null;
+                solver.Dispose();
                 provider = null; childAnalyzer = null; parentAnalyzer = null; paraview = null; solutiondata = null;
                 #endregion
             }

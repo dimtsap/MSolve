@@ -460,8 +460,8 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var runMs = true;
             IdegenerateRVEbuilder RveBuilder3 = new GrapheneReinforcedRVEBuilderExample3GrSh1RVEstifDegenAndLinearPeripheralHostTestPostData(1);
-            var BasicMaterial = new Shell2dRVEMaterialHost(1, 2, 0, RveBuilder3);
-            int totalsimulations = 2;
+            var BasicMaterial = new Shell2dRVEMaterialHost(50, 2, 0, RveBuilder3);
+            int totalsimulations = 3;
 
             #region Genika settings
             //LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
@@ -479,14 +479,14 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 if (runMs)
                 {
-                    var thickness = 1.0;
+                    var thickness = 0.015;
                     modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, BasicMaterial, thickness);
                 }
                 else
                 {
                     if (transformationA)
                     {
-                        var thickness = 1.0;
+                        var thickness = 0.015;
                         modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
                         {
                             PoissonRatio = 0.4,
@@ -495,7 +495,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     }
                     else
                     {
-                        var thickness = 1.0;
+                        var thickness = 0.015;
                         modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2Dtransformationb()
                         {
                             PoissonRatio = 0.4,
@@ -517,7 +517,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     var id = model.ControlPoints[i].ID;
                     model.Loads.Add(new Load()
                     {
-                        Amount = 100,
+                        Amount = 1,
                         ControlPoint = model.ControlPointsDictionary[id],
                         DOF = DOFType.Z
                     });
@@ -545,6 +545,15 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 double[] solutiondata = solver.LinearSystems[0].Solution.CopyToArray();
                 PrintUtilities.WriteToFileVector(new double[1] { new Vector(solutiondata).Norm }, $"..\\..\\..\\OutputFiles\\{outputString}SolutionNorm.txt");
+
+                #region empty data
+                model.Clear();
+                model = null;
+                modelReader = null;
+                solverBuilder = null;
+                solver = null;
+                provider = null; childAnalyzer = null; parentAnalyzer = null; paraview = null; solutiondata = null;
+                #endregion
             }
         }
 

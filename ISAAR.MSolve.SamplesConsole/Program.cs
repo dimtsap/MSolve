@@ -170,8 +170,9 @@ namespace ISAAR.MSolve.SamplesConsole
             //SeparateCodeCheckingClass.Check05h2StressIntegration();
             //SeparateCodeCheckingClass.Check05h3StressIntegration();
             //SeparateCodeCheckingClass.Check05h4StressIntegration();
-            SeparateCodeCheckingClass.Check05h4SharedRves();
+            //SeparateCodeCheckingClass.Check05h4SharedRves();
             //SeparateCodeCheckingClass.Check05h3ConstiOnlyStressIntegration();
+            SeparateCodeCheckingClass.CheckRandomIntCreation();
         }
     }
 }

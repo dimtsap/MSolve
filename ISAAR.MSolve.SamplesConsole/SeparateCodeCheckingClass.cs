@@ -1106,6 +1106,20 @@ namespace ISAAR.MSolve.SamplesConsole
             int ch02 = ch01.Capacity;
         }
 
+        public static void CheckRandomIntCreation()
+        {
+            Random rnd1 = new Random();
+            int ch01 = rnd1.Next(1, 13); // creates a number between 1 and 12
+
+            Random rnd2 = new Random();
+            int ch02 = rnd2.Next(1, 13); // creates a number between 1 and 12
+
+            int ch03 = rnd2.Next(1, 2); // creates a number between 1 and 12
+
+            int ch04 = rnd2.Next(1, 13); // creates a number between 1 and 12
+
+        }
+
         public static void CheckStressStrainBonSlipMaterial()
         {
             VectorExtensions.AssignTotalAffinityCount();

@@ -263,7 +263,34 @@ namespace ISAAR.MSolve.IGA.Elements
 			}
 		}
 
-		public void ClearMaterialStresses()
+        public Dictionary<GaussLegendrePoint3D, double[]> GetStressesAtLowerSurfaceForLogging()
+        {
+            Dictionary<GaussLegendrePoint3D, double[]> StressesAtLowerSurfaceGpS = new Dictionary<GaussLegendrePoint3D, double[]>();
+
+            for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)
+            {
+                double[] lowerSurfaceStresses = materialsAtThicknessGP[materialsAtThicknessGP.Keys.ToList()[j]].ElementAt(0).Value.Stresses;
+                StressesAtLowerSurfaceGpS.Add(materialsAtThicknessGP.Keys.ToList()[j], lowerSurfaceStresses);
+            }
+
+            return StressesAtLowerSurfaceGpS;
+        }
+
+        public Dictionary<GaussLegendrePoint3D, double[]> GetStressesAtMidSurfaceForLogging()
+        {
+            Dictionary<GaussLegendrePoint3D, double[]> StressesAtLowerSurfaceGpS = new Dictionary<GaussLegendrePoint3D, double[]>();
+
+            for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)
+            {
+                double[] lowerSurfaceStresses = materialsAtThicknessGP[materialsAtThicknessGP.Keys.ToList()[j]].ElementAt(1).Value.Stresses;
+                StressesAtLowerSurfaceGpS.Add(materialsAtThicknessGP.Keys.ToList()[j], lowerSurfaceStresses);
+            }
+
+            return StressesAtLowerSurfaceGpS;
+        }
+
+
+        public void ClearMaterialStresses()
 		{
 			//TODO: the next throws an exception. Investigate. Possible changes in Analyzers may be the cause.
 			//for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)

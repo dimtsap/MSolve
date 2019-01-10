@@ -17,7 +17,7 @@ namespace ISAAR.MSolve.Materials
 
 		private bool modified; 
 		private double[,] CartesianConstitutiveMatrix;
-		private double[] CartesianStresses = new double[6];
+		private double[] CartesianStresses = new double[3];
 
 		object ICloneable.Clone() => Clone();
 

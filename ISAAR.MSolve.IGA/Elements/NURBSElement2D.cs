@@ -362,5 +362,10 @@ namespace ISAAR.MSolve.IGA.Elements
 		{
 			throw new NotImplementedException();
 		}
+
+		public (double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

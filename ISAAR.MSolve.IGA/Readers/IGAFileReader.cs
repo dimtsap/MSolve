@@ -220,5 +220,7 @@ namespace ISAAR.MSolve.IGA.Readers
 			Model.ElementsDictionary.Add(elementIDCounter++, element);
 			Model.PatchesDictionary[0].Elements.Add(element);
 		}
+
+
 	}
 }

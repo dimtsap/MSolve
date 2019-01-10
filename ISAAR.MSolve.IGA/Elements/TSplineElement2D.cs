@@ -136,7 +136,7 @@ namespace ISAAR.MSolve.IGA.Elements
 				var B2 = CalculateDeformationMatrix2(tsplineElement, tsplines, j);
 
 				Matrix2D B = B1 * B2;
-				Matrix2D ElasticityMatrix = materialsAtGaussPoints[j].ConstitutiveMatrix;
+				Matrix2D ElasticityMatrix = ((IContinuumMaterial2D)tsplineElement.Patch.Material).ConstitutiveMatrix;
 				Matrix2D stiffnessMatrixGaussPoint = B.Transpose() * ElasticityMatrix;
 				stiffnessMatrixGaussPoint = stiffnessMatrixGaussPoint * B;
 				stiffnessMatrixGaussPoint = stiffnessMatrixGaussPoint *
@@ -238,7 +238,7 @@ namespace ISAAR.MSolve.IGA.Elements
 			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(tsplineElement,
 				tsplineElement.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
 
-			var knotDisplacements = new double[4, 3];
+			var knotDisplacements = new double[4, 2];
 			var paraviewKnotRenumbering = new int[] {0, 3, 1, 2};
 			for (int j = 0; j < knotDisplacements.GetLength(0); j++)
 			{
@@ -248,8 +248,6 @@ namespace ISAAR.MSolve.IGA.Elements
 						tsplines.TSplineValues[i, j] * localDisplacements[i, 0];
 					knotDisplacements[paraviewKnotRenumbering[j], 1] +=
 						tsplines.TSplineValues[i, j] * localDisplacements[i, 1];
-					knotDisplacements[paraviewKnotRenumbering[j], 2] +=
-						tsplines.TSplineValues[i, j] * localDisplacements[i, 2];
 				}
 			}
 
@@ -288,6 +286,49 @@ namespace ISAAR.MSolve.IGA.Elements
 			}
 
 			return knotDisplacements;
+		}
+
+		public (double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			var tsplineElement = (TSplineElement2D)element;
+			var knotParametricCoordinatesKsi = new Vector(new double[] { -1, 1 });
+			var knotParametricCoordinatesHeta = new Vector(new double[] { -1, 1 });
+
+			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(tsplineElement, tsplineElement.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
+
+			var knotStresses = new double[4, 3];
+			var knotStrains = new double[4, 3];
+
+			for (int j = 0; j < knotStresses.GetLength(0); j++)
+			{
+				var jacobianMatrix = CalculateJacobianMatrix(tsplineElement, tsplines, j);
+
+				var jacdet = CalculateJacobianDeterminant(jacobianMatrix);
+
+				var B1 = CalculateDeformationMatrix1(jacobianMatrix, jacdet);
+
+				var B2 = CalculateDeformationMatrix2(tsplineElement, tsplines, j);
+
+				Matrix2D B = B1 * B2;
+				Matrix2D ElasticityMatrix = ((IContinuumMaterial2D)tsplineElement.Patch.Material).ConstitutiveMatrix;
+
+				var ldisp = new double[localDisplacements.Length];
+				var index = 0;
+				for (int i = 0; i < localDisplacements.GetLength(0); i++)
+				for (int k = 0; k < localDisplacements.GetLength(1); k++)
+					ldisp[index++] = localDisplacements[i, k];
+
+				var strain = B * new Vector(ldisp);
+				var stresses = ElasticityMatrix * strain;
+				
+				for (int i = 0; i < stresses.Length; i++)
+				{
+					knotStrains[j, i] = strain[i];
+					knotStresses[j, i] = stresses[i];
+				}
+			}
+			return (knotStrains, knotStresses);
+
 		}
 	}
 }

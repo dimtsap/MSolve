@@ -71,6 +71,8 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 			var elementConnectivity = CreateTsplineConnectivity();
 
 			var pointDisplacements = new double[nodes.GetLength(0), 3];
+			var pointStrains = new double[nodes.GetLength(0), 3];
+			var pointStresses = new double[nodes.GetLength(0), 3];
 			foreach (var element in _model.Elements)
 			{
 				var localDisplacements = new double[element.ControlPoints.Count, 3];
@@ -91,19 +93,31 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 							: _solution[_model.GlobalDofOrdering.GlobalFreeDofs[controlPoint, DOFType.Z]];
 				}
 				var elementKnotDisplacements = element.ElementType.CalculateDisplacementsForPostProcessing(element, localDisplacements);
+				var (knotStrains, knotStresses) = element.ElementType.CalculateStressesForPostProcessing(
+					element, localDisplacements);
 				for (int i = 0; i < elementConnectivity.GetLength(1); i++)
 				{
 					var knotConnectivity = elementConnectivity[element.ID, i];
 					pointDisplacements[knotConnectivity, 0] = elementKnotDisplacements[i, 0];
 					pointDisplacements[knotConnectivity, 1] = elementKnotDisplacements[i, 1];
 					pointDisplacements[knotConnectivity, 2] = elementKnotDisplacements[i, 2];
+
+					pointStrains[knotConnectivity, 0] = knotStrains[i, 0];
+					pointStrains[knotConnectivity, 1] = knotStrains[i, 1];
+					pointStrains[knotConnectivity, 2] = knotStrains[i, 2];
+
+					pointStresses[knotConnectivity, 0] = knotStresses[i, 0];
+					pointStresses[knotConnectivity, 1] = knotStresses[i, 1];
+					pointStresses[knotConnectivity, 2] = knotStresses[i, 2];
 				}
+
+
 			}
 
-			WriteTSplineShellsFile(nodes, elementConnectivity, pointDisplacements);
+			WriteTSplineShellsFile(nodes, elementConnectivity, pointDisplacements, pointStrains, pointStresses);
 		}
 
-		public void WriteTSplineShellsFile(double[,] nodeCoordinates, int[,] elementConnectivity, double[,] displacements)
+		public void WriteTSplineShellsFile(double[,] nodeCoordinates, int[,] elementConnectivity, double[,] displacements, double[,] strains, double[,] stresses)
 		{
 			var numberOfPoints = nodeCoordinates.GetLength(0);
 			var numberOfCells = elementConnectivity.GetLength(0);
@@ -129,6 +143,21 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 				
 
 				outputFile.WriteLine("</DataArray>");
+				outputFile.WriteLine($"<DataArray type=\"Float32\" Name=\"Strain\" format=\"ascii\" NumberOfComponents=\"3\">");
+
+				for (int i = 0; i < numberOfPoints; i++)
+					outputFile.WriteLine($"{strains[i, 0]} {strains[i, 1]} {strains[i, 2]}");
+
+
+				outputFile.WriteLine("</DataArray>");
+				outputFile.WriteLine($"<DataArray type=\"Float32\" Name=\"Stress\" format=\"ascii\" NumberOfComponents=\"3\">");
+
+				for (int i = 0; i < numberOfPoints; i++)
+					outputFile.WriteLine($"{stresses[i, 0]} {stresses[i, 1]} {stresses[i, 2]}");
+
+
+				outputFile.WriteLine("</DataArray>");
+
 				outputFile.WriteLine("</PointData>");
 				outputFile.WriteLine("<Points>");
 				outputFile.WriteLine("<DataArray type=\"Float32\" NumberOfComponents=\"3\">");

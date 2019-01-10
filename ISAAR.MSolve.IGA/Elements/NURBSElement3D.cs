@@ -297,5 +297,10 @@ namespace ISAAR.MSolve.IGA.Elements
 
 			return knotDisplacements;
 		}
+
+		public (double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

@@ -176,8 +176,9 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			VectorExtensions.AssignTotalAffinityCount();
 			Model model = new Model();
-			string filename = "..\\..\\..\\InputFiles\\CantileverShell.iga";
-			IGAFileReader modelReader = new IGAFileReader(model, filename);
+			var filename = "CantileverShell";
+			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
+			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
 			var thickness = 1.0;
 
@@ -219,6 +220,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 
+			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
+			paraview.CreateParaviewFile();
 
 			var expectedSolutionVector = new Vector(new double[]
 			{
@@ -240,6 +243,61 @@ namespace ISAAR.MSolve.IGA.Tests
 			}
 
 		}
+
+		[Fact]
+		public void CylinderShellMaterialBenchmark()
+		{
+			VectorExtensions.AssignTotalAffinityCount();
+			Model model = new Model();
+			var filename = "cylinder";
+			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
+			IGAFileReader modelReader = new IGAFileReader(model, filepath);
+
+			var thickness = 1.0;
+
+			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D
+			{
+				PoissonRatio = 0.3,
+				YoungModulus = 1000,
+			}, thickness);
+			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.Z < 1e-7))
+			{
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() { DOF = DOFType.X });
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() { DOF = DOFType.Y });
+				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() { DOF = DOFType.Z });
+			}
+
+			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => 40-cp.Z <1e-6 &&(cp.X>10||cp.X<-10)))
+			{
+				model.Loads.Add(new Load()
+				{
+					Amount = -100,
+					ControlPoint = model.ControlPointsDictionary[controlPoint.ID],
+					DOF = DOFType.X
+				});
+			}
+
+			var solverBuilder = new SuiteSparseSolver.Builder();
+			solverBuilder.DofOrderer = new DofOrderer(
+				new NodeMajorDofOrderingStrategy(), new NullReordering());
+			ISolver_v2 solver = solverBuilder.BuildSolver(model);
+
+			// Structural problem provider
+			var provider = new ProblemStructural_v2(model, solver);
+
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer_v2(solver);
+			var parentAnalyzer = new StaticAnalyzer_v2(model, solver, provider, childAnalyzer);
+
+			// Run the analysis
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
+			paraview.CreateParaviewFile();
+
+		}
+
 
 		[Fact]
 		public void SquareShellMaterialMultiscaleBenchmark()
@@ -382,7 +440,7 @@ namespace ISAAR.MSolve.IGA.Tests
 			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
 			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
-            var runMs = true;
+            var runMs = false;
             var transformationA = false;
 
             if (runMs)

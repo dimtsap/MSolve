@@ -287,9 +287,9 @@ namespace ISAAR.MSolve.FEM.Entities
         private void AssignElementMassLoads()
         {
             foreach (ElementMassAccelerationLoad load in elementMassAccelerationLoads)
-                load.Element.Subdomain.AddLocalVectorToGlobal(load.Element,
-                    load.Element.ElementType.CalculateAccelerationForces(load.Element, massAccelerationLoads),
-                    load.Element.Subdomain.Forces);
+                ((Element)load.Element).Subdomain.AddLocalVectorToGlobal(((Element)load.Element),
+	                ((Element)load.Element).ElementType.CalculateAccelerationForces(((Element)load.Element), massAccelerationLoads),
+	                ((Element)load.Element).Subdomain.Forces);
         }
 
         private void AssignMassAccelerationLoads()
@@ -327,9 +327,9 @@ namespace ISAAR.MSolve.FEM.Entities
             foreach (ElementMassAccelerationHistoryLoad load in elementMassAccelerationHistoryLoads)
             {
                 MassAccelerationLoad hl = new MassAccelerationLoad() { Amount = load.HistoryLoad[timeStep] * 564000000, DOF = load.HistoryLoad.DOF };
-                load.Element.Subdomain.AddLocalVectorToGlobal(load.Element,
-                    load.Element.ElementType.CalculateAccelerationForces(load.Element, (new MassAccelerationLoad[] { hl }).ToList()),
-                    load.Element.Subdomain.Forces);
+                ((Element)load.Element).Subdomain.AddLocalVectorToGlobal(((Element)load.Element),
+	                ((Element)load.Element).ElementType.CalculateAccelerationForces(((Element)load.Element), (new MassAccelerationLoad[] { hl }).ToList()),
+	                ((Element)load.Element).Subdomain.Forces);
             }
         }
 

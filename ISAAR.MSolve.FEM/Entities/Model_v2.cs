@@ -92,10 +92,10 @@ namespace ISAAR.MSolve.FEM.Entities
             foreach (ElementMassAccelerationHistoryLoad load in ElementMassAccelerationHistoryLoads)
             {
                 MassAccelerationLoad hl = new MassAccelerationLoad() { Amount = load.HistoryLoad[timeStep] * 564000000, DOF = load.HistoryLoad.DOF };
-                Element element = load.Element;
+                Element element = load.Element as Element;
                 ISubdomain_v2 subdomain = element.Subdomain_v2;
                 var accelerationForces = Vector.CreateFromArray(element.ElementType.CalculateAccelerationForces(
-                    load.Element, (new MassAccelerationLoad[] { hl }).ToList()));
+	                ((Element)load.Element), (new MassAccelerationLoad[] { hl }).ToList()));
                 globalDofOrdering.SubdomainDofOrderings[subdomain].AddVectorElementToSubdomain(element, accelerationForces,
                     subdomain.Forces);
             }
@@ -146,9 +146,9 @@ namespace ISAAR.MSolve.FEM.Entities
         {
             foreach (ElementMassAccelerationLoad load in ElementMassAccelerationLoads)
             {
-                ISubdomain_v2 subdomain = load.Element.Subdomain_v2;
+                ISubdomain_v2 subdomain = ((Element)load.Element).Subdomain_v2;
                 var accelerationForces = Vector.CreateFromArray(
-                    load.Element.ElementType.CalculateAccelerationForces(load.Element, MassAccelerationLoads));
+	                ((Element)load.Element).ElementType.CalculateAccelerationForces(((Element)load.Element), MassAccelerationLoads));
                 globalDofOrdering.SubdomainDofOrderings[subdomain].AddVectorElementToSubdomain(load.Element,
                     accelerationForces, subdomain.Forces);
             }

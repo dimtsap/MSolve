@@ -57,6 +57,8 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 			var elementConnectivity = CreateElement2DConnectivity(nodePattern, uniqueKnotsKsi[0].Length - 1,
 				uniqueKnotsHeta[0].Length - 1, incrementKsi, incrementHeta);
 			var knotDisplacements = new double[knots.GetLength(0), 3];
+			var pointStrains = new double[knots.GetLength(0), 3];
+			var pointStresses = new double[knots.GetLength(0), 3];
 
 
 			foreach (var element in _model.Elements)
@@ -79,19 +81,29 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 							: _solution[_model.GlobalDofOrdering.GlobalFreeDofs[controlPoint, DOFType.Z]];
 				}
 				var elementKnotDisplacements = element.ElementType.CalculateDisplacementsForPostProcessing(element, localDisplacements);
+				var (knotStrains, knotStresses) = element.ElementType.CalculateStressesForPostProcessing(
+					element, localDisplacements);
 				for (int i = 0; i < elementConnectivity.GetLength(1); i++)
 				{
 					var knotConnectivity = elementConnectivity[element.ID, i];
 					knotDisplacements[knotConnectivity, 0] = elementKnotDisplacements[i, 0];
 					knotDisplacements[knotConnectivity, 1] = elementKnotDisplacements[i, 1];
 					knotDisplacements[knotConnectivity, 2] = elementKnotDisplacements[i, 2];
+
+					pointStrains[knotConnectivity, 0] = knotStrains[i, 0];
+					pointStrains[knotConnectivity, 1] = knotStrains[i, 1];
+					pointStrains[knotConnectivity, 2] = knotStrains[i, 2];
+
+					pointStresses[knotConnectivity, 0] = knotStresses[i, 0];
+					pointStresses[knotConnectivity, 1] = knotStresses[i, 1];
+					pointStresses[knotConnectivity, 2] = knotStresses[i, 2];
 				}
 			}
 
-			Write2DNurbsFile(knots, elementConnectivity, "Quad4", knotDisplacements);
+			Write2DNurbsFile(knots, elementConnectivity, "Quad4", knotDisplacements, pointStrains, pointStresses);
 		}
 
-		public void Write2DNurbsFile(double[,] nodeCoordinates, int[,] elementConnectivity, string elementType, double[,] displacements)
+		public void Write2DNurbsFile(double[,] nodeCoordinates, int[,] elementConnectivity, string elementType, double[,] displacements, double[,] strains, double[,] stresses)
 		{
 			var dimensions = 2;
 			var numberOfNodes = nodeCoordinates.GetLength(0);
@@ -154,6 +166,20 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 
 				for (int i = 0; i < numberOfNodes; i++)
 					outputFile.WriteLine($"{displacements[i, 0]} {displacements[i, 1]} {displacements[i, 2]}");
+
+				outputFile.WriteLine("</DataArray>");
+				outputFile.WriteLine($"<DataArray type=\"Float32\" Name=\"Strain\" format=\"ascii\" NumberOfComponents=\"3\">");
+
+				for (int i = 0; i < numberOfNodes; i++)
+					outputFile.WriteLine($"{strains[i, 0]} {strains[i, 1]} {strains[i, 2]}");
+
+
+				outputFile.WriteLine("</DataArray>");
+				outputFile.WriteLine($"<DataArray type=\"Float32\" Name=\"Stress\" format=\"ascii\" NumberOfComponents=\"3\">");
+
+				for (int i = 0; i < numberOfNodes; i++)
+					outputFile.WriteLine($"{stresses[i, 0]} {stresses[i, 1]} {stresses[i, 2]}");
+
 
 				outputFile.WriteLine("</DataArray>");
 				outputFile.WriteLine("</PointData>");

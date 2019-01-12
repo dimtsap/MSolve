@@ -11,6 +11,7 @@ using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
 using System;
 using System.Collections.Generic;
+using ISAAR.MSolve.Discretization.Loads;
 using IEmbeddedElement = ISAAR.MSolve.FEM.Interfaces.IEmbeddedElement;
 
 //TODO: current nodal coordinates should be managed by the analyzer, instead of each element calculting and storing them independently. The same applies for direction vectors of shells. 

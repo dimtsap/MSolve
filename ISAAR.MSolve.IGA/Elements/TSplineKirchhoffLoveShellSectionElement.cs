@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Discretization.Loads;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
@@ -472,6 +473,11 @@ namespace ISAAR.MSolve.IGA.Elements
 		}
 
 		public (double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			throw new NotImplementedException();
+		}
+
+		public double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads)
 		{
 			throw new NotImplementedException();
 		}

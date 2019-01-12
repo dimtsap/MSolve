@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Discretization.Loads;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.IGA.Problems.SupportiveClasses;
+using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
@@ -385,6 +387,88 @@ namespace ISAAR.MSolve.IGA.Elements
         }
 
 		public (double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			var nurbsElement = (NURBSKirchhoffLoveShellElement)element;
+			var knotParametricCoordinatesKsi = new Vector(new double[] { element.Knots[0].Ksi, element.Knots[2].Ksi });
+			var knotParametricCoordinatesHeta = new Vector(new double[] { element.Knots[0].Heta, element.Knots[1].Heta });
+			NURBS2D nurbs = new NURBS2D(nurbsElement, nurbsElement.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
+			var knotDisplacements = new double[4, 3];
+			var knotStresses = new double[4, 3];
+			var knotStrains = new double[4, 3];
+			var paraviewKnotRenumbering = new int[] { 0, 3, 1, 2 };
+
+			for (int j = 0; j < knotDisplacements.GetLength(0); j++)
+			{
+				var jacobianMatrix = CalculateJacobian(nurbsElement, nurbs, j);
+
+				var hessianMatrix = CalculateHessian(nurbsElement, nurbs, j);
+
+				var surfaceBasisVector1 = CalculateSurfaceBasisVector1(jacobianMatrix, 0);
+
+				var surfaceBasisVector2 = CalculateSurfaceBasisVector1(jacobianMatrix, 1);
+
+				var surfaceBasisVector3 = surfaceBasisVector1 ^ surfaceBasisVector2;
+				var J1 = surfaceBasisVector3.Norm;
+				surfaceBasisVector3.Multiply(1 / J1);
+
+				var surfaceBasisVectorDerivative1 = CalculateSurfaceBasisVector1(hessianMatrix, 0);
+				var surfaceBasisVectorDerivative2 = CalculateSurfaceBasisVector1(hessianMatrix, 1);
+				var surfaceBasisVectorDerivative12 = CalculateSurfaceBasisVector1(hessianMatrix, 2);
+
+				Matrix2D constitutiveMatrix = CalculateConstitutiveMatrix(nurbsElement, surfaceBasisVector1, surfaceBasisVector2);
+
+				var Bmembrane = CalculateMembraneDeformationMatrix(nurbs, j, surfaceBasisVector1, surfaceBasisVector2, nurbsElement);
+
+				var Bbending = CalculateBendingDeformationMatrix(surfaceBasisVector3, nurbs, j, surfaceBasisVector2,
+					surfaceBasisVectorDerivative1, surfaceBasisVector1, J1, surfaceBasisVectorDerivative2,
+					surfaceBasisVectorDerivative12, nurbsElement);
+
+				double membraneStiffness = ((IIsotropicContinuumMaterial2D)nurbsElement.Patch.Material).YoungModulus * nurbsElement.Patch.Thickness /
+										   (1 - Math.Pow(((IIsotropicContinuumMaterial2D)nurbsElement.Patch.Material).PoissonRatio, 2));
+
+				var membraneStrain = new double[Bmembrane.Rows];
+				var bendingStrain = new double[Bmembrane.Rows];
+				var ldisp = new double[localDisplacements.Length];
+				var index = 0;
+				for (int i = 0; i < localDisplacements.GetLength(0); i++)
+				for (int k = 0; k < localDisplacements.GetLength(1); k++)
+					ldisp[index++] = localDisplacements[i, k];
+
+				for (int i = 0; i < Bmembrane.Rows; i++)
+				{
+					for (int k = 0; k < Bmembrane.Rows; k++)
+					{
+						membraneStrain[i] += Bmembrane[i, k] * ldisp[k];
+						bendingStrain[i] += Bbending[i, k] * ldisp[k];
+					}
+				}
+
+				var material = ((IIsotropicContinuumMaterial2D)nurbsElement.Patch.Material).Clone();
+				var constitutive = ((ElasticMaterial2D) material).ConstitutiveMatrix;
+				var gpStrain = new double[bendingStrain.Length];
+				var z = -nurbsElement.Patch.Thickness / 2;
+				for (int i = 0; i < bendingStrain.Length; i++)
+				{
+					gpStrain[i] += membraneStrain[i] + bendingStrain[i] * z;
+					knotStrains[paraviewKnotRenumbering[j], i] += membraneStrain[i] + bendingStrain[i] * z;
+				}
+
+				var stresses = constitutive * new Vector(gpStrain);
+				for (int i = 0; i < stresses.Length; i++)
+				{
+					knotStresses[paraviewKnotRenumbering[j], i] = stresses[i];
+				}
+
+			}
+			return (knotStrains, knotStresses);
+		}
+
+		public double[] CalculateAccelerationForces(FEM.Entities.Element element, IList<MassAccelerationLoad> loads)
+		{
+			throw new NotImplementedException();
+		}
+
+		public double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads)
 		{
 			throw new NotImplementedException();
 		}

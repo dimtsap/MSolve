@@ -12,6 +12,7 @@ using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Providers;
 using ISAAR.MSolve.Discretization;
+using ISAAR.MSolve.Discretization.Loads;
 using ISAAR.MSolve.FEM.Providers;
 using ISAAR.MSolve.Solvers.Assemblers;
 

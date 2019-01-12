@@ -41,7 +41,7 @@ namespace ISAAR.MSolve.IGA.Readers
 	    private int controlPointIDcounter=0;
 	    private int elementIDCounter = 0;
         private int numberOfDimensions;
-	    public void CreateTSplineShellsModelFromFile(TSplineShellTypes shellType=TSplineShellTypes.LinearMaterial, IShellMaterial shellMaterial =null, double thickness=1)
+	    public void CreateTSplineShellsModelFromFile(TSplineShellTypes shellType=TSplineShellTypes.LinearMaterial, IShellMaterial shellMaterial =null, double thickness=1, DynamicMaterial dynamicMaterial=null)
 	    {
 		    char[] delimeters = { ' ', '=', '\t' };
 		    Attributes? name = null;
@@ -146,7 +146,7 @@ namespace ISAAR.MSolve.IGA.Readers
 									CreateSectionMaterialShell(elementDegreeKsi, elementDegreeHeta, extractionOperator, connectivity);
 									break;
 								case TSplineShellTypes.ThicknessMaterial:
-									CreateThicknessShell(elementDegreeKsi, elementDegreeHeta, extractionOperator, connectivity, shellMaterial, thickness);
+									CreateThicknessShell(elementDegreeKsi, elementDegreeHeta, extractionOperator, connectivity, shellMaterial, thickness, dynamicMaterial);
 									break;
 							}
 						}
@@ -203,13 +203,13 @@ namespace ISAAR.MSolve.IGA.Readers
 	    }
 
 	    private void CreateThicknessShell(int elementDegreeKsi, int elementDegreeHeta, Matrix2D extractionOperator,
-		    int[] connectivity, IShellMaterial shellMaterial, double thickness)
+		    int[] connectivity, IShellMaterial shellMaterial, double thickness, DynamicMaterial dynamicMaterial=null)
 	    {
 			//TODO: Create constructor to fill section material at gauss points
 		    Element element = new TSplineKirchhoffLoveShellElementMaterial(elementIDCounter, Model.PatchesDictionary[0],
-				    elementDegreeKsi, elementDegreeHeta, thickness, extractionOperator, shellMaterial)
+				    elementDegreeKsi, elementDegreeHeta, thickness, extractionOperator, shellMaterial, dynamicMaterial)
 			    {ElementType = new TSplineKirchhoffLoveShellElementMaterial(elementIDCounter, Model.PatchesDictionary[0],
-				    elementDegreeKsi, elementDegreeHeta, thickness, extractionOperator, shellMaterial)
+				    elementDegreeKsi, elementDegreeHeta, thickness, extractionOperator, shellMaterial, dynamicMaterial)
 			    };
 
 		    for (int cp = 0; cp < connectivity.Length; cp++)

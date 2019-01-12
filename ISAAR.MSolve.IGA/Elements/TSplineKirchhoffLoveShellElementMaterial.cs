@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Accord;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Discretization.Loads;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
@@ -32,7 +34,7 @@ namespace ISAAR.MSolve.IGA.Elements
 
 
 		public TSplineKirchhoffLoveShellElementMaterial(int id, Patch patch, int degreeKsi, int degreeHeta,
-			double thickness, Matrix2D extractionOperator, IShellMaterial shellMaterial)
+			double thickness, Matrix2D extractionOperator, IShellMaterial shellMaterial, DynamicMaterial dynamicMaterial=null)
 		{
 			this.ID = id;
 			this.Patch = patch;
@@ -40,6 +42,7 @@ namespace ISAAR.MSolve.IGA.Elements
 			this.DegreeHeta = degreeHeta;
 			this.Thickness = thickness;
 			this.ExtractionOperator = extractionOperator;
+			this.dynamicProperties = dynamicMaterial;
 
 			CreateElementGaussPoints(this);
 			foreach (var medianSurfaceGP in thicknessIntegrationPoints.Keys)
@@ -322,7 +325,25 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public IMatrix2D MassMatrix(IElement element)
 		{
-			throw new NotImplementedException();
+			var tsplineElement = element as TSplineKirchhoffLoveShellElementMaterial;
+			Matrix2D lumpedMassMatrix= new Matrix2D(tsplineElement.ControlPoints.Count * 3,
+				tsplineElement.ControlPoints.Count * 3);
+			ShapeTSplines2DFromBezierExtraction tsplines =
+				new ShapeTSplines2DFromBezierExtraction(tsplineElement, tsplineElement.ControlPoints);
+
+			double area = 0;
+			for (int j = 0; j < materialsAtThicknessGP.Keys.Count; j++)
+			{
+				var jacobianMatrix = CalculateJacobian(tsplineElement, tsplines, j);
+				var determinant = jacobianMatrix[0, 0] * jacobianMatrix[1, 1] -
+				                  jacobianMatrix[0, 1] * jacobianMatrix[1, 0];
+				area += determinant * materialsAtThicknessGP.Keys.ToList()[j].WeightFactor;
+			}
+
+			double cpMass = Thickness * area * this.dynamicProperties.Density / tsplineElement.ControlPoints.Count;
+			for (int i = 0; i < tsplineElement.ControlPoints.Count*3; ++i) lumpedMassMatrix[i, i] = cpMass;
+
+			return lumpedMassMatrix;
 		}
 
 		public void ResetMaterialModified()
@@ -730,7 +751,7 @@ namespace ISAAR.MSolve.IGA.Elements
 			return medianSurfaceGP;
 		}
 
-
+		int[] paraviewKnotRenumbering = new int[] { 0, 3, 1, 2 };
 		public double[,] CalculateDisplacementsForPostProcessing(Element element, double[,] localDisplacements)
 		{
 			var tsplineElement = (TSplineKirchhoffLoveShellElementMaterial)element;
@@ -740,7 +761,7 @@ namespace ISAAR.MSolve.IGA.Elements
 			ShapeTSplines2DFromBezierExtraction tsplines = new ShapeTSplines2DFromBezierExtraction(tsplineElement, tsplineElement.ControlPoints, knotParametricCoordinatesKsi, knotParametricCoordinatesHeta);
 
 			var knotDisplacements = new double[4, 3];
-			var paraviewKnotRenumbering = new int[] { 0, 3, 1, 2 };
+			
 			for (int j = 0; j < knotDisplacements.GetLength(0); j++)
 			{
 				for (int i = 0; i < element.ControlPoints.Count; i++)
@@ -818,18 +839,18 @@ namespace ISAAR.MSolve.IGA.Elements
 				material.TangentVectorV2 = surfaceBasisVector2;
 				material.NormalVectorV3 = surfaceBasisVector3;
 				var gpStrain = new double[bendingStrain.Length];
-				var z = -Thickness/2;
+				var z = 0.0;
 				for (int i = 0; i < bendingStrain.Length; i++)
 				{
 					gpStrain[i] += membraneStrain[i] + bendingStrain[i] * z;
-					knotStrains[j, i] += membraneStrain[i] + bendingStrain[i] * z;
+					knotStrains[paraviewKnotRenumbering[j], i] += membraneStrain[i] + bendingStrain[i] * z;
 				}
 
 				material.UpdateMaterial(gpStrain);
 				var stresses = material.Stresses;
-				for (int i = 0; i < stresses.Length; i++)
+				for (int i = 0; i < 3; i++)
 				{
-					knotStresses[j, i] = stresses[i];
+					knotStresses[paraviewKnotRenumbering[j], i] = stresses[i];
 				}
 			}
 			return (knotStrains, knotStresses);
@@ -867,5 +888,9 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		}
 
+		public double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Discretization.Loads;
+using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
@@ -10,6 +12,7 @@ using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.Numerical.LinearAlgebra;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
+using Element = ISAAR.MSolve.IGA.Entities.Element;
 
 namespace ISAAR.MSolve.IGA.Elements
 {
@@ -58,6 +61,11 @@ namespace ISAAR.MSolve.IGA.Elements
 		}
 
 		public double[] CalculateForcesForLogging(Element element, double[] localDisplacements)
+		{
+			throw new NotImplementedException();
+		}
+
+		public double[] CalculateAccelerationForces(FEM.Entities.Element element, IList<MassAccelerationLoad> loads)
 		{
 			throw new NotImplementedException();
 		}
@@ -364,6 +372,11 @@ namespace ISAAR.MSolve.IGA.Elements
 		}
 
 		public (double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element, double[,] localDisplacements)
+		{
+			throw new NotImplementedException();
+		}
+
+		public double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads)
 		{
 			throw new NotImplementedException();
 		}

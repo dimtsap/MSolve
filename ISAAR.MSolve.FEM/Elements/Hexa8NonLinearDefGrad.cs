@@ -12,6 +12,7 @@ using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ISAAR.MSolve.Discretization.Loads;
 
 namespace ISAAR.MSolve.FEM.Elements
 {

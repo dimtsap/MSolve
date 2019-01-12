@@ -8,6 +8,7 @@ using System;
 using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Discretization.Loads;
 using ISAAR.MSolve.Discretization.Providers;
 using ISAAR.MSolve.Solvers.Commons;
 using ISAAR.MSolve.LinearAlgebra.Matrices;

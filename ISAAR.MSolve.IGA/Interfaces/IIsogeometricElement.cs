@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ISAAR.MSolve.Discretization.Interfaces;
+using Element = ISAAR.MSolve.IGA.Entities.Element;
+using ISAAR.MSolve.Discretization.Loads;
 
 namespace ISAAR.MSolve.IGA.Interfaces
 {
@@ -29,6 +31,7 @@ namespace ISAAR.MSolve.IGA.Interfaces
         Tuple<double[], double[]> CalculateStresses(Element element, double[] localDisplacements, double[] localdDisplacements);
         double[] CalculateForces(Element element, double[] localDisplacements, double[] localdDisplacements);
         double[] CalculateForcesForLogging(Element element, double[] localDisplacements);
+        double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads);
 		double[,] CalculateDisplacementsForPostProcessing(Element element, double[,] localDisplacements);
 		(double[,] knotStrains, double[,] knotStresses) CalculateStressesForPostProcessing(Element element,
 			double[,] localDisplacements);

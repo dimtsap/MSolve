@@ -12,6 +12,8 @@ using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.Materials.Interfaces;
 using System.Text;
+using ISAAR.MSolve.Discretization.Loads;
+
 //TODO: get rid of Hexa8.cs
 
 namespace ISAAR.MSolve.FEM.Elements

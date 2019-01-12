@@ -5,7 +5,8 @@ using System.Text;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.Interfaces;
-using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.Discretization.Loads;
+using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra;
@@ -22,6 +23,8 @@ using ISAAR.MSolve.Solvers.Ordering;
 using ISAAR.MSolve.Solvers.Ordering.Reordering;
 using ISAAR.MSolve.Solvers.Skyline;
 using Xunit;
+using Load = ISAAR.MSolve.IGA.Entities.Load;
+using Model = ISAAR.MSolve.IGA.Entities.Model;
 
 namespace ISAAR.MSolve.IGA.Tests
 {
@@ -513,7 +516,69 @@ namespace ISAAR.MSolve.IGA.Tests
             PrintUtilities.WriteToFileVector(new double[1] { new Vector(solutiondata).Norm }, $"..\\..\\..\\OutputFiles\\{filename}SolutionNorm.txt");
         }
 
-        [Fact] //commented out: requires mkl and suitesparse can't be test
+		[Fact] //commented out: requires mkl and suitesparse can't be test
+		public void SimpleHoodBenchmarkDynamic()
+		{
+			//LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
+			VectorExtensions.AssignTotalAffinityCount();
+			Model model = new Model();
+			var filename = "attempt2";
+			string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
+			IGAFileReader modelReader = new IGAFileReader(model, filepath);
+
+			var thickness = 1.0;
+			DynamicMaterial dynamicMaterial = new DynamicMaterial(25, 0.05, 0.05);
+			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
+			{
+				PoissonRatio = 0.4,
+				YoungModulus = 3.5
+			}, thickness, dynamicMaterial);
+
+			for (int i = 0; i < 100; i++)
+			{
+				var id = model.ControlPoints[i].ID;
+				model.ControlPointsDictionary[id].Constrains.Add(new Constraint() { DOF = DOFType.X });
+				model.ControlPointsDictionary[id].Constrains.Add(new Constraint() { DOF = DOFType.Y });
+				model.ControlPointsDictionary[id].Constrains.Add(new Constraint() { DOF = DOFType.Z });
+			}
+
+			for (int i = model.ControlPoints.Count - 100; i < model.ControlPoints.Count; i++)
+			{
+				var id = model.ControlPoints[i].ID;
+				model.Loads.Add(new Load()
+				{
+					Amount = 100,
+					ControlPoint = model.ControlPointsDictionary[id],
+					DOF = DOFType.Z
+				});
+			}
+
+			model.MassAccelerationHistoryLoads.Add(new MassAccelerationHistoryLoad("..\\..\\..\\InputFiles\\elcentro_NS.txt", 1) { DOF = DOFType.X });
+
+			var solverBuilder = new SuiteSparseSolver.Builder();
+			solverBuilder.DofOrderer = new DofOrderer(
+				new NodeMajorDofOrderingStrategy(), AmdReordering.CreateWithSuiteSparseAmd());
+			ISolver_v2 solver = solverBuilder.BuildSolver(model);
+
+			// Structural problem provider
+			var provider = new ProblemStructural_v2(model, solver);
+
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer_v2(solver);
+			var builder =
+				new NewmarkDynamicAnalyzer_v2.Builder(model, solver, provider, childAnalyzer, 0.02, 0.04);
+			var parentAnalyzer = builder.Build();
+
+			// Run the analysis
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
+			paraview.CreateParaviewFile();
+
+		}
+
+		[Fact] //commented out: requires mkl and suitesparse can't be test
         public void SimpleHoodBenchmarkMKLStochastic()
         {
             var runMs = true;

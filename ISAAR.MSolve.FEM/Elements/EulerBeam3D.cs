@@ -10,6 +10,7 @@ using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.FEM.Entities;
 using IEmbeddedElement = ISAAR.MSolve.FEM.Interfaces.IEmbeddedElement;
 using ISAAR.MSolve.Discretization;
+using ISAAR.MSolve.Discretization.Loads;
 
 namespace ISAAR.MSolve.FEM.Elements
 {

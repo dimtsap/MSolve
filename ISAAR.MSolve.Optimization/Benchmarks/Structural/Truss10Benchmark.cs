@@ -202,7 +202,7 @@ namespace ISAAR.MSolve.Optimization.Benchmarks.Structural
                     model.NodalDOFsDictionary[3][DOFType.Y],
                     model.NodalDOFsDictionary[4][DOFType.Y]
                 };
-                childAnalyzer.LogFactories[1] = new LinearAnalyzerLogFactory(monitoredDOFs);
+                //childAnalyzer.LogFactories[1] = new LinearAnalyzerLogFactory(monitoredDOFs);
                 //Element[] stressElements = model.ElementsDictionary.Values.ToArray<Element>();
                 //childAnalyzer.LogFactories[1] = new LinearAnalyzerLogFactory(monitoredDOFs,
                 //    stressElements, new Element[0]);

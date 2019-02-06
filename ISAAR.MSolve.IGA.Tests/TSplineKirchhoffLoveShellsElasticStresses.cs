@@ -110,8 +110,8 @@ namespace ISAAR.MSolve.IGA.Tests
                 Dictionary<GaussLegendrePoint3D, double[]> stressesTodisplay1 = e1.GetStressesAtLowerSurfaceForLogging();
                 Dictionary<GaussLegendrePoint3D, double[]> stressesTodisplay2 = e1.GetStressesAtLowerSurfaceForLogging();
             }
-            var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-            paraview.CreateParaviewFile();
+            var paraview = new ParaviewTsplineShells(model);
+            paraview.CreateParaviewFile(solver.LinearSystems[0].Solution, filename);
 
             double[] solutiondata = solver.LinearSystems[0].Solution.CopyToArray();
             PrintUtilities.WriteToFileVector(new double[1] { new Vector(solutiondata).Norm }, $"..\\..\\..\\OutputFiles\\{filename}SolutionNorm.txt");

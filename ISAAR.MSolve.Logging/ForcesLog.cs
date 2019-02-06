@@ -5,10 +5,11 @@ using System.Text;
 using ISAAR.MSolve.Logging.Interfaces;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
 using ISAAR.MSolve.FEM.Entities;
+using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 namespace ISAAR.MSolve.Logging
 {
-    public class ForcesLog : IAnalyzerLog
+    public class ForcesLog : IAnalyzerLog_v2
     {
         private readonly Element[] elements;
         private readonly Dictionary<int, double[]> forces = new Dictionary<int, double[]>();
@@ -37,14 +38,14 @@ namespace ISAAR.MSolve.Logging
 
         #region IResultStorage Members
 
-        public void StoreResults(DateTime startTime, DateTime endTime, IVector solutionVector)
+        public void StoreResults(DateTime startTime, DateTime endTime, IVectorView solutionVector)
         {
             StartTime = startTime;
             EndTime = endTime;
             //double[] solution = ((Vector<double>)solutionVector).Data;
             foreach (Element e in elements)
             {
-                var localVector = e.Subdomain.GetLocalVectorFromGlobal(e, solutionVector);
+                var localVector = e.Subdomain.GetLocalVectorFromGlobal(e, solutionVector.ToLegacyVector());
                 forces[e.ID] = e.ElementType.CalculateForcesForLogging(e, localVector);
 
                 //for (int i = 0; i < stresses[e.ID].Length; i++)

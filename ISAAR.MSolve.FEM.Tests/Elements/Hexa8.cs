@@ -37,7 +37,7 @@ namespace ISAAR.MSolve.FEM.Tests.Elements
 			new Node3D(7,5,5,0),
 		};
 
-		//[Fact]
+		[Fact]
 		private static void TestStiffnessMatrix0()
 		{
 			var factory = new ContinuumElement3DFactory(Material0, DynamicMaterial);

@@ -51,7 +51,7 @@ namespace ISAAR.MSolve.Analyzers
         }
 
         public Dictionary<int, LinearAnalyzerLogFactory> LogFactories { get; } = new Dictionary<int, LinearAnalyzerLogFactory>();
-        public Dictionary<int, IAnalyzerLog[]> Logs { get; } = new Dictionary<int, IAnalyzerLog[]>();
+        public Dictionary<int, IAnalyzerLog_v2[]> Logs { get; } = new Dictionary<int, IAnalyzerLog_v2[]>();
 
         public TotalDisplacementsPerIterationLog TotalDisplacementsPerIterationLog { get; set; }
         public Dictionary<int, TotalLoadsDisplacementsPerIncrementLog> IncrementalLogs { get; }
@@ -204,7 +204,7 @@ namespace ISAAR.MSolve.Analyzers
         {
             foreach (int id in Logs.Keys)
                 foreach (var l in Logs[id])
-                    l.StoreResults(start, end, u[id].ToLegacyVector());
+                    l.StoreResults(start, end, u[id]);
         }
 
         protected void UpdateInternalVectors()//TODOMaria this is where I should add the calculation of the internal nodal force vector

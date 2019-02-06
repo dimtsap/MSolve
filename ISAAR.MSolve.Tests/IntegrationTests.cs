@@ -45,7 +45,7 @@ namespace ISAAR.MSolve.Tests
             //NewtonRaphsonNonLinearAnalyzer analyzer = new NewtonRaphsonNonLinearAnalyzer(solver, linearSystems, provider, 10, 48);
             StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
 
-            analyzer.LogFactories[1] = new LinearAnalyzerLogFactory(new int[] { 47 });
+            //analyzer.LogFactories[1] = new LinearAnalyzerLogFactory(new int[] { 47 });
 
             parentAnalyzer.BuildMatrices();
             parentAnalyzer.Initialize();

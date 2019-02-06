@@ -10,6 +10,7 @@ using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra;
+using ISAAR.MSolve.Logging.VTK;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
@@ -80,8 +81,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 
-			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-			paraview.CreateParaviewFile();
+			var paraview = new ParaviewTsplineShells(model);
+			paraview.CreateParaviewFile(solver.LinearSystems[0].Solution, filename);
 
 			var expectedSolutionVector = new Vector(new double[]
 			{
@@ -185,11 +186,13 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			var thickness = 1.0;
 
-			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D
+			DynamicMaterial dynamicMaterial = new DynamicMaterial(25, 0.05, 0.05);
+			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
 			{
-				PoissonRatio = 0.0,
-				YoungModulus = 100,
-			}, thickness);
+				PoissonRatio = 0.3,
+				YoungModulus = 1000
+			}, thickness, dynamicMaterial);
+
 			foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X < 3))
 			{
 				model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint(){DOF = DOFType.X});
@@ -206,6 +209,7 @@ namespace ISAAR.MSolve.IGA.Tests
 					DOF = DOFType.Z
 				});
 			}
+			model.MassAccelerationHistoryLoads.Add(new MassAccelerationSinusoidalLoad(1, Math.PI/4.0, 9.0*Math.PI, 10) { DOF = DOFType.Z });
 
 			var solverBuilder = new SuiteSparseSolver.Builder();
 			solverBuilder.DofOrderer = new DofOrderer(
@@ -215,35 +219,15 @@ namespace ISAAR.MSolve.IGA.Tests
 			// Structural problem provider
 			var provider = new ProblemStructural_v2(model, solver);
 
-			// Linear static analysis
 			var childAnalyzer = new LinearAnalyzer_v2(solver);
-			var parentAnalyzer = new StaticAnalyzer_v2(model, solver, provider, childAnalyzer);
+			var builder =
+				new NewmarkDynamicAnalyzer_v2.Builder(model, solver, provider, childAnalyzer, 0.02, 0.3);
+			var parentAnalyzer = builder.Build();
 
+			childAnalyzer.LogFactories[0] = new TsplinesShellsLogFactory(model, filename);
 			// Run the analysis
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
-
-			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-			paraview.CreateParaviewFile();
-
-			var expectedSolutionVector = new Vector(new double[]
-			{
-				0, 0, -306.122431, 0, 0, -1552.478121, 0, 0, -3454.810388, 0, 0, -5881.924153, 0, 0, -8702.62361, 0, 0,
-				-11785.71439, 0, 0, -13928.57064, 0, 0, -15000.0008, 0, 0, -306.1224369, 0, 0, -1552.47811, 0, 0,
-				-3454.810407, 0, 0, -5881.924117, 0, 0, -8702.623683, 0, 0, -11785.71423, 0, 0, -13928.57093, 0, 0,
-				-15000.00025, 0, 0, -306.1224493, 0, 0, -1552.478088, 0, 0, -3454.810449, 0, 0, -5881.924038, 0, 0,
-				-8702.623837, 0, 0, -11785.71389, 0, 0, -13928.57157, 0, 0, -14999.99909, 0, 0, -306.1224494, 0, 0,
-				-1552.478088, 0, 0, -3454.810449, 0, 0, -5881.924038, 0, 0, -8702.623837, 0, 0, -11785.71389, 0, 0,
-				-13928.57157, 0, 0, -14999.99909, 0, 0, -306.1224369, 0, 0, -1552.47811, 0, 0, -3454.810407, 0, 0,
-				-5881.924117, 0, 0, -8702.623683, 0, 0, -11785.71423, 0, 0, -13928.57093, 0, 0, -15000.00025, 0, 0,
-				-306.122431, 0, 0, -1552.478121, 0, 0, -3454.810388, 0, 0, -5881.924154, 0, 0, -8702.62361, 0, 0,
-				-11785.71439, 0, 0, -13928.57064, 0, 0, -15000.0008
-			});
-			for (int i = 0; i < expectedSolutionVector.Length; i++)
-			{
-				Assert.True(Utilities.AreValuesEqual(expectedSolutionVector[i], solver.LinearSystems[0].Solution[i],
-					1e-6));
-			}
 
 		}
 
@@ -296,8 +280,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 
-			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-			paraview.CreateParaviewFile();
+			var paraview = new ParaviewTsplineShells(model);
+			paraview.CreateParaviewFile(solver.LinearSystems[0].Solution, filename);
 
 		}
 
@@ -429,8 +413,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 
-			var paraview= new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution,filename);
-			paraview.CreateParaviewFile();
+			var paraview= new ParaviewTsplineShells(model);
+			paraview.CreateParaviewFile(solver.LinearSystems[0].Solution, filename);
 		}
 
 		[Fact] //commented out: requires mkl and suitesparse can't be test
@@ -444,7 +428,7 @@ namespace ISAAR.MSolve.IGA.Tests
 			IGAFileReader modelReader = new IGAFileReader(model, filepath);
 
             var runMs = false;
-            var transformationA = false;
+            var transformationA = true;
 
             if (runMs)
             {
@@ -460,8 +444,8 @@ namespace ISAAR.MSolve.IGA.Tests
                     var thickness = 1.0;
                     modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
                     {
-                        PoissonRatio = 0.4,
-                        YoungModulus = 3.5
+                        PoissonRatio = 0.3,
+                        YoungModulus = 1000
                     }, thickness);
                 }
                 else
@@ -490,7 +474,7 @@ namespace ISAAR.MSolve.IGA.Tests
 				{
 					Amount = 100,
 					ControlPoint = model.ControlPointsDictionary[id],
-					DOF = DOFType.Z
+					DOF = DOFType.X
 				});
 			}
 			var solverBuilder = new SuiteSparseSolver.Builder();
@@ -509,8 +493,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 
-            var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-            paraview.CreateParaviewFile();
+            var paraview = new ParaviewTsplineShells(model);
+            paraview.CreateParaviewFile(solver.LinearSystems[0].Solution, filename);
 
             double[] solutiondata =solver.LinearSystems[0].Solution.CopyToArray();
             PrintUtilities.WriteToFileVector(new double[1] { new Vector(solutiondata).Norm }, $"..\\..\\..\\OutputFiles\\{filename}SolutionNorm.txt");
@@ -530,8 +514,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			DynamicMaterial dynamicMaterial = new DynamicMaterial(25, 0.05, 0.05);
 			modelReader.CreateTSplineShellsModelFromFile(IGAFileReader.TSplineShellTypes.ThicknessMaterial, new ShellElasticMaterial2D()
 			{
-				PoissonRatio = 0.4,
-				YoungModulus = 3.5
+				PoissonRatio = 0.3,
+				YoungModulus = 1000
 			}, thickness, dynamicMaterial);
 
 			for (int i = 0; i < 100; i++)
@@ -542,18 +526,19 @@ namespace ISAAR.MSolve.IGA.Tests
 				model.ControlPointsDictionary[id].Constrains.Add(new Constraint() { DOF = DOFType.Z });
 			}
 
-			for (int i = model.ControlPoints.Count - 100; i < model.ControlPoints.Count; i++)
-			{
-				var id = model.ControlPoints[i].ID;
-				model.Loads.Add(new Load()
-				{
-					Amount = 100,
-					ControlPoint = model.ControlPointsDictionary[id],
-					DOF = DOFType.Z
-				});
-			}
+			//for (int i = model.ControlPoints.Count - 100; i < model.ControlPoints.Count; i++)
+			//{
+			//	var id = model.ControlPoints[i].ID;
+			//	model.Loads.Add(new Load()
+			//	{
+			//		Amount = 100,
+			//		ControlPoint = model.ControlPointsDictionary[id],
+			//		DOF = DOFType.X
+			//	});
+			//}
 
-			model.MassAccelerationHistoryLoads.Add(new MassAccelerationHistoryLoad("..\\..\\..\\InputFiles\\elcentro_NS.txt", 1) { DOF = DOFType.X });
+			//model.MassAccelerationHistoryLoads.Add(new MassAccelerationHistoryLoad("..\\..\\..\\InputFiles\\elcentro_NS.txt", 50) { DOF = DOFType.Z });
+			model.MassAccelerationHistoryLoads.Add(new MassAccelerationSinusoidalLoad(1, Math.PI / 8.0, 4.0 * Math.PI, 1000) { DOF = DOFType.X });
 
 			var solverBuilder = new SuiteSparseSolver.Builder();
 			solverBuilder.DofOrderer = new DofOrderer(
@@ -566,16 +551,13 @@ namespace ISAAR.MSolve.IGA.Tests
 			// Linear static analysis
 			var childAnalyzer = new LinearAnalyzer_v2(solver);
 			var builder =
-				new NewmarkDynamicAnalyzer_v2.Builder(model, solver, provider, childAnalyzer, 0.02, 0.04);
+				new NewmarkDynamicAnalyzer_v2.Builder(model, solver, provider, childAnalyzer, Math.PI / 8.0, 4.0 * Math.PI);
 			var parentAnalyzer = builder.Build();
 
+			childAnalyzer.LogFactories[0]= new TsplinesShellsLogFactory(model,filename);
 			// Run the analysis
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
-
-			var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, filename);
-			paraview.CreateParaviewFile();
-
 		}
 
 		[Fact] //commented out: requires mkl and suitesparse can't be test
@@ -666,8 +648,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 string outputString = "Analysis_no_" + simulation_id.ToString() + "_output";
 
-                var paraview = new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution, outputString);
-                paraview.CreateParaviewFile();
+                var paraview = new ParaviewTsplineShells(model);
+                paraview.CreateParaviewFile(solver.LinearSystems[0].Solution, outputString);
 
                 double[] solutiondata = solver.LinearSystems[0].Solution.CopyToArray();
                 PrintUtilities.WriteToFileVector(new double[1] { new Vector(solutiondata).Norm }, $"..\\..\\..\\OutputFiles\\{outputString}SolutionNorm.txt");

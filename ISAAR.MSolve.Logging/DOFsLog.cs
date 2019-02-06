@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using ISAAR.MSolve.Logging.Interfaces;
 using System.Diagnostics;
+using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
 
 namespace ISAAR.MSolve.Logging
 {
-    public class DOFSLog : IAnalyzerLog
+    public class DOFSLog : IAnalyzerLog_v2
     {
         private readonly int[] dofs;
         private readonly Dictionary<int, double> dofValues = new Dictionary<int, double>();
@@ -31,7 +32,7 @@ namespace ISAAR.MSolve.Logging
 
         #region IResultStorage Members
 
-        public void StoreResults(DateTime startTime, DateTime endTime, IVector solution)
+        public void StoreResults(DateTime startTime, DateTime endTime, IVectorView solution)
         {
             StartTime = startTime;
             EndTime = endTime;

@@ -23,15 +23,16 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 		private string _filename;
 
 
-		public ParaviewTsplineShells(Model model, IVectorView solution, string filename)
+		public ParaviewTsplineShells(Model model)
 		{
 			_model = model;
-			_solution = solution;
-			_filename = filename;
+			
 		}
 
-		public void CreateParaviewFile(TSplineShellType shellType=TSplineShellType.Linear)
+		public void CreateParaviewFile(IVectorView solution, string filename,TSplineShellType shellType=TSplineShellType.Linear)
 		{
+			_filename = filename;
+			_solution = solution;
 			var projectiveControlPoints = CalculateProjectiveControlPoints();
 			var numberOfPointsPerElement = 4;
 			var nodes = new double[_model.Elements.Count * numberOfPointsPerElement, 3];
@@ -128,7 +129,7 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 			numberOfVerticesPerCell = 4;
 			paraviewCellCode = 9;
 
-			using (StreamWriter outputFile = new StreamWriter($"..\\..\\..\\OutputFiles\\{_filename}Paraview.vtu"))
+			using (StreamWriter outputFile = new StreamWriter($"..\\..\\..\\OutputFiles\\{_filename}.vtu"))
 			{
 				outputFile.WriteLine("<?xml version=\"1.0\"?>");
 				outputFile.WriteLine("<VTKFile type=\"UnstructuredGrid\" version=\"0.1\">");

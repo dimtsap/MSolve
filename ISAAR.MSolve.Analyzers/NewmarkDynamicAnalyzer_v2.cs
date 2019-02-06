@@ -58,7 +58,7 @@ namespace ISAAR.MSolve.Analyzers
             a7 = delta * timeStep;
         }
 
-        public Dictionary<int, IAnalyzerLog[]> Logs => null; //TODO: this can't be right
+        public Dictionary<int, IAnalyzerLog_v2[]> Logs => null; //TODO: this can't be right
         public Dictionary<int, ImplicitIntegrationAnalyzerLog> ResultStorages { get; }
             = new Dictionary<int, ImplicitIntegrationAnalyzerLog>();
 

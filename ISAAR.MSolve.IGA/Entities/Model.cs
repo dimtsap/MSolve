@@ -5,6 +5,7 @@ using System.Linq;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Discretization.Loads;
 using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
@@ -27,6 +28,7 @@ namespace ISAAR.MSolve.IGA.Entities
 
 		private readonly IList<IMassAccelerationHistoryLoad> massAccelerationHistoryLoads =
 			new List<IMassAccelerationHistoryLoad>();
+		public IList<MassAccelerationLoad> MassAccelerationLoads { get; } = new List<MassAccelerationLoad>();
 
 		private IGlobalFreeDofOrdering globalDofOrdering;
 
@@ -43,6 +45,9 @@ namespace ISAAR.MSolve.IGA.Entities
 
 		public IList<IMassAccelerationHistoryLoad> MassAccelerationHistoryLoads { get; } =
 			new List<IMassAccelerationHistoryLoad>();
+
+		public IList<ElementMassAccelerationHistoryLoad> ElementMassAccelerationHistoryLoads { get; } =
+			new List<ElementMassAccelerationHistoryLoad>();
 
 		public IList<ControlPoint> ControlPoints => controlPointsDictionary.Values.ToList();
 		IReadOnlyList<INode> IStructuralModel_v2.Nodes => controlPointsDictionary.Values.ToList();
@@ -97,11 +102,55 @@ namespace ISAAR.MSolve.IGA.Entities
 			foreach (Patch patch in PatchesDictionary.Values) patch.Forces.Clear();
 			AssignControlPointLoads();
 			AssignBoundaryLoads();
+			AssignMassAccelerationLoads();
+		}
+
+		private void AssignMassAccelerationLoads()
+		{
+			if (MassAccelerationLoads.Count<1) return;
+
+			foreach (var patch in PatchesDictionary.Values)
+			{
+				foreach (var element in patch.Elements)
+				{
+					patch.DofOrdering.AddVectorElementToSubdomain(element,
+						Vector.CreateFromArray(element.ElementType.CalculateAccelerationForces(element,MassAccelerationLoads)),
+						patch.Forces);
+				}
+			}
 		}
 
 		public void AssignMassAccelerationHistoryLoads(int timeStep)
 		{
-			throw new NotImplementedException();
+			if (MassAccelerationHistoryLoads.Count > 0)
+			{
+				List<MassAccelerationLoad> m=new List<MassAccelerationLoad>(MassAccelerationHistoryLoads.Count);
+				foreach (var load in MassAccelerationHistoryLoads)
+				{
+					m.Add(new MassAccelerationLoad() {Amount = load[timeStep], DOF = load.DOF});
+				}
+
+				foreach (var patch in PatchesDictionary.Values)
+				{
+					foreach (var element in patch.Elements)
+					{
+							patch.DofOrdering.AddVectorElementToSubdomain(element,
+								Vector.CreateFromArray(element.ElementType.CalculateAccelerationForces(element,m)),
+								patch.Forces);
+					}
+				}
+			}
+
+			foreach (var load in ElementMassAccelerationHistoryLoads)
+			{
+				MassAccelerationLoad hl = new MassAccelerationLoad() { Amount = load.HistoryLoad[timeStep] * 564000000, DOF = load.HistoryLoad.DOF };
+				Element element = load.Element as Element;
+				ISubdomain_v2 subdomain = element.Patch;
+				var accelerationForces = Vector.CreateFromArray(element.ElementType.CalculateAccelerationForces(
+					((Element)load.Element), (new MassAccelerationLoad[] { hl }).ToList()));
+				globalDofOrdering.SubdomainDofOrderings[subdomain].AddVectorElementToSubdomain(element, accelerationForces,
+					subdomain.Forces);
+			}
 		}
 
 		private void AssignBoundaryLoads()

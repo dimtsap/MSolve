@@ -309,7 +309,10 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public IMatrix2D DampingMatrix(IElement element)
 		{
-			throw new NotImplementedException();
+			Matrix2D damping = StiffnessMatrix(element) as Matrix2D;
+			damping.Scale(dynamicProperties.RayleighCoeffStiffness);
+			damping.AxpyIntoThis(MassMatrix(element), dynamicProperties.RayleighCoeffMass);
+			return damping;
 		}
 
 		public IList<IList<DOFType>> GetElementDOFTypes(IElement element)
@@ -890,7 +893,23 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public double[] CalculateAccelerationForces(Element element, IList<MassAccelerationLoad> loads)
 		{
-			throw new NotImplementedException();
+			int numDofs = 3 * ((TSplineKirchhoffLoveShellElementMaterial)element).ControlPoints.Count;
+			Vector accelerations = new Vector(numDofs);
+			IMatrix2D massMatrix = MassMatrix(element);
+
+			foreach (MassAccelerationLoad load in loads)
+			{
+				int index = 0;
+				foreach (DOFType[] nodalDOFTypes in dofTypes)
+				foreach (DOFType dofType in nodalDOFTypes)
+				{
+					if (dofType == load.DOF) accelerations[index] += load.Amount;
+					index++;
+				}
+			}
+			double[] forces = new double[numDofs];
+			massMatrix.Multiply(accelerations, forces);
+			return forces;
 		}
 	}
 }

@@ -37,7 +37,7 @@ namespace ISAAR.MSolve.SamplesConsole
             LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
             StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, analyzer, linearSystems);
 
-            analyzer.LogFactories[1] = new LinearAnalyzerLogFactory(new int[] { 420 });
+            //analyzer.LogFactories[1] = new LinearAnalyzerLogFactory(new int[] { 420 });
 
             parentAnalyzer.BuildMatrices();
             parentAnalyzer.Initialize();
@@ -60,7 +60,7 @@ namespace ISAAR.MSolve.SamplesConsole
             LinearAnalyzer analyzer = new LinearAnalyzer(solver, linearSystems);
             NewmarkDynamicAnalyzer parentAnalyzer = new NewmarkDynamicAnalyzer(provider, analyzer, linearSystems, 0.25, 0.5, 0.01, 0.1);
 
-            analyzer.LogFactories[1] = new LinearAnalyzerLogFactory(new int[] { 420 });
+            //analyzer.LogFactories[1] = new LinearAnalyzerLogFactory(new int[] { 420 });
 
             parentAnalyzer.BuildMatrices();
             parentAnalyzer.Initialize();

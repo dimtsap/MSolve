@@ -143,12 +143,13 @@ namespace ISAAR.MSolve.Analyzers
 
         private void UpdateResultStorages(DateTime start, DateTime end)
         {
-            if (childAnalyzer == null) return;
-            foreach (ILinearSystem subdomain in subdomains.Values)
-                if (resultStorages.ContainsKey(subdomain.ID))
-                    if (resultStorages[subdomain.ID] != null)
-                        foreach (var l in childAnalyzer.Logs[subdomain.ID])
-                            resultStorages[subdomain.ID].StoreResults(start, end, l);
+			throw new NotImplementedException();
+            //if (childAnalyzer == null) return;
+            //foreach (ILinearSystem subdomain in subdomains.Values)
+            //    if (resultStorages.ContainsKey(subdomain.ID))
+            //        if (resultStorages[subdomain.ID] != null)
+            //            foreach (var l in childAnalyzer.Logs[subdomain.ID])
+            //                resultStorages[subdomain.ID].StoreResults(start, end, l);
         }
 
         #region IAnalyzer Members

@@ -75,8 +75,9 @@ namespace ISAAR.MSolve.Analyzers
 
         private void InitializeLogs()
         {
-            logs.Clear();
-            foreach (int id in logFactories.Keys) logs.Add(id, logFactories[id].CreateLogs());
+			throw new NotImplementedException();
+            //logs.Clear();
+            //foreach (int id in logFactories.Keys) logs.Add(id, logFactories[id].CreateLogs());
         }
 
         private void StoreLogResults(DateTime start, DateTime end)

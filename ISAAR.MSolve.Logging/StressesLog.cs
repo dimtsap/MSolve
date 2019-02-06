@@ -5,10 +5,11 @@ using System.Text;
 using ISAAR.MSolve.Logging.Interfaces;
 using ISAAR.MSolve.Numerical.LinearAlgebra.Interfaces;
 using ISAAR.MSolve.FEM.Entities;
+using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 namespace ISAAR.MSolve.Logging
 {
-    public class StressesLog : IAnalyzerLog
+    public class StressesLog : IAnalyzerLog_v2
     {
         private readonly Element[] elements;
         private readonly Dictionary<int, double[]> strains = new Dictionary<int, double[]>();
@@ -41,14 +42,14 @@ namespace ISAAR.MSolve.Logging
 
         #region IResultStorage Members
 
-        public void StoreResults(DateTime startTime, DateTime endTime, IVector solutionVector)
+        public void StoreResults(DateTime startTime, DateTime endTime, IVectorView solutionVector)
         {
             StartTime = startTime;
             EndTime = endTime;
             //double[] solution = ((Vector<double>)solutionVector).Data;
             foreach (Element e in elements)
             {
-                var localVector = e.Subdomain.GetLocalVectorFromGlobal(e, solutionVector);
+                var localVector = e.Subdomain.GetLocalVectorFromGlobal(e, solutionVector.ToLegacyVector());
                 var strainStresses = e.ElementType.CalculateStresses(e, localVector, new double[e.ElementType.GetElementDOFTypes(e).SelectMany(x => x).Count()]);
                 strains[e.ID] = new double[strainStresses.Item1.Length];
                 stresses[e.ID] = new double[strainStresses.Item2.Length];

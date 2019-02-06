@@ -89,10 +89,10 @@ namespace ISAAR.MSolve.SamplesConsole
             LinearAnalyzer childAnalyzer = new LinearAnalyzer(solver, linearSystems);
             StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
 
-            childAnalyzer.LogFactories[0] = new LinearAnalyzerLogFactory(new int[] {
-                trussModel.NodalDOFsDictionary[3][DOFType.X],
-                trussModel.NodalDOFsDictionary[3][DOFType.Y],
-                });
+            //childAnalyzer.LogFactories[0] = new LinearAnalyzerLogFactory(new int[] {
+            //    trussModel.NodalDOFsDictionary[3][DOFType.X],
+            //    trussModel.NodalDOFsDictionary[3][DOFType.Y],
+            //    });
 
             parentAnalyzer.BuildMatrices();
             parentAnalyzer.Initialize();

@@ -108,9 +108,9 @@ namespace ISAAR.MSolve.SamplesConsole
             StaticAnalyzer parentAnalyzer = new StaticAnalyzer(provider, childAnalyzer, linearSystems);
 
             // Choose dof types X, Y, Z to log for node 5
-            childAnalyzer.LogFactories[0] = new LinearAnalyzerLogFactory(new int[] {
-                model.NodalDOFsDictionary[2][DOFType.X],
-                model.NodalDOFsDictionary[2][DOFType.RotZ]});
+            //childAnalyzer.LogFactories[0] = new LinearAnalyzerLogFactory(new int[] {
+            //    model.NodalDOFsDictionary[2][DOFType.X],
+            //    model.NodalDOFsDictionary[2][DOFType.RotZ]});
 
             // Analyze the problem
             parentAnalyzer.BuildMatrices();

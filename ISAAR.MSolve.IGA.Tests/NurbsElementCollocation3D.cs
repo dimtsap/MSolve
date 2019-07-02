@@ -11,6 +11,7 @@ using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers;
 using ISAAR.MSolve.Solvers.Assemblers.Collocation;
+using ISAAR.MSolve.Solvers.Direct;
 using ISAAR.MSolve.Solvers.Ordering;
 using ISAAR.MSolve.Solvers.Ordering.Reordering;
 using MathNet.Numerics.Data.Matlab;
@@ -45,20 +46,77 @@ namespace ISAAR.MSolve.IGA.Tests
             parentAnalyzer.BuildMatrices();
 
             var k = solver.LinearSystems[0].Matrix;
-            Matrix<double> stiffnessMatrixExpected =
-                MatlabReader.Read<double>("..\\..\\..\\InputFiles\\Kcol3D.mat", "Ktotal");
-            
 
+            Matrix<double> kmatlab = CreateMatrix.Dense<double>(k.NumRows, k.NumColumns);
             for (int i = 0; i < k.NumRows; i++)
             {
                 for (int j = 0; j < k.NumColumns; j++)
                 {
-                    Utilities.AreValuesEqual(stiffnessMatrixExpected[i, j], k[i, j], 10e-9);
+                    kmatlab[i, j] = k[i, j];
                 }
             }
+            MatlabWriter.Write("..\\..\\..\\InputFiles\\Kcol7.mat", kmatlab, "Ktotal");
+            //Matrix<double> stiffnessMatrixExpected =
+            //    MatlabReader.Read<double>("..\\..\\..\\InputFiles\\Kcol3D.mat", "Ktotal");
+
+
+            //for (int i = 0; i < k.NumRows; i++)
+            //{
+            //    for (int j = 0; j < k.NumColumns; j++)
+            //    {
+            //        Utilities.AreValuesEqual(stiffnessMatrixExpected[i, j], k[i, j], 10e-9);
+            //    }
+            //}
 
         }
 
+        //[Fact]
+        //public void Galerkin3DMatrix()
+        //{
+        //    var model = new Model();
+        //    ModelCreator modelCreator = new ModelCreator(model);
+        //    string filename = "..\\..\\..\\InputFiles\\Collocation 3D.txt";
+        //    IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+        //    modelReader.CreateModelFromFile();
+
+        //    var solverBuilder = new SkylineSolver.Builder();
+        //    ISolver solver = solverBuilder.BuildSolver(model);
+
+        //    // Structural problem provider
+        //    var provider = new ProblemStructural(model, solver);
+
+        //    // Linear static analysis
+        //    var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+        //    var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+        //    // Run the analysis
+        //    parentAnalyzer.Initialize();
+        //    parentAnalyzer.BuildMatrices();
+
+        //    var k = solver.LinearSystems[0].Matrix;
+
+        //    Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows, k.NumColumns);
+        //    for (int i = 0; i < k.NumRows; i++)
+        //    {
+        //        for (int j = 0; j < k.NumColumns; j++)
+        //        {
+        //            kmatlab[i, j] = k[i, j];
+        //        }
+        //    }
+        //    MatlabWriter.Write("..\\..\\..\\InputFiles\\Kcol7Gal.mat", kmatlab, "Ktotal");
+        //    //Matrix<double> stiffnessMatrixExpected =
+        //    //    MatlabReader.Read<double>("..\\..\\..\\InputFiles\\Kcol3D.mat", "Ktotal");
+
+
+        //    //for (int i = 0; i < k.NumRows; i++)
+        //    //{
+        //    //    for (int j = 0; j < k.NumColumns; j++)
+        //    //    {
+        //    //        Utilities.AreValuesEqual(stiffnessMatrixExpected[i, j], k[i, j], 10e-9);
+        //    //    }
+        //    //}
+
+        //}
 
         [Fact]
         public void GmresTest()

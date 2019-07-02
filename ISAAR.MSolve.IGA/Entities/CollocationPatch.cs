@@ -399,7 +399,12 @@ namespace ISAAR.MSolve.IGA.Entities
 
                     var isBoundary = (i == 0 || i == NumberOfControlPointsKsi - 1 || j == 0 ||
                                       j == NumberOfControlPointsHeta - 1);
-                    collocationPoints.Add(new CollocationPoint2D(index++, coordinateKsi, coordinateHeta, isBoundary));
+                    var collocationPoint2D = new CollocationPoint2D(index++, coordinateKsi, coordinateHeta, isBoundary);
+                    if (i == 0) collocationPoint2D.Edge = Edge2D.Left;
+                    if (i == NumberOfControlPointsKsi - 1) collocationPoint2D.Edge = Edge2D.Right;
+                    if (j == 0) collocationPoint2D.Edge = Edge2D.Bottom;
+                    if (j == NumberOfControlPointsHeta - 1) collocationPoint2D.Edge = Edge2D.Top;
+                    collocationPoints.Add(collocationPoint2D);
                 }
             }
             #endregion

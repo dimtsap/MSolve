@@ -126,7 +126,7 @@ namespace ISAAR.MSolve.IGA.Elements
 
             if (elementCollocation.CollocationPoint.IsBoundary)
             {
-                var (xGaussPoint, yGaussPoint) = CalculateNormalVectors(elementCollocation, nurbs);
+                var (xGaussPoint, yGaussPoint) = CalculateNormalVectors(elementCollocation, jacobianMatrix);
 
                 return CalculateCollocationPointStiffnessBoundary(elementCollocation, xGaussPoint, dR, yGaussPoint);
             }
@@ -165,20 +165,30 @@ namespace ISAAR.MSolve.IGA.Elements
         }
 
         private (double xGaussPoint, double yGaussPoint) CalculateNormalVectors(
-            NURBSElement2DCollocation elementCollocation, NURBS2D nurbs)
+            NURBSElement2DCollocation elementCollocation, Matrix2by2 jacobianMatrix)
         {
-            double xGaussPoint = 0;
-            double yGaussPoint = 0;
-            for (int k = 0; k < elementCollocation.ControlPoints.Count; k++)
+            var norm= Vector2.CreateZero();
+            switch (elementCollocation.CollocationPoint.Edge)
             {
-                xGaussPoint += nurbs.NurbsValues[k, 0] * elementCollocation.ControlPoints[k].X;
-                yGaussPoint += nurbs.NurbsValues[k, 0] * elementCollocation.ControlPoints[k].Y;
+                case Edge2D.Left://4
+                    norm[0] = -jacobianMatrix[1, 1];
+                    norm[1] = jacobianMatrix[0, 1];
+                    break;
+                case Edge2D.Right://2
+                    norm[0] = jacobianMatrix[1, 1];
+                    norm[1] = -jacobianMatrix[0, 1];
+                    break;
+                case Edge2D.Bottom://1
+                    norm[0] = jacobianMatrix[1, 0];
+                    norm[1] = -jacobianMatrix[0, 0];
+                    break;
+                case Edge2D.Top://3
+                    norm[0] = -jacobianMatrix[1, 0];
+                    norm[1] = jacobianMatrix[0, 0];
+                    break;
             }
-
-            double norm = Math.Sqrt(Math.Pow(xGaussPoint, 2) + Math.Pow(yGaussPoint, 2));
-            xGaussPoint /= norm;
-            yGaussPoint /= norm;
-            return (xGaussPoint, yGaussPoint);
+            norm.ScaleIntoThis(norm.Norm2());
+            return (norm[0], norm[1]);
         }
 
 

@@ -12,7 +12,7 @@ namespace ISAAR.MSolve.IGA.Entities
         private int _id;
         private bool _isBoundary;
         public int ID { get => _id; set => ID = value; }
-    int INode.ID { get => _id; }
+        int INode.ID { get => _id; }
 
         public bool IsBoundary
         {
@@ -25,6 +25,7 @@ namespace ISAAR.MSolve.IGA.Entities
         public double Z { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public List<Constraint> Constraints => new List<Constraint>();
+        public Edge2D Edge { get; set; }
 
         public Dictionary<int, ISubdomain> SubdomainsDictionary => throw new NotImplementedException();
 
@@ -41,5 +42,15 @@ namespace ISAAR.MSolve.IGA.Entities
         }
 
         public int CompareTo(INode other) => this.ID - other.ID;
+
+        
+    }
+
+    public enum Edge2D
+    {
+        Left,
+        Right,
+        Bottom,
+        Top
     }
 }

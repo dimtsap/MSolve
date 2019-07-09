@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Problems.SupportiveClasses;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
@@ -834,7 +836,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-			string filename = "..\\..\\..\\InputFiles\\PlateWithHole.txt";
+			string filename = "..\\..\\..\\InputFiles\\5x5.txt";
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
 			modelReader.CreateCollocationModelFromFile();
 
@@ -852,7 +854,6 @@ namespace ISAAR.MSolve.IGA.Tests
             // Linear static analysis
             var childAnalyzer = new LinearAnalyzer(model,solver,provider);
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
-
             // Run the analysis
             parentAnalyzer.Initialize();
             parentAnalyzer.BuildMatrices();
@@ -867,9 +868,43 @@ namespace ISAAR.MSolve.IGA.Tests
                     kmatlab[i, j] = k[i, j];
                 }
             }
-            MatlabWriter.Write("..\\..\\..\\InputFiles\\KcolMsolve.mat", kmatlab,"Ktotal");
-            
+            MatlabWriter.Write("..\\..\\..\\OutputFiles\\K5x5.mat", kmatlab,"Ktotal");
+
+
+            var coarsePoints= new List<NaturalPoint>();
+            var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0};
+            var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
+
+            foreach (var x in ksi)
+                coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
+
+            var R0 = new double[model.ControlPoints.Count*2,coarsePoints.Count*2];
+            for (int i = 0; i < coarsePoints.Count; i++)
+            {
+                var pointShapeFunctions = new NURBS2D(3, 3, model.PatchesDictionary[0].KnotValueVectorKsi,
+                    model.PatchesDictionary[0].KnotValueVectorHeta, coarsePoints[i], model.ControlPoints, true);
+                for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
+                {
+                    R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
+
+                    R0[2 * j + 1, 2 * i + 1] = pointShapeFunctions.NurbsValues[j, 0];
+                }
+            }
+
+            Matrix<double> Rmatlab = CreateMatrix.Dense<double>(R0.GetLength(0), R0.GetLength(1));
+            for (int i = 0; i < R0.GetLength(0); i++)
+            {
+                for (int j = 0; j < R0.GetLength(1); j++)
+                {
+                    Rmatlab[i, j] = R0[i, j];
+                }
+            }
+            MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_7x7.mat", Rmatlab, "R0");
+
         }
+
+
+
 
         [Fact]
         private void TestCollocationPoint2DBoundaryStiffness()

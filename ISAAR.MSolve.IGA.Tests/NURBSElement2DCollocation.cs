@@ -11,6 +11,7 @@ using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Problems.SupportiveClasses;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
+using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Problems;
@@ -875,14 +876,27 @@ namespace ISAAR.MSolve.IGA.Tests
             var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0};
             var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
 
+            var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+            var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+            var linearCP= new List<ControlPoint>();
+            var id = 0;
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    linearCP.Add(new ControlPoint(){ID = id++, Ksi = xCP[i], Heta = yCP[j], WeightFactor = 1.0, X = xCP[i], Y= yCP[j], });
+                }
+            }
+            var linearVectorKsi=Vector.CreateFromArray(new double[]{0,0,0.25,0.5,0.75,1,1});
+
             foreach (var x in ksi)
                 coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
 
             var R0 = new double[model.ControlPoints.Count*2,coarsePoints.Count*2];
             for (int i = 0; i < coarsePoints.Count; i++)
             {
-                var pointShapeFunctions = new NURBS2D(3, 3, model.PatchesDictionary[0].KnotValueVectorKsi,
-                    model.PatchesDictionary[0].KnotValueVectorHeta, coarsePoints[i], model.ControlPoints, true);
+                var pointShapeFunctions = new NURBS2D(1, 1, linearVectorKsi,
+                    linearVectorKsi, coarsePoints[i], linearCP, true);
                 for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
                 {
                     R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
@@ -899,7 +913,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     Rmatlab[i, j] = R0[i, j];
                 }
             }
-            MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_7x7.mat", Rmatlab, "R0");
+            MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_3.mat", Rmatlab, "R0_3");
 
         }
 

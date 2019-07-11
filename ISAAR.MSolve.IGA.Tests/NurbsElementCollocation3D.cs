@@ -5,6 +5,8 @@ using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Iterative;
+using ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual;
+using ISAAR.MSolve.LinearAlgebra.Iterative.Preconditioning;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Termination;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
@@ -143,7 +145,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 RelativeTolerance = 1e-8
             };
             var gmres = gmresAlgorithmBuilder.Build();
-            gmres.Solve(matrix, rhs, solution,true, () => Vector.CreateZero(9));
+            gmres.Solve(matrix, new IdentityPreconditioner(), rhs, solution,true, () => Vector.CreateZero(9));
 
             var expectedSolution = Vector.CreateFromArray(new double[] {3.5, 1.0, 1.0, 6.0, 7.5, 8.0, 7.5, 6.0, 3.5});
 

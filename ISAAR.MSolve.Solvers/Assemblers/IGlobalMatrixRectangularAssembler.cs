@@ -3,7 +3,7 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 
-namespace ISAAR.MSolve.Solvers.Assemblers.Collocation
+namespace ISAAR.MSolve.Solvers.Assemblers
 {
 	public interface IGlobalMatrixRectangularAssembler<TMatrix> where TMatrix:IMatrix
 	{

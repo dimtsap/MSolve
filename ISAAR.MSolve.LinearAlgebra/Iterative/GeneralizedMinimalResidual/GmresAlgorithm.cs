@@ -1,22 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
+using ISAAR.MSolve.LinearAlgebra.Commons;
+using ISAAR.MSolve.LinearAlgebra.Iterative.Preconditioning;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Termination;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
-namespace ISAAR.MSolve.LinearAlgebra.Iterative
+namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
 {
     /// <summary>
     /// Based on Restarted GMRES implementation provided in https://people.sc.fsu.edu/~jburkardt/m_src/mgmres/mgmres.html
     /// </summary>
     public class GmresAlgorithm
     {
+        private const string name = "Restarted Generalized minimal residual method";
+
         private double absoluteTolerance;
         private double relativeTolerance;
         private int maximumIterations;
         private IMaxIterationsProvider innerIterationsProvider;
+        protected IVector residual;
 
         public GmresAlgorithm(double absoluteTolerance, double relativeTolerance, int maximumIterations,
             IMaxIterationsProvider innerIterationsProvider)
@@ -27,17 +29,20 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative
             this.innerIterationsProvider = innerIterationsProvider;
         }
 
-        public IterativeStatistics Solve(IMatrixView matrix, IVectorView rhs, IVector solution,
+        public IterativeStatistics Solve(IMatrixView matrix, IPreconditioner preconditioner,IVectorView rhs, IVector solution,
             bool initialGuessIsZero, Func<IVector> zeroVectorInitializer)
         {
-            return Solve(new ExplicitMatrixTransformation(matrix), rhs, solution, initialGuessIsZero,
+            return Solve(new ExplicitMatrixTransformation(matrix), preconditioner,rhs, solution, initialGuessIsZero,
                 zeroVectorInitializer);
         }
 
 
-        public IterativeStatistics Solve(ILinearTransformation matrix, IVectorView rhs, IVector solution,
+        public IterativeStatistics Solve(ILinearTransformation matrix, IPreconditioner preconditioner, IVectorView rhs, IVector solution,
             bool initialGuessIsZero, Func<IVector> zeroVectorInitializer)
         {
+            Preconditions.CheckMultiplicationDimensions(matrix.NumColumns, solution.Length);
+            Preconditions.CheckSystemSolutionDimensions(matrix.NumRows, rhs.Length);
+
             var innerIterations = innerIterationsProvider.GetMaxIterations(matrix.NumRows);
             IVector[] v =new Vector[innerIterations+1];
             var y = Vector.CreateZero(innerIterations + 1);
@@ -47,10 +52,13 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative
             double residualNorm = double.MaxValue;
             var usedIterations = 0;
 
+            if (initialGuessIsZero) residual = rhs.Copy();
+            else residual = ExactResidual.Calculate(matrix, rhs, solution);
+
             for ( var iteration = 0; iteration < maximumIterations; iteration++)
             {
-                
-                var residual = ExactResidual.Calculate(matrix, rhs, solution);
+                preconditioner.SolveLinearSystem(residual, residual);
+                //var residual = ExactResidual.Calculate(matrix, rhs, solution);
 
                 residualNorm = residual.Norm2();
 
@@ -69,7 +77,9 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative
                 {
                     indexIteration = innerIteration;
                     v[innerIteration + 1] = Vector.CreateZero(v[innerIteration].Length);
+
                     matrix.Multiply(v[innerIteration], v[innerIteration + 1]);
+                    preconditioner.SolveLinearSystem(v[innerIteration + 1], v[innerIteration + 1]);
 
                     var av = v[innerIteration + 1].Norm2();
 
@@ -156,7 +166,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative
             return new IterativeStatistics()
             {
                 HasConverged = residualNorm <= relativeTolerance && residualNorm <= absoluteTolerance,
-                AlgorithmName = "Restarted Gmres",
+                AlgorithmName = name,
                 NumIterationsRequired = usedIterations,
                 ResidualNormRatioEstimation = residualNorm
             };

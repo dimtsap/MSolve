@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using ISAAR.MSolve.Discretization.Commons;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
+using ISAAR.MSolve.Solvers.Assemblers;
 using ISAAR.MSolve.Solvers.Commons;
 using ISAAR.MSolve.Solvers.LinearSystems;
 using ISAAR.MSolve.Solvers.Ordering;
 
-namespace ISAAR.MSolve.Solvers.Assemblers.Collocation
+namespace ISAAR.MSolve.Solvers
 {
-	public abstract class SingleSubdomainRectangularSolverBase<TMatrix>:ISolver
+	public abstract class SingleSubdomainNonSymmetricSolverBase<TMatrix>:ISolver
 	where TMatrix: class,IMatrix
 	{
         protected readonly IGlobalMatrixRectangularAssembler<TMatrix> assembler;
@@ -25,7 +25,7 @@ namespace ISAAR.MSolve.Solvers.Assemblers.Collocation
         protected readonly IAsymmetricDofOrderer dofRowOrderer;
         protected readonly IDofOrderer dofColOrderer;
 
-		protected SingleSubdomainRectangularSolverBase(IStructuralAsymmetricModel model, IAsymmetricDofOrderer dofRowOrderer,
+		protected SingleSubdomainNonSymmetricSolverBase(IStructuralAsymmetricModel model, IAsymmetricDofOrderer dofRowOrderer,
 			IDofOrderer dofColOrderer, IGlobalMatrixRectangularAssembler<TMatrix> assembler, string name)
 		{
 			if (model.Subdomains.Count != 1) throw new InvalidSolverException(

@@ -4,23 +4,24 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Matrices.Builders;
+using ISAAR.MSolve.Solvers.Assemblers.Collocation;
 using ISAAR.MSolve.Solvers.Commons;
 
 //TODO: Instead of storing the raw CSR arrays, use a reusable DOK or CsrIndexer class. That class should provide methods to 
 //      assemble the values part of the global matrix more efficiently than the general purpose DOK. The general purpose DOK 
 //      should only be used to assemble the first global matrix and whenever the dof ordering changes. Now it is used everytime 
 //      and the indexing arrays are discarded.
-namespace ISAAR.MSolve.Solvers.Assemblers.Collocation
+namespace ISAAR.MSolve.Solvers.Assemblers
 {
     /// <summary>
     /// Builds the global matrix of the linear system that will be solved. This matrix is square and stored in CSR format, but
     /// both triangles are explicitly stored. This format is suitable for matrix/vector multiplications, therefore it can be 
     /// combined with many iterative solvers. 
-    /// Authors: Serafeim Bakalakos
+    /// Authors: Dimitris Tsapetis
     /// </summary>
-    public class CsrRectangularAssembler : IGlobalMatrixRectangularAssembler<CsrMatrix>
+    public class CsrNonSymmetricAssembler : IGlobalMatrixRectangularAssembler<CsrMatrix>
     {
-        private const string name = "CsrRectangularAssembler"; // for error messages
+        private const string name = "CsrNonSymmetricAssembler"; // for error messages
         private readonly bool sortColsOfEachRow;
         private ConstrainedMatricesAssembler constrainedAssembler = new ConstrainedMatricesAssembler();
 
@@ -34,7 +35,7 @@ namespace ISAAR.MSolve.Solvers.Assemblers.Collocation
         /// Sorting the columns of each row in the CSR storage format may increase performance of the matrix vector 
         /// multiplications. It is recommended to set it to true, especially for iterative linear system solvers.
         /// </param>
-        public CsrRectangularAssembler(bool sortColsOfEachRow = true)
+        public CsrNonSymmetricAssembler(bool sortColsOfEachRow = true)
         {
             this.sortColsOfEachRow = sortColsOfEachRow;
         }

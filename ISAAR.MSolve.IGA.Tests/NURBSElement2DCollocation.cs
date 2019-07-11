@@ -16,7 +16,7 @@ using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers;
-using ISAAR.MSolve.Solvers.Assemblers.Collocation;
+using ISAAR.MSolve.Solvers.Iterative;
 using ISAAR.MSolve.Solvers.Ordering;
 using ISAAR.MSolve.Solvers.Ordering.Reordering;
 using MathNet.Numerics.Data.Matlab;

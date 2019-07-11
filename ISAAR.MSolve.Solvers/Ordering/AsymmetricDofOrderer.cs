@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
-using ISAAR.MSolve.Solvers.Assemblers.Collocation;
 
 namespace ISAAR.MSolve.Solvers.Ordering
 {

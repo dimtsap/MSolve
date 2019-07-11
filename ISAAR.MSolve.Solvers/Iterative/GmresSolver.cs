@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Iterative;
 using ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Preconditioning;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
+using ISAAR.MSolve.Solvers.Assemblers;
 using ISAAR.MSolve.Solvers.Commons;
 using ISAAR.MSolve.Solvers.Ordering;
 using ISAAR.MSolve.Solvers.Ordering.Reordering;
 
-namespace ISAAR.MSolve.Solvers.Assemblers.Collocation
+namespace ISAAR.MSolve.Solvers.Iterative
 {
     public class GmresSolver : SingleSubdomainNonSymmetricSolverBase<CsrMatrix>
     {

@@ -4,7 +4,6 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Matrices.Builders;
-using ISAAR.MSolve.Solvers.Assemblers.Collocation;
 using ISAAR.MSolve.Solvers.Commons;
 
 //TODO: Instead of storing the raw CSR arrays, use a reusable DOK or CsrIndexer class. That class should provide methods to 

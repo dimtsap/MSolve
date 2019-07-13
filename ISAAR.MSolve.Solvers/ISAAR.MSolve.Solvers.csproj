@@ -9,7 +9,4 @@
     <ProjectReference Include="..\ISAAR.MSolve.Discretization\ISAAR.MSolve.Discretization.csproj" />
     <ProjectReference Include="..\ISAAR.MSolve.LinearAlgebra\ISAAR.MSolve.LinearAlgebra.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="DomainDecomposition\Overlapping\Schwarz\Additive\" />
-  </ItemGroup>
 </Project>

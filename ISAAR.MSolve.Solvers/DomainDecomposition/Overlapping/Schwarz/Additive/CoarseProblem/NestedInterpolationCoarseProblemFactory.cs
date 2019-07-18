@@ -1,17 +1,27 @@
-﻿using ISAAR.MSolve.LinearAlgebra.Matrices;
+﻿using System.Collections.Generic;
+using ISAAR.MSolve.Geometry.Coordinates;
+using ISAAR.MSolve.LinearAlgebra.Matrices;
+using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.Interfaces;
 
 namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.CoarseProblem
 {
     public class NestedInterpolationCoarseProblemFactory : ICoarseProblemFactory
     {
-        public void GenerateMatrices(IOverlappingDecomposition overlappingDecomposition)
+        private Matrix inverseCoarseMatrix;
+        private IModelOverlappingDecomposition _modelOverlappingDecomposition;
+
+        public void GenerateMatrices(IMatrixView matrix, IModelOverlappingDecomposition modelOverlappingDecomposition)
         {
-            throw new System.NotImplementedException();
+            _modelOverlappingDecomposition = modelOverlappingDecomposition;
+            var interpolationMatrix = modelOverlappingDecomposition.CoarseSpaceInterpolation;
+            var coarseSpaceMatrix = interpolationMatrix.ThisTimesOtherTimesThisTranspose(matrix);
+            inverseCoarseMatrix = coarseSpaceMatrix.Invert();
         }
 
-        public CsrMatrix RetrievePreconditionerContribution()
+        public Matrix RetrievePreconditionerContribution()
         {
-            throw new System.NotImplementedException();
+            var interpolationMatrix = _modelOverlappingDecomposition.CoarseSpaceInterpolation.Transpose();
+            return interpolationMatrix.ThisTimesOtherTimesThisTranspose(inverseCoarseMatrix);
         }
     }
 }

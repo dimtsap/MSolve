@@ -12,7 +12,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.
             throw new System.NotImplementedException();
         }
 
-        public CsrMatrix RetrievePreconditionerContribution()
+        public Matrix RetrievePreconditionerContribution()
         {
             throw new System.NotImplementedException();
         }

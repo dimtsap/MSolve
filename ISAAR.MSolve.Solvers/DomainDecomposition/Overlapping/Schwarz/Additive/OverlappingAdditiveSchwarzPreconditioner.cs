@@ -1,25 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.LinearAlgebra.Commons;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Preconditioning;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.CoarseProblem;
+using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.Interfaces;
+using ISAAR.MSolve.Solvers.Ordering;
 
 namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
 {
     public class OverlappingAdditiveSchwarzPreconditioner : IPreconditioner
     {
         private readonly IMatrix _preconditioner;
-        public OverlappingAdditiveSchwarzPreconditioner(ICoarseProblemFactory coarseProblemFactory,
-            LocalProblemsFactory localProblemsFactory, IOverlappingDecomposition overlappingDecomposition)
+
+        public OverlappingAdditiveSchwarzPreconditioner(IMatrixView matrix, ICoarseProblemFactory coarseProblemFactory,
+            LocalProblemsFactory localProblemsFactory, IModelOverlappingDecomposition modelOverlappingDecomposition,
+            IStructuralAsymmetricModel model)
         {
-            coarseProblemFactory.GenerateMatrices(overlappingDecomposition);
-            localProblemsFactory.GenerateMatrices(overlappingDecomposition);
+            modelOverlappingDecomposition.DecomposeMatrix();
+            coarseProblemFactory.GenerateMatrices(matrix, modelOverlappingDecomposition);
+            localProblemsFactory.GenerateMatrices(matrix, modelOverlappingDecomposition);
             var coarseProblemContribution = coarseProblemFactory.RetrievePreconditionerContribution();
             var localProblemsContribution = localProblemsFactory.RetrievePreconditionerContribution();
-            _preconditioner = coarseProblemContribution.Add(localProblemsContribution);
+
+            var freeSubdomainDofs= model.GlobalRowDofOrdering.MapFreeDofsSubdomainToGlobal(model.Subdomains[0]);
+            _preconditioner = coarseProblemContribution.Add(localProblemsContribution).GetSubmatrix(freeSubdomainDofs, freeSubdomainDofs);
             Order = _preconditioner.NumRows;
         }
 
@@ -37,17 +46,22 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
 
     public class Factory : IPreconditionerFactory
     {
-        public readonly IOverlappingDecomposition OverlappingDecomposition;
+        private readonly IStructuralAsymmetricModel _model;
+        public readonly IModelOverlappingDecomposition ModelOverlappingDecomposition;
+        private readonly List<IWeightedPoint> _patchControlPoints;
 
-        public Factory(IOverlappingDecomposition overlappingDecomposition) =>
-            OverlappingDecomposition = overlappingDecomposition;
+        public Factory(IModelOverlappingDecomposition modelOverlappingDecomposition, IStructuralAsymmetricModel model)
+        {
+            _model = model;
+            ModelOverlappingDecomposition = modelOverlappingDecomposition;
+        }
 
         public ICoarseProblemFactory CoarseProblemFactory { get; set; } = new NestedInterpolationCoarseProblemFactory();
 
         public LocalProblemsFactory LocalProblemsFactory { get; set; } = new LocalProblemsFactory();
 
         public IPreconditioner CreatePreconditionerFor(IMatrixView matrix) =>
-            new OverlappingAdditiveSchwarzPreconditioner(CoarseProblemFactory, LocalProblemsFactory,
-                OverlappingDecomposition);
+            new OverlappingAdditiveSchwarzPreconditioner(matrix, CoarseProblemFactory, LocalProblemsFactory,
+                ModelOverlappingDecomposition, _model);
     }
 }

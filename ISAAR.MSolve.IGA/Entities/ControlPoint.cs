@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
+using ISAAR.MSolve.Geometry.Coordinates;
 
 namespace ISAAR.MSolve.IGA.Entities
 {
-    public class ControlPoint : INode
+    public class ControlPoint : INode, IWeightedPoint
 	{
         protected readonly Dictionary<int, Element> elementsDictionary = new Dictionary<int, Element>();
         protected readonly Dictionary<int, Patch> patchesDictionary =new Dictionary<int, Patch>();

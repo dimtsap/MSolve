@@ -45,7 +45,7 @@ namespace ISAAR.MSolve.Solvers.Iterative
         public override void Solve()
         {
             var watch = new Stopwatch();
-            if (linearSystem == null) linearSystem.SolutionConcrete = linearSystem.CreateZeroVectorConcrete();
+            if (linearSystem.SolutionConcrete == null) linearSystem.SolutionConcrete = linearSystem.CreateZeroVectorConcrete();
             else linearSystem.SolutionConcrete.Clear();
 
             // Preconditioning

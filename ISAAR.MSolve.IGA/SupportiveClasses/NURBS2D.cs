@@ -9,6 +9,7 @@ using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Geometry.Coordinates;
+using ISAAR.MSolve.LinearAlgebra.Interpolation;
 
 namespace ISAAR.MSolve.IGA.Problems.SupportiveClasses
 {

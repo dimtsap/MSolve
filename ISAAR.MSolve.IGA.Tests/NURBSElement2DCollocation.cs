@@ -4,6 +4,9 @@ using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using ISAAR.MSolve.Analyzers;
+using ISAAR.MSolve.Discretization;
+using ISAAR.MSolve.Discretization.FreedomDegrees;
+using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
@@ -16,6 +19,8 @@ using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers;
+using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive;
+using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.CoarseProblem;
 using ISAAR.MSolve.Solvers.Iterative;
 using ISAAR.MSolve.Solvers.Ordering;
 using ISAAR.MSolve.Solvers.Ordering.Reordering;
@@ -837,14 +842,27 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-			string filename = "..\\..\\..\\InputFiles\\5x5.txt";
+			string filename = "..\\..\\..\\InputFiles\\7x7.txt";
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
 			modelReader.CreateCollocationModelFromFile();
 
-            //var solverBuilder = new SuiteSparseSolver.Builder();
-            //solverBuilder.DofOrderer = new DofOrderer(
-            //    new NodeMajorDofOrderingStrategy(), new NullReordering());
+            for (int i = 0; i < 7; i++)
+            {
+                model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationX});
+                model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationY});
+                model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationX });
+                model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationY });
+            }
+
+            var patch = model.Patches[0];
             var solverBuilder= new GmresSolver.Builder();
+            solverBuilder.PreconditionerFactory =
+                new Factory(new ModelOverlappingDecomposition2D(
+                    new ParametricAxisDecomposition(patch.KnotValueVectorKsi, patch.DegreeKsi, 2),
+                    new ParametricAxisDecomposition(patch.KnotValueVectorHeta, patch.DegreeHeta, 2),
+                    patch.NumberOfControlPointsHeta, patch.ControlPoints.ToList<IWeightedPoint>(),model,
+                    new UsedDefinedCoarseNodes(25,Enumerable.Range(0,10).ToArray()), patch)
+                    , model);
             ISolver solver = solverBuilder.BuildSolver(model);
 
             // Structural problem provider
@@ -855,7 +873,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
             // Run the analysis
             parentAnalyzer.Initialize();
-            parentAnalyzer.BuildMatrices();
+            parentAnalyzer.Solve();
 
             var k = solver.LinearSystems[0].Matrix;
             

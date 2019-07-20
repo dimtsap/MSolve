@@ -3,6 +3,7 @@ using ISAAR.MSolve.LinearAlgebra.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ISAAR.MSolve.LinearAlgebra.Interpolation;
 using Xunit;
 
 namespace ISAAR.MSolve.IGA.Tests

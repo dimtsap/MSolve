@@ -4,6 +4,7 @@ using System.Text;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Problems.SupportiveClasses;
+using ISAAR.MSolve.LinearAlgebra.Interpolation;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 

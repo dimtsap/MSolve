@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ISAAR.MSolve.LinearAlgebra.Interpolation;
 
 namespace ISAAR.MSolve.IGA.Problems.SupportiveClasses
 {

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ISAAR.MSolve.Geometry.Coordinates;
+using ISAAR.MSolve.LinearAlgebra.Interpolation;
 
 namespace ISAAR.MSolve.IGA.Problems.SupportiveClasses
 {

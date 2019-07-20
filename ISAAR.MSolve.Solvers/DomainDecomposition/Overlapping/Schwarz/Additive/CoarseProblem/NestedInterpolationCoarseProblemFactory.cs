@@ -13,14 +13,14 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.
         public void GenerateMatrices(IMatrixView matrix, IModelOverlappingDecomposition modelOverlappingDecomposition)
         {
             _modelOverlappingDecomposition = modelOverlappingDecomposition;
-            var interpolationMatrix = modelOverlappingDecomposition.CoarseSpaceInterpolation;
+            var interpolationMatrix = modelOverlappingDecomposition.CoarseSpaceInterpolation.Transpose();
             var coarseSpaceMatrix = interpolationMatrix.ThisTimesOtherTimesThisTranspose(matrix);
             inverseCoarseMatrix = coarseSpaceMatrix.Invert();
         }
 
         public Matrix RetrievePreconditionerContribution()
         {
-            var interpolationMatrix = _modelOverlappingDecomposition.CoarseSpaceInterpolation.Transpose();
+            var interpolationMatrix = _modelOverlappingDecomposition.CoarseSpaceInterpolation;
             return interpolationMatrix.ThisTimesOtherTimesThisTranspose(inverseCoarseMatrix);
         }
     }

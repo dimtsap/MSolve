@@ -1,36 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using ISAAR.MSolve.Discretization.FreedomDegrees;
+using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Geometry.Coordinates;
+using ISAAR.MSolve.LinearAlgebra.Interpolation;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Matrices.Builders;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
+using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.CoarseProblem;
 using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.Interfaces;
 
 namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
 {
     public class ModelOverlappingDecomposition2D : IModelOverlappingDecomposition
     {
-        private int[][] _connectivity;
-        private IAxisOverlappingDecomposition _ksiDecomposition;
-        private IAxisOverlappingDecomposition _hetaDecomposition;
-        private int _numberOfCpHeta;
+        private List<int>[] _connectivity;
+        private readonly IAxisOverlappingDecomposition _ksiDecomposition;
+        private readonly IAxisOverlappingDecomposition _hetaDecomposition;
+        private readonly int _numberOfCpHeta;
         private List<IWeightedPoint> _patchControlPoints;
-        private CsrMatrix _coarseSpaceInterpolation;
+        private readonly IStructuralAsymmetricModel _model;
+        private readonly ISubdomain _patch;
+        private readonly ICoarseSpaceNodeSelection _coarseSpaceNodeSelection;
+        private IMatrix _coarseSpaceInterpolation;
+        private List<int> freeSubdomainDofs;
 
         public ModelOverlappingDecomposition2D(IAxisOverlappingDecomposition ksiDecomposition,
-            IAxisOverlappingDecomposition hetaDecomposition, int numberOfCpHeta, List<IWeightedPoint> patchControlPoints)
+            IAxisOverlappingDecomposition hetaDecomposition, int numberOfCpHeta, List<IWeightedPoint> patchControlPoints,
+            IStructuralAsymmetricModel model, ICoarseSpaceNodeSelection coarseSpaceNodeSelection, ISubdomain patch)
         {
             _ksiDecomposition = ksiDecomposition;
             _hetaDecomposition = hetaDecomposition;
             _numberOfCpHeta = numberOfCpHeta;
             _patchControlPoints = patchControlPoints;
+            _coarseSpaceNodeSelection = coarseSpaceNodeSelection;
+            _model = model;
+            _patch = patch;
         }
 
         public int NumberOfSubdomains => _connectivity.GetLength(0);
 
-        public CsrMatrix CoarseSpaceInterpolation => _coarseSpaceInterpolation;
+        public IMatrix CoarseSpaceInterpolation => _coarseSpaceInterpolation;
 
         public void DecomposeMatrix()
         {
@@ -67,7 +78,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
                 }
             }
 
-            _coarseSpaceInterpolation = R0.BuildCsrMatrix(true);
+            _coarseSpaceInterpolation = R0.BuildCsrMatrix(true).GetSubmatrix(freeSubdomainDofs.ToArray(),_coarseSpaceNodeSelection.GetFreeCoarseSpaceDofs());
         }
 
         private Matrix CalculateNURBS2D(int degreeKsi, int degreeHeta, IVector knotValueVectorKsi,
@@ -76,11 +87,10 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
             var numberOfCPKsi = knotValueVectorKsi.Length - degreeKsi - 1;
             var numberOfCPHeta = knotValueVectorHeta.Length - degreeHeta - 1;
 
-            var spanKsi = FindSpan(numberOfCPKsi, degreeKsi, naturalPoint.Xi, knotValueVectorKsi);
-            var spanHeta = FindSpan(numberOfCPHeta, degreeHeta, naturalPoint.Eta, knotValueVectorHeta);
-
-            var pointFunctionsKsi = BasisFunctions(spanKsi, naturalPoint.Xi, degreeKsi, knotValueVectorKsi);
-            var pointFunctionsHeta = BasisFunctions(spanHeta, naturalPoint.Eta, degreeHeta, knotValueVectorHeta);
+            BSPLines1D bsplinesKsi = new BSPLines1D(degreeKsi, knotValueVectorKsi, Vector.CreateFromArray(new double[] { naturalPoint.Xi }));
+            BSPLines1D bsplinesHeta = new BSPLines1D(degreeHeta, knotValueVectorHeta, Vector.CreateFromArray(new double[] { naturalPoint.Eta }));
+            bsplinesKsi.calculateBSPLines();
+            bsplinesHeta.calculateBSPLines();
 
             int numberOfElementControlPoints = patchControlPoints.Count;
 
@@ -92,8 +102,8 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
             {
                 int indexKsi = patchControlPoints[k].ID / numberOfCPHeta;
                 int indexHeta = patchControlPoints[k].ID % numberOfCPHeta;
-                sumKsiHeta += pointFunctionsKsi[indexKsi] *
-                              pointFunctionsHeta[indexHeta] *
+                sumKsiHeta += bsplinesKsi.BSPLineValues[indexKsi,0] *
+                              bsplinesHeta.BSPLineValues[indexHeta,0] *
                               patchControlPoints[k].WeightFactor;
             }
 
@@ -103,8 +113,8 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
                 int indexHeta = patchControlPoints[k].ID % numberOfCPHeta;
 
                 nurbsValues[k, 0] =
-                    pointFunctionsKsi[indexKsi] *
-                    pointFunctionsHeta[indexHeta] *
+                    bsplinesKsi.BSPLineValues[indexKsi,0] *
+                    bsplinesHeta.BSPLineValues[indexHeta,0] *
                     patchControlPoints[k].WeightFactor / sumKsiHeta;
             }
 
@@ -155,10 +165,11 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
 
         private void CalculateLocalProblems()
         {
+            //TODO: add dofOrderer to ignored constrainedDofs of each subdomain
             var numberOfSubdomainKsi = _ksiDecomposition.NumberOfAxisSubdomains;
             var numberOfSubdomainHeta = _hetaDecomposition.NumberOfAxisSubdomains;
-            _connectivity = new int[numberOfSubdomainKsi * numberOfSubdomainHeta][];
-
+            _connectivity = new List<int>[numberOfSubdomainKsi * numberOfSubdomainHeta];
+            
             var indexSubdomain = -1;
             for (int i = 0; i < numberOfSubdomainKsi; i++)
             {
@@ -167,24 +178,37 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive
                 {
                     var subdomainHetaConnectivity = _hetaDecomposition.GetAxisIndicesOfSubdomain(j);
                     indexSubdomain++;
-                    _connectivity[indexSubdomain] = new int[subdomainKsiConnectivity.Length * subdomainHetaConnectivity.Length];
+                    _connectivity[indexSubdomain] =
+                        new List<int>();
 
-                    var indexCP = 0;
+                    freeSubdomainDofs=new List<int>();
+                    foreach (var controlPoint in _patchControlPoints)
+                    {
+                        if (_model.GlobalColDofOrdering.GlobalFreeDofs.Contains(controlPoint, StructuralDof.TranslationX))
+                            freeSubdomainDofs.Add(2*controlPoint.ID);
+
+                        if (_model.GlobalColDofOrdering.GlobalFreeDofs.Contains(controlPoint, StructuralDof.TranslationX))
+                            freeSubdomainDofs.Add(2 * controlPoint.ID+1);
+                    }
+
                     foreach (var indexKsi in subdomainKsiConnectivity)
                     {
                         foreach (var indexHeta in subdomainHetaConnectivity)
                         {
-                            var globalIndex = indexKsi * _numberOfCpHeta + indexHeta;
-                            _connectivity[indexSubdomain][2 * indexCP] = 2 * globalIndex;
-                            _connectivity[indexSubdomain][2 * indexCP + 1] = 2 * globalIndex + 1;
-                            indexCP++;
+                            var indexCP = indexKsi * _numberOfCpHeta + indexHeta;
+                            var node = _patchControlPoints[indexCP] as INode;
+                            if (_model.GlobalColDofOrdering.GlobalFreeDofs.Contains(node, StructuralDof.TranslationX))
+                                _connectivity[indexSubdomain].Add(_model.GlobalColDofOrdering.GlobalFreeDofs[node, StructuralDof.TranslationX]);
+                            if (_model.GlobalColDofOrdering.GlobalFreeDofs.Contains(node, StructuralDof.TranslationY))
+                                _connectivity[indexSubdomain].Add(_model.GlobalColDofOrdering.GlobalFreeDofs[node, StructuralDof.TranslationY]);
+
                         }
                     }
                 }
             }
         }
 
-        public int[] GetConnectivityOfSubdomain(int indexSubdomain) => _connectivity[indexSubdomain];
+        public int[] GetConnectivityOfSubdomain(int indexSubdomain) => _connectivity[indexSubdomain].ToArray();
 
     }
 }

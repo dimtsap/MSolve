@@ -24,7 +24,7 @@ namespace ISAAR.MSolve.IGA.Entities
         public double Y { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public double Z { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public List<Constraint> Constraints => new List<Constraint>();
+        public List<Constraint> Constraints { get; }
         public Edge2D Edge { get; set; }
 
         public Dictionary<int, ISubdomain> SubdomainsDictionary => throw new NotImplementedException();
@@ -33,12 +33,14 @@ namespace ISAAR.MSolve.IGA.Entities
 		{
             _id = id;
             _isBoundary = isBoundary;
+            Constraints= new List<Constraint>();
         }
 
 		public CollocationPoint2D(int id, double[] coordinates, bool isBoundary=false) : base(coordinates)
 		{
             _id = id;
             _isBoundary = isBoundary;
+            Constraints = new List<Constraint>();
         }
 
         public int CompareTo(INode other) => this.ID - other.ID;

@@ -40,7 +40,7 @@ namespace ISAAR.MSolve.IGA.Entities
         public double X { get; set; }
         public double Y { get; set; }
         public double Z { get; set; }
-        public List<Constraint> Constraints { get; }
+        public List<Constraint> Constraints { get; }= new List<Constraint>();
         public Dictionary<int, ISubdomain> SubdomainsDictionary { get; }
 
         public int CompareTo(INode other) => this.ID - other.ID;

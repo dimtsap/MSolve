@@ -837,101 +837,101 @@ namespace ISAAR.MSolve.IGA.Tests
 			}
 		}
 
-		[Fact]
-		private void TestCollocationPointCreation()
-		{
-			var model = new CollocationModel();
-			ModelCreator modelCreator = new ModelCreator(model);
-			string filename = "..\\..\\..\\InputFiles\\7x7.txt";
-			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
-			modelReader.CreateCollocationModelFromFile();
+		//[Fact]
+		//private void TestCollocationPointCreation()
+		//{
+		//	var model = new CollocationModel();
+		//	ModelCreator modelCreator = new ModelCreator(model);
+		//	string filename = "..\\..\\..\\InputFiles\\7x7.txt";
+		//	IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+		//	modelReader.CreateCollocationModelFromFile();
 
-            for (int i = 0; i < 7; i++)
-            {
-                model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationX});
-                model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationY});
-                model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationX });
-                model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationY });
-            }
+  //          for (int i = 0; i < 7; i++)
+  //          {
+  //              model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationX});
+  //              model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationY});
+  //              model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationX });
+  //              model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationY });
+  //          }
 
-            var patch = model.Patches[0];
-            var solverBuilder= new GmresSolver.Builder();
-            solverBuilder.PreconditionerFactory =
-                new Factory(new ModelOverlappingDecomposition2D(
-                    new ParametricAxisDecomposition(patch.KnotValueVectorKsi, patch.DegreeKsi, 2),
-                    new ParametricAxisDecomposition(patch.KnotValueVectorHeta, patch.DegreeHeta, 2),
-                    patch.NumberOfControlPointsHeta, patch.ControlPoints.ToList<IWeightedPoint>(),model,
-                    new UsedDefinedCoarseNodes(25,Enumerable.Range(0,10).ToArray()), patch)
-                    , model);
-            ISolver solver = solverBuilder.BuildSolver(model);
+  //          var patch = model.Patches[0];
+  //          var solverBuilder= new GmresSolver.Builder();
+  //          solverBuilder.PreconditionerFactory =
+  //              new Factory(new ModelOverlappingDecomposition2D(
+  //                  new ParametricAxisDecomposition(patch.KnotValueVectorKsi, patch.DegreeKsi, 2),
+  //                  new ParametricAxisDecomposition(patch.KnotValueVectorHeta, patch.DegreeHeta, 2),
+  //                  patch.NumberOfControlPointsHeta, patch.ControlPoints.ToList<IWeightedPoint>(),model,
+  //                  new UsedDefinedCoarseNodes(25,Enumerable.Range(0,10).ToArray()), patch)
+  //                  , model);
+  //          ISolver solver = solverBuilder.BuildSolver(model);
 
-            // Structural problem provider
-            var provider = new ProblemStructural(model, solver);
+  //          // Structural problem provider
+  //          var provider = new ProblemStructural(model, solver);
 
-            // Linear static analysis
-            var childAnalyzer = new LinearAnalyzer(model,solver,provider);
-            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
-            // Run the analysis
-            parentAnalyzer.Initialize();
-            parentAnalyzer.Solve();
+  //          // Linear static analysis
+  //          var childAnalyzer = new LinearAnalyzer(model,solver,provider);
+  //          var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+  //          // Run the analysis
+  //          parentAnalyzer.Initialize();
+  //          parentAnalyzer.Solve();
 
-            var k = solver.LinearSystems[0].Matrix;
+  //          var k = solver.LinearSystems[0].Matrix;
             
-            Matrix<double> kmatlab=MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows,k.NumColumns);
-            for (int i = 0; i < k.NumRows; i++)
-            {
-                for (int j = 0; j < k.NumColumns; j++)
-                {
-                    kmatlab[i, j] = k[i, j];
-                }
-            }
-            MatlabWriter.Write("..\\..\\..\\OutputFiles\\K5x5.mat", kmatlab,"Ktotal");
+  //          Matrix<double> kmatlab=MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows,k.NumColumns);
+  //          for (int i = 0; i < k.NumRows; i++)
+  //          {
+  //              for (int j = 0; j < k.NumColumns; j++)
+  //              {
+  //                  kmatlab[i, j] = k[i, j];
+  //              }
+  //          }
+  //          MatlabWriter.Write("..\\..\\..\\OutputFiles\\K5x5.mat", kmatlab,"Ktotal");
 
 
-            var coarsePoints= new List<NaturalPoint>();
-            var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0};
-            var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
+  //          var coarsePoints= new List<NaturalPoint>();
+  //          var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0};
+  //          var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
 
-            var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-            var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-            var linearCP= new List<ControlPoint>();
-            var id = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 5; j++)
-                {
-                    linearCP.Add(new ControlPoint(){ID = id++, Ksi = xCP[i], Heta = yCP[j], WeightFactor = 1.0, X = xCP[i], Y= yCP[j], });
-                }
-            }
-            var linearVectorKsi=Vector.CreateFromArray(new double[]{0,0,0.25,0.5,0.75,1,1});
+  //          var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+  //          var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+  //          var linearCP= new List<ControlPoint>();
+  //          var id = 0;
+  //          for (int i = 0; i < 5; i++)
+  //          {
+  //              for (int j = 0; j < 5; j++)
+  //              {
+  //                  linearCP.Add(new ControlPoint(){ID = id++, Ksi = xCP[i], Heta = yCP[j], WeightFactor = 1.0, X = xCP[i], Y= yCP[j], });
+  //              }
+  //          }
+  //          var linearVectorKsi=Vector.CreateFromArray(new double[]{0,0,0.25,0.5,0.75,1,1});
 
-            foreach (var x in ksi)
-                coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
+  //          foreach (var x in ksi)
+  //              coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
 
-            var R0 = new double[model.ControlPoints.Count*2,coarsePoints.Count*2];
-            for (int i = 0; i < coarsePoints.Count; i++)
-            {
-                var pointShapeFunctions = new NURBS2D(1, 1, linearVectorKsi,
-                    linearVectorKsi, coarsePoints[i], linearCP, true);
-                for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
-                {
-                    R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
+  //          var R0 = new double[model.ControlPoints.Count*2,coarsePoints.Count*2];
+  //          for (int i = 0; i < coarsePoints.Count; i++)
+  //          {
+  //              var pointShapeFunctions = new NURBS2D(1, 1, linearVectorKsi,
+  //                  linearVectorKsi, coarsePoints[i], linearCP, true);
+  //              for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
+  //              {
+  //                  R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
 
-                    R0[2 * j + 1, 2 * i + 1] = pointShapeFunctions.NurbsValues[j, 0];
-                }
-            }
+  //                  R0[2 * j + 1, 2 * i + 1] = pointShapeFunctions.NurbsValues[j, 0];
+  //              }
+  //          }
 
-            Matrix<double> Rmatlab = CreateMatrix.Dense<double>(R0.GetLength(0), R0.GetLength(1));
-            for (int i = 0; i < R0.GetLength(0); i++)
-            {
-                for (int j = 0; j < R0.GetLength(1); j++)
-                {
-                    Rmatlab[i, j] = R0[i, j];
-                }
-            }
-            MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_3.mat", Rmatlab, "R0_3");
+  //          Matrix<double> Rmatlab = CreateMatrix.Dense<double>(R0.GetLength(0), R0.GetLength(1));
+  //          for (int i = 0; i < R0.GetLength(0); i++)
+  //          {
+  //              for (int j = 0; j < R0.GetLength(1); j++)
+  //              {
+  //                  Rmatlab[i, j] = R0[i, j];
+  //              }
+  //          }
+  //          MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_3.mat", Rmatlab, "R0_3");
 
-        }
+  //      }
 
 
 

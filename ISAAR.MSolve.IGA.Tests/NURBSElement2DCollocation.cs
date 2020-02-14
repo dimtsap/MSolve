@@ -19,6 +19,7 @@ using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers;
+using ISAAR.MSolve.Solvers.Direct;
 using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive;
 using ISAAR.MSolve.Solvers.DomainDecomposition.Overlapping.Schwarz.Additive.CoarseProblem;
 using ISAAR.MSolve.Solvers.Iterative;
@@ -837,139 +838,131 @@ namespace ISAAR.MSolve.IGA.Tests
 			}
 		}
 
+		[Fact]
+		private void TestCollocationPointCreation()
+		{
+			var model = new Model();
+			ModelCreator modelCreator = new ModelCreator(model);
+			string filename = "..\\..\\..\\InputFiles\\5x5.txt";
+			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+			modelReader.CreateModelFromFile();
+
+			//for (int i = 0; i < 7; i++)
+			//{
+			//	model.ControlPoints[i].Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationX });
+			//	model.ControlPoints[i].Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationY });
+			//	model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationX });
+			//	model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationY });
+			//}
+
+			var patch = model.Patches[0];
+			var solverBuilder = new SkylineSolver.Builder();
+			ISolver solver = solverBuilder.BuildSolver(model);
+
+			// Structural problem provider
+			var provider = new ProblemStructural(model, solver);
+
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+			// Run the analysis
+			parentAnalyzer.Initialize();
+
+			var k = solver.LinearSystems[0].Matrix;
+
+			Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows, k.NumColumns);
+			for (int i = 0; i < k.NumRows; i++)
+			{
+				for (int j = 0; j < k.NumColumns; j++)
+				{
+					kmatlab[i, j] = k[i, j];
+				}
+			}
+			MatlabWriter.Write("..\\..\\..\\OutputFiles\\K5x5.mat", kmatlab, "Ktotal");
+
+
+			var coarsePoints = new List<NaturalPoint>();
+			var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
+			var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
+
+			var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+			var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+			var linearCP = new List<ControlPoint>();
+			var id = 0;
+			for (int i = 0; i < 5; i++)
+			{
+				for (int j = 0; j < 5; j++)
+				{
+					linearCP.Add(new ControlPoint() { ID = id++, Ksi = xCP[i], Heta = yCP[j], WeightFactor = 1.0, X = xCP[i], Y = yCP[j], });
+				}
+			}
+			var linearVectorKsi = Vector.CreateFromArray(new double[] { 0, 0, 0.25, 0.5, 0.75, 1, 1 });
+
+			foreach (var x in ksi)
+				coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
+
+			var R0 = new double[model.ControlPoints.Count * 2, coarsePoints.Count * 2];
+			for (int i = 0; i < coarsePoints.Count; i++)
+			{
+				var pointShapeFunctions = new NURBS2D(1, 1, linearVectorKsi,
+					linearVectorKsi, coarsePoints[i], linearCP, true);
+				for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
+				{
+					R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
+
+					R0[2 * j + 1, 2 * i + 1] = pointShapeFunctions.NurbsValues[j, 0];
+				}
+			}
+
+			Matrix<double> Rmatlab = CreateMatrix.Dense<double>(R0.GetLength(0), R0.GetLength(1));
+			for (int i = 0; i < R0.GetLength(0); i++)
+			{
+				for (int j = 0; j < R0.GetLength(1); j++)
+				{
+					Rmatlab[i, j] = R0[i, j];
+				}
+			}
+			MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_3.mat", Rmatlab, "R0_3");
+
+		}
+
+
+
+
 		//[Fact]
-		//private void TestCollocationPointCreation()
+		//private void TestCollocationPoint2DBoundaryStiffness()
 		//{
-		//	var model = new CollocationModel();
-		//	ModelCreator modelCreator = new ModelCreator(model);
-		//	string filename = "..\\..\\..\\InputFiles\\7x7.txt";
-		//	IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
-		//	modelReader.CreateCollocationModelFromFile();
-
-  //          for (int i = 0; i < 7; i++)
-  //          {
-  //              model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationX});
-  //              model.ControlPoints[i].Constraints.Add(new Constraint() {Amount = 0, DOF = StructuralDof.TranslationY});
-  //              model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationX });
-  //              model.Elements[i].CollocationPoint.Constraints.Add(new Constraint() { Amount = 0, DOF = StructuralDof.TranslationY });
-  //          }
-
-  //          var patch = model.Patches[0];
-  //          var solverBuilder= new GmresSolver.Builder();
-  //          solverBuilder.PreconditionerFactory =
-  //              new Factory(new ModelOverlappingDecomposition2D(
-  //                  new ParametricAxisDecomposition(patch.KnotValueVectorKsi, patch.DegreeKsi, 2),
-  //                  new ParametricAxisDecomposition(patch.KnotValueVectorHeta, patch.DegreeHeta, 2),
-  //                  patch.NumberOfControlPointsHeta, patch.ControlPoints.ToList<IWeightedPoint>(),model,
-  //                  new UsedDefinedCoarseNodes(25,Enumerable.Range(0,10).ToArray()), patch)
-  //                  , model);
-  //          ISolver solver = solverBuilder.BuildSolver(model);
-
-  //          // Structural problem provider
-  //          var provider = new ProblemStructural(model, solver);
-
-  //          // Linear static analysis
-  //          var childAnalyzer = new LinearAnalyzer(model,solver,provider);
-  //          var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
-  //          // Run the analysis
-  //          parentAnalyzer.Initialize();
-  //          parentAnalyzer.Solve();
-
-  //          var k = solver.LinearSystems[0].Matrix;
-            
-  //          Matrix<double> kmatlab=MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows,k.NumColumns);
-  //          for (int i = 0; i < k.NumRows; i++)
-  //          {
-  //              for (int j = 0; j < k.NumColumns; j++)
-  //              {
-  //                  kmatlab[i, j] = k[i, j];
-  //              }
-  //          }
-  //          MatlabWriter.Write("..\\..\\..\\OutputFiles\\K5x5.mat", kmatlab,"Ktotal");
+		//    var stiffnessMatrix = BoundaryElement.StiffnessMatrix(BoundaryElement);
 
 
-  //          var coarsePoints= new List<NaturalPoint>();
-  //          var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0};
-  //          var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
+		//    var expectedStiffnessMatrix = new double[2, 72]
+		//    {
+		//        {
+		//            942491.130114883, - 1528622.97410973, - 960229.359363204, 5526.82466713629, 0, 0, 0, 0, 0, 0, 0, 0,
+		//            1541946.85604645, 604278.375904314, -1534772.04676494, 8833.73948502993, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0,
+		//            402655.741148221, 795032.315762745, -393396.546787819, 2264.28583707860, 0 ,0, 0, 0, 0, 0, 0, 0,
+		//            31983.9502496700, 108207.034955708, -30729.3930359958, 176.870208957262, 0 ,0, 0, 0, 0, 0, 0, 0,
+		//            906.755309707459, 4251.32132908476, -857.631046319342, 4.93629607955652, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0,
+		//            7.97712650859460, 47.2268812420649, -7.43299716737894, 0.0427823537104383, 0, 0, 0, 0, 0, 0, 0, 0,
+		//        },
+		//        {
+		//            -1782504.44499018 ,369391.148725693, 5526.82466713629, -336146.346449264, 0, 0, 0, 0, 0, 0, 0, 0,
+		//            706476.688202230, 523905.386804851, 8833.73948502993, -537275.819700648, 0, 0, 0, 0, 0, 0, 0, 0,
+		//            927931.867544305, 120303.984740049, 2264.28583707860, -137715.859881830, 0, 0, 0, 0, 0, 0, 0, 0,
+		//            126273.296906741, 8388.99921530011, 176.870208957262 ,-10757.4019654052, 0, 0, 0, 0, 0, 0, 0, 0,
+		//            4960.78691125707, 207.172382078212, 4.93629607955652, -300.229877383557, 0, 0, 0, 0, 0, 0, 0, 0,
+		//            55.1061490101538 ,1.56806701121465, 0.0427823537104383, -2.60206045213942, 0, 0, 0, 0, 0, 0, 0, 0,
+		//        },
+		//    };
 
-  //          var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-  //          var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-  //          var linearCP= new List<ControlPoint>();
-  //          var id = 0;
-  //          for (int i = 0; i < 5; i++)
-  //          {
-  //              for (int j = 0; j < 5; j++)
-  //              {
-  //                  linearCP.Add(new ControlPoint(){ID = id++, Ksi = xCP[i], Heta = yCP[j], WeightFactor = 1.0, X = xCP[i], Y= yCP[j], });
-  //              }
-  //          }
-  //          var linearVectorKsi=Vector.CreateFromArray(new double[]{0,0,0.25,0.5,0.75,1,1});
+		//    for (int i = 0; i < 2; i++)
+		//    {
+		//        for (int j = 0; j < 72; j++)
+		//        {
+		//            Assert.True(Utilities.AreValuesEqual(-expectedStiffnessMatrix[i, j], stiffnessMatrix[i, j], 1e-9));
+		//        }
+		//    }
+		//}
 
-  //          foreach (var x in ksi)
-  //              coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
-
-  //          var R0 = new double[model.ControlPoints.Count*2,coarsePoints.Count*2];
-  //          for (int i = 0; i < coarsePoints.Count; i++)
-  //          {
-  //              var pointShapeFunctions = new NURBS2D(1, 1, linearVectorKsi,
-  //                  linearVectorKsi, coarsePoints[i], linearCP, true);
-  //              for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
-  //              {
-  //                  R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
-
-  //                  R0[2 * j + 1, 2 * i + 1] = pointShapeFunctions.NurbsValues[j, 0];
-  //              }
-  //          }
-
-  //          Matrix<double> Rmatlab = CreateMatrix.Dense<double>(R0.GetLength(0), R0.GetLength(1));
-  //          for (int i = 0; i < R0.GetLength(0); i++)
-  //          {
-  //              for (int j = 0; j < R0.GetLength(1); j++)
-  //              {
-  //                  Rmatlab[i, j] = R0[i, j];
-  //              }
-  //          }
-  //          MatlabWriter.Write("..\\..\\..\\OutputFiles\\R0_3.mat", Rmatlab, "R0_3");
-
-  //      }
-
-
-
-
-        //[Fact]
-        //private void TestCollocationPoint2DBoundaryStiffness()
-        //{
-        //    var stiffnessMatrix = BoundaryElement.StiffnessMatrix(BoundaryElement);
-
-
-        //    var expectedStiffnessMatrix = new double[2, 72]
-        //    {
-        //        {
-        //            942491.130114883, - 1528622.97410973, - 960229.359363204, 5526.82466713629, 0, 0, 0, 0, 0, 0, 0, 0,
-        //            1541946.85604645, 604278.375904314, -1534772.04676494, 8833.73948502993, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0,
-        //            402655.741148221, 795032.315762745, -393396.546787819, 2264.28583707860, 0 ,0, 0, 0, 0, 0, 0, 0,
-        //            31983.9502496700, 108207.034955708, -30729.3930359958, 176.870208957262, 0 ,0, 0, 0, 0, 0, 0, 0,
-        //            906.755309707459, 4251.32132908476, -857.631046319342, 4.93629607955652, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0,
-        //            7.97712650859460, 47.2268812420649, -7.43299716737894, 0.0427823537104383, 0, 0, 0, 0, 0, 0, 0, 0,
-        //        },
-        //        {
-        //            -1782504.44499018 ,369391.148725693, 5526.82466713629, -336146.346449264, 0, 0, 0, 0, 0, 0, 0, 0,
-        //            706476.688202230, 523905.386804851, 8833.73948502993, -537275.819700648, 0, 0, 0, 0, 0, 0, 0, 0,
-        //            927931.867544305, 120303.984740049, 2264.28583707860, -137715.859881830, 0, 0, 0, 0, 0, 0, 0, 0,
-        //            126273.296906741, 8388.99921530011, 176.870208957262 ,-10757.4019654052, 0, 0, 0, 0, 0, 0, 0, 0,
-        //            4960.78691125707, 207.172382078212, 4.93629607955652, -300.229877383557, 0, 0, 0, 0, 0, 0, 0, 0,
-        //            55.1061490101538 ,1.56806701121465, 0.0427823537104383, -2.60206045213942, 0, 0, 0, 0, 0, 0, 0, 0,
-        //        },
-        //    };
-
-        //    for (int i = 0; i < 2; i++)
-        //    {
-        //        for (int j = 0; j < 72; j++)
-        //        {
-        //            Assert.True(Utilities.AreValuesEqual(-expectedStiffnessMatrix[i, j], stiffnessMatrix[i, j], 1e-9));
-        //        }
-        //    }
-        //}
-
-    }
+	}
 }

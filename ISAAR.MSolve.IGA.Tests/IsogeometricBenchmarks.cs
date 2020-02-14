@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
@@ -1793,5 +1794,45 @@ namespace ISAAR.MSolve.IGA.Tests
 			parentAnalyzer.Initialize();
 			parentAnalyzer.Solve();
 		}
+
+		[Fact]
+		public void Isogeometric5x5()
+		{
+			// Model
+			
+			Model model = new Model();
+			ModelCreator modelCreator = new ModelCreator(model);
+			string filename = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "5x5.txt");
+			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
+			modelReader.CreateModelFromFile();
+			
+			var solverBuilder = new DenseMatrixSolver.Builder();
+			solverBuilder.DofOrderer = new DofOrderer(
+				new NodeMajorDofOrderingStrategy(), new NullReordering());
+			ISolver solver = solverBuilder.BuildSolver(model);
+
+			// Structural problem provider
+			var provider = new ProblemStructural(model, solver);
+
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+			// Run the analysis
+			parentAnalyzer.Initialize();
+
+
+            var k = solver.LinearSystems[0].Matrix;
+            Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows, k.NumColumns);
+            for (int i = 0; i < k.NumRows; i++)
+            {
+                for (int j = 0; j < k.NumColumns; j++)
+                {
+                    kmatlab[i, j] = k[i, j];
+                }
+            }
+            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"K5x5.mat"), kmatlab, "Ktotal");
+		}
+
 	}
 }

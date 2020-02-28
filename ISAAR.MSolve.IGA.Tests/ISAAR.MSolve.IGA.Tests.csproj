@@ -40,6 +40,9 @@
   </ItemGroup>
   
   <ItemGroup>
+    <None Update="InputFiles\4x4.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="InputFiles\5x5.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

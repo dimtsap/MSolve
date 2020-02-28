@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
@@ -841,11 +842,11 @@ namespace ISAAR.MSolve.IGA.Tests
 		[Fact]
 		private void TestCollocationPointCreation()
 		{
-			var model = new Model();
+			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-			string filename = "..\\..\\..\\InputFiles\\5x5.txt";
+			string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","4x4.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
-			modelReader.CreateModelFromFile();
+			modelReader.CreateCollocationModelFromFile();
 
 			//for (int i = 0; i < 7; i++)
 			//{
@@ -856,7 +857,7 @@ namespace ISAAR.MSolve.IGA.Tests
 			//}
 
 			var patch = model.Patches[0];
-			var solverBuilder = new SkylineSolver.Builder();
+			var solverBuilder = new GmresSolver.Builder();
 			ISolver solver = solverBuilder.BuildSolver(model);
 
 			// Structural problem provider
@@ -878,7 +879,7 @@ namespace ISAAR.MSolve.IGA.Tests
 					kmatlab[i, j] = k[i, j];
 				}
 			}
-			MatlabWriter.Write("..\\..\\..\\OutputFiles\\K5x5.mat", kmatlab, "Ktotal");
+			MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), "K4x4Collocation.mat"), kmatlab, "KC");
 
 
 			var coarsePoints = new List<NaturalPoint>();

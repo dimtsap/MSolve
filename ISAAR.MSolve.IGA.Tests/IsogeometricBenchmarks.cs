@@ -1831,7 +1831,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     kmatlab[i, j] = k[i, j];
                 }
             }
-            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"K5x5.mat"), kmatlab, "Ktotal");
+            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"K5x5Dimitra.mat"), kmatlab, "KG");
 		}
 
 	}

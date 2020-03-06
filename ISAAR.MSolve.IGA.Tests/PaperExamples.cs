@@ -38,38 +38,32 @@ namespace ISAAR.MSolve.IGA.Tests
             var filename = "ScordelisLoShell";
             var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt")
                 .ToString(CultureInfo.InvariantCulture);
-            var numberOfRealizations = 1;
-            var trandom = new TRandom();
+            var numberOfRealizations = 10;
 
-            var youngModulusSolutionPairs = new double[numberOfRealizations, 2];
-            for (var realization =0; realization<numberOfRealizations; realization++)
+            var outterMaterial = new ElasticMaterial3DtotalStrain()
+            {
+                YoungModulus = 4.3210e8,
+                PoissonRatio = 0.0
+            };
+            var innerMaterial = new ElasticMaterial3DtotalStrain()
+            {
+                YoungModulus = 3.4e9,
+                PoissonRatio = 0.0
+            };
+
+            var homogeneousRveBuilder1 =
+                new CompositeMaterialModeluilderTet2(outterMaterial, innerMaterial, 100, 100, 100);
+            //var material4 = new MicrostructureShell2D(homogeneousRveBuilder1,
+            //    microModel => (new SuiteSparseSolver.Builder()).BuildSolver(microModel), false, 1);
+
+            var material4 = new Shell2dRVEMaterialHostConst(1000, 1, 1, homogeneousRveBuilder1,
+                constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+
+            var youngModulusSolutionPairs = new double[numberOfRealizations, 1];
+            Parallel.For(0, numberOfRealizations, realization =>
             {
                 // Data from https://www.researchgate.net/figure/Mechanical-properties-of-the-nano-hydroxyapatite-polyetheretherketone-nha-PeeK_tbl1_265175039
-                var randomInnerE = trandom.Normal(3.4e9, 0.2e9);
-                youngModulusSolutionPairs[realization, 0] = randomInnerE;
-                var outterMaterial = new ElasticMaterial3DtotalStrain()
-                {
-                    YoungModulus = 4.3210e8,
-                    PoissonRatio = 0.0
-                };
-                var innerMaterial = new ElasticMaterial3DtotalStrain()
-                {
-                    YoungModulus = 3.4e9,
-                    PoissonRatio = 0.0
-                };
 
-                var material3= new ElasticMaterial2D(StressState2D.PlaneStress)
-                {
-                    YoungModulus = 4.3210e8,
-                    PoissonRatio = 0.0
-                };
-                var homogeneousRveBuilder1 =
-                    new CompositeMaterialModeluilderTet2(outterMaterial, innerMaterial, 100, 100, 100);
-                //var material = new MicrostructureShell2D(homogeneousRveBuilder1,
-                //    microModel => (new SuiteSparseSolver.Builder()).BuildSolver(microModel), false, 1);
-
-                var material4 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
-                    constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
 
                 var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, material4);
                 var model = modelReader.GenerateModelFromFile();
@@ -133,8 +127,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 var solution = solver.LinearSystems[0].Solution[dofA];
 
-                youngModulusSolutionPairs[realization, 1] = solution;
-            }
+                youngModulusSolutionPairs[realization, 0] = solution;
+            });
 
             var writer = new Array2DWriter();
             writer.WriteToFile(youngModulusSolutionPairs,

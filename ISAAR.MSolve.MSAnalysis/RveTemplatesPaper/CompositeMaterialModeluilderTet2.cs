@@ -8,12 +8,14 @@ using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Mesh;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.FEM.Entities;
+using ISAAR.MSolve.FEM.Materials;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.Solvers.DomainDecomposition.Dual.FetiDP.CornerNodes;
+using Troschuetz.Random;
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
 {
@@ -39,7 +41,14 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
 
         public IRVEbuilder Clone(int a)
         {
-            return new CompositeMaterialModeluilderTet2(outterMaterial, innerMaterial,
+            var trandom = new TRandom();
+            var randomOutterE = trandom.Normal(3.4e9, 1e9);
+            var material= new ElasticMaterial3DtotalStrain()
+            {
+                YoungModulus = randomOutterE
+            };
+
+            return new CompositeMaterialModeluilderTet2(material, innerMaterial,
                 L01, L02, L03, boundarySearchTol);
         }
 

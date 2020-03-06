@@ -8,6 +8,7 @@ using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.Solvers;
+using Troschuetz.Random;
 
 
 namespace ISAAR.MSolve.MultiscaleAnalysis
@@ -80,8 +81,9 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             //    gpCounter += -(rveDatabaseSize * gpsPerRve);
             //}
 
-            int rve_id = 1;// ((gpCounter-1) / gpsPerRve) + 1;      //TODO: xrhsh tou rand()     
-
+            //int rve_id = 1;// ((gpCounter-1) / gpsPerRve) + 1;      //TODO: xrhsh tou rand()     
+            var rand= new TRandom();
+            var rve_id = rand.DiscreteUniform(1, rveDatabaseSize);
             var sharedRVEmaterial = new Shell2dRVEMaterialHostConst(MaterialDatabase[rve_id]);
             return sharedRVEmaterial;
         }

@@ -90,7 +90,7 @@ namespace ISAAR.MSolve.IGA.Tests
 				var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta,
                     ElementControlPoints().ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
 
-				var element = new ContinuumElement2D(material,nurbs, gaussPoints, thickness);
+				var element = new ContinuumElement2D(material,nurbs,null, gaussPoints, thickness);
 				var patch = new Patch();
 				
 				foreach (var controlPoint in ElementControlPoints())

@@ -739,11 +739,17 @@ namespace ISAAR.MSolve.IGA.Readers
                     var nurbs = new Nurbs2D(DegreeKsiDictionary[0], KnotValueVectorsKsiDictionary[0],
                         DegreeHetaDictionary[0], KnotValueVectorsHetaDictionary[0],
                         elementControlPoints.ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
+                    var centroidKsi = (knotsOfElement[0].Ksi + knotsOfElement[2].Ksi) / 2.0;
+                    var centroidHeta = (knotsOfElement[0].Heta + knotsOfElement[2].Heta) / 2.0;
+                    var nurbsCentroid = new Nurbs2D(DegreeKsiDictionary[0], KnotValueVectorsKsiDictionary[0],
+                        DegreeHetaDictionary[0], KnotValueVectorsHetaDictionary[0],
+                        elementControlPoints.ToArray(), new double[]{ centroidKsi}, new double[]{ centroidHeta});
+
                     Element element = new Element
                     {
                         ID = elementID,
                         Patch = model.PatchesDictionary[0],
-                        ElementType = new ContinuumElement2D(_material2D, nurbs, gaussPoints, Thickness)
+                        ElementType = new ContinuumElement2D(_material2D, nurbs,nurbsCentroid, gaussPoints, Thickness)
                     };
                     element.AddKnots(knotsOfElement);
                     element.AddControlPoints(elementControlPoints.ToList());

@@ -17,7 +17,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP
 {
     public class TopologySimpLinear2D
     {
-        private readonly ILinearFemAnalysis fem;
+        private readonly ILinearAnalysis fem;
         private readonly IDensityFilter filter;
         private readonly IMaterialInterpolation materialInterpolation;
         private readonly OptimalityCriteriaBuilder optimAlgorithmBuilder;
@@ -25,7 +25,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP
         private OptimalityCriteria optimAlgorithm; //TODO: extend this
         private double prescribedVolume;
 
-        public TopologySimpLinear2D(ILinearFemAnalysis fem, OptimalityCriteriaBuilder optimAlgorithmBuilder,
+        public TopologySimpLinear2D(ILinearAnalysis fem, OptimalityCriteriaBuilder optimAlgorithmBuilder,
             IDensityFilter filter, IMaterialInterpolation materialInterpolation, double prescribedVolumeFraction)
         {
             this.fem = fem;

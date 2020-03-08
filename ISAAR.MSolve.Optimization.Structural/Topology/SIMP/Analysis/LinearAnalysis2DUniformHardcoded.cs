@@ -22,7 +22,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
     /// class is useful to compare other FEM analyses with, in terms of computational cost. 
     /// For the full paper see "A 99 line topology optimization code written in Matlab, O. Sigmund, 1991"
     /// </summary>
-    public class LinearFemAnalysis2DUniformHardcoded: ILinearFemAnalysis
+    public class LinearAnalysis2DUniformHardcoded: ILinearAnalysis
     {
         //TODO: Use MSolve analysis and Model instead of this
         public enum BoundaryConditions
@@ -41,7 +41,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
         private IMatrixView unitStiffness; //TODO: Should this be readonly without an Initialize() method?
         private IVectorView youngModuli;
 
-        public LinearFemAnalysis2DUniformHardcoded(int numElementsX, int numElementsY, ElasticMaterial2D material,
+        public LinearAnalysis2DUniformHardcoded(int numElementsX, int numElementsY, ElasticMaterial2D material,
             BoundaryConditions bc)
         {
             this.numElementsX = numElementsX;

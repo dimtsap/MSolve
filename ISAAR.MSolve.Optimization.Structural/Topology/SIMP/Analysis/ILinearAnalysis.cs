@@ -10,7 +10,7 @@ using ISAAR.MSolve.LinearAlgebra.Vectors;
 //      node and dof ordering. The assumption would be that elements have identical geometry, whatever that may be.
 namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
 {
-    public interface ILinearFemAnalysis
+    public interface ILinearAnalysis
     {
         int NumElements { get; }
         int NumLoadCases { get; }

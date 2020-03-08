@@ -101,7 +101,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 
             // Define the fem analysis and the filter
             double filterAreaRadius = 1.2;
-            var fem = new LinearFemAnalysis2DGeneral(model, solver);
+            var fem = new LinearAnalysis2DGeneral(model, solver);
             var filter = new ProximityDensityFilter2D(model, filterAreaRadius);
 
             // Run the test
@@ -117,15 +117,15 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 
             // Define the fem analysis and the filter
             var material = new ElasticMaterial2D(StressState2D.PlaneStress) { YoungModulus = 1.0, PoissonRatio = 0.3 };
-            var fem = new LinearFemAnalysis2DUniformHardcoded(numElementsX, numElementsY, material,
-                LinearFemAnalysis2DUniformHardcoded.BoundaryConditions.ShortCantilever);
+            var fem = new LinearAnalysis2DUniformHardcoded(numElementsX, numElementsY, material,
+                LinearAnalysis2DUniformHardcoded.BoundaryConditions.ShortCantilever);
             var filter = new MeshIndependentSensitivityFilter2DUniform(numElementsX, numElementsY, filterAreaRadius);
 
             // Run the test
             TestCantileverBeam(fem, filter);
         }
 
-        private static void TestCantileverBeam(ILinearFemAnalysis fem, IDensityFilter filter)
+        private static void TestCantileverBeam(ILinearAnalysis fem, IDensityFilter filter)
         {
             // Parameters
             double volumeFraction = 0.4, penalty = 3.0;
@@ -163,8 +163,8 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 
             // Define the optimization
             var material = new ElasticMaterial2D(StressState2D.PlaneStress) { YoungModulus = youngModulus, PoissonRatio = 0.3 };
-            var fem = new LinearFemAnalysis2DUniformHardcoded(numElementsX, numElementsY, material,
-                LinearFemAnalysis2DUniformHardcoded.BoundaryConditions.Cantilever2LoadCases);
+            var fem = new LinearAnalysis2DUniformHardcoded(numElementsX, numElementsY, material,
+                LinearAnalysis2DUniformHardcoded.BoundaryConditions.Cantilever2LoadCases);
             var filter = new MeshIndependentSensitivityFilter2DUniform(numElementsX, numElementsY, filterAreaRadius);
             var materialInterpolation = new PowerLawMaterialInterpolation(youngModulus, penalty, 1E-3);
             var simp = new TopologySimpLinear2D(fem, optimAlgorithmBuilder, filter, materialInterpolation, volumeFraction);
@@ -252,7 +252,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 
             // Define the fem analysis and the filter
             double filterAreaRadius = 1.5;
-            var fem = new LinearFemAnalysis2DGeneral(model, solver);
+            var fem = new LinearAnalysis2DGeneral(model, solver);
             var filter = new ProximityDensityFilter2D(model, filterAreaRadius);
 
             // Run the test
@@ -268,14 +268,14 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 
             // Define the optimization
             var material = new ElasticMaterial2D(StressState2D.PlaneStress) { YoungModulus = youngModulus, PoissonRatio = 0.3 };
-            var fem = new LinearFemAnalysis2DUniformHardcoded(numElementsX, numElementsY, material,
-                LinearFemAnalysis2DUniformHardcoded.BoundaryConditions.MbbBeam);
+            var fem = new LinearAnalysis2DUniformHardcoded(numElementsX, numElementsY, material,
+                LinearAnalysis2DUniformHardcoded.BoundaryConditions.MbbBeam);
             var filter = new MeshIndependentSensitivityFilter2DUniform(numElementsX, numElementsY, filterAreaRadius);
 
             TestMbbBeam(fem, filter);
         }
 
-        private static void TestMbbBeam(ILinearFemAnalysis fem, IDensityFilter filter)
+        private static void TestMbbBeam(ILinearAnalysis fem, IDensityFilter filter)
         {
             // Parameters
             double volumeFraction = 0.5, penalty = 3.0;
@@ -303,5 +303,6 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
             Vector densitiesExpected = reader.ReadFile(densitiesPath).Reshape(false);
             Assert.True(densitiesExpected.Equals(densities, 1E-8));
         }
+
     }
 }

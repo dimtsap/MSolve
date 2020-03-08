@@ -216,7 +216,7 @@ namespace ISAAR.MSolve.IGA.Entities
 					Element element = new Element
 					{
 						ID = elementID,
-						ElementType = new ContinuumElement2D(null, nurbs, gaussPoints, 0),
+						ElementType = new ContinuumElement2D(null, nurbs,null, gaussPoints, 0),
 						Patch = Patch,
 						Model = Patch.Elements[0].Model
 					};

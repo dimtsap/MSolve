@@ -6,6 +6,7 @@ using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Mesh;
+using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
@@ -25,11 +26,13 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 	public class ContinuumElement2D : Element, IStructuralIsogeometricElement
 	{
         public ContinuumElement2D(IContinuumMaterial2D material, 
-            IShapeFunction2D shapeFunctions, GaussLegendrePoint3D[] gaussPoints,
+            IShapeFunction2D shapeFunctions,IShapeFunction2D centroidShapeFunction2D,
+            GaussLegendrePoint3D[] gaussPoints,
             double thickness)
         {
             _material = material;
             _shapeFunctions = shapeFunctions;
+            _centroidShapeFunctions = centroidShapeFunction2D;
             _gaussPoints = gaussPoints;
             _thickness = thickness;
         }
@@ -39,9 +42,10 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		private IDofType[][] _dofTypes;
         private readonly IContinuumMaterial2D _material;
         internal readonly IShapeFunction2D _shapeFunctions;
-        private readonly GaussLegendrePoint3D[] _gaussPoints;
+		private readonly IShapeFunction2D _centroidShapeFunctions;
+		private readonly GaussLegendrePoint3D[] _gaussPoints;
         private readonly double _thickness;
-
+		public double Thickness { get; }
         /// <summary>
         /// Retrieves the type of Finite Element used. Since the element is Isogeometric its type is defined as unknown.
         /// </summary>
@@ -176,7 +180,10 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		/// <summary>
 		/// Clear the material state of the element.
 		/// </summary>
-		public void ClearMaterialState() => throw new NotImplementedException();
+		public void ClearMaterialState()
+        {
+            _material.ClearState();
+        }
 
 		/// <summary>
 		/// Calculates the damping matrix of the element.
@@ -466,5 +473,46 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 			GaussQuadrature gauss = new GaussQuadrature();
 			return gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, element.Knots.ToArray());
 		}
+
+        public double CalculateArea(IElement element)
+        {
+            var area = 0.0;
+            var numberOfCP = element.Nodes.Count;
+            var elementControlPoints = element.Nodes.ToArray();
+
+            for (var j = 0; j < _gaussPoints.Length; j++)
+            {
+                var jacobianMatrix = Matrix.CreateZero(2, 2);
+
+                for (int k = 0; k < numberOfCP; k++)
+                {
+                    jacobianMatrix[0, 0] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].X;
+                    jacobianMatrix[0, 1] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].Y;
+                    jacobianMatrix[1, 0] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].X;
+                    jacobianMatrix[1, 1] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].Y;
+                }
+
+                var jacdet = (jacobianMatrix[0, 0] * jacobianMatrix[1, 1])
+                                - (jacobianMatrix[1, 0] * jacobianMatrix[0, 1]);
+                area += _gaussPoints[j].WeightFactor * jacdet;
+            }
+
+            return area;
+        }
+
+
+        public CartesianPoint FindCentroid(IElement element)
+        {
+            var numberOfCP = element.Nodes.Count;
+            var elementControlPoints = element.Nodes.ToArray();
+            var x = 0.0;
+            var y = 0.0;
+            for (int i = 0; i < numberOfCP; i++)
+            {
+                x += _centroidShapeFunctions.Values[i, 0] * element.Nodes[i].X;
+                y += _centroidShapeFunctions.Values[i, 0] * element.Nodes[i].Y;
+            }
+			return new CartesianPoint(x,y);
+        } 
 	}
 }

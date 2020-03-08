@@ -83,7 +83,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     ElementControlPoints().ToArray(), parametricPointKsi, parametricPointHeta);
 
 
-				var element = new ContinuumElement2D(null,nurbs, gaussPoints, 1);
+				var element = new ContinuumElement2D(null,nurbs,null, gaussPoints, 1);
 				var patch = new Patch();
 				foreach (var controlPoint in ElementControlPoints())
 					element.ControlPointsDictionary.Add(controlPoint.ID, controlPoint);

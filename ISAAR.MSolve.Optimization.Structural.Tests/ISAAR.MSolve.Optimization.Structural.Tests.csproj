@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ISAAR.MSolve.IGA\ISAAR.MSolve.IGA.csproj" />
     <ProjectReference Include="..\ISAAR.MSolve.Optimization.Structural\ISAAR.MSolve.Optimization.Structural.csproj" />
   </ItemGroup>
 
@@ -30,6 +31,12 @@
     <Reference Include="System">
       <HintPath>System</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="InputFiles\Cantilever2D.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

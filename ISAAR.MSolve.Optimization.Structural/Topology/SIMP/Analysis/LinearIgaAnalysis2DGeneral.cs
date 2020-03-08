@@ -5,8 +5,9 @@ using System.Text;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Providers;
-using ISAAR.MSolve.FEM.Elements;
-using ISAAR.MSolve.FEM.Entities;
+using ISAAR.MSolve.IGA.Elements.Continuum;
+using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Problems;
@@ -14,32 +15,33 @@ using ISAAR.MSolve.Solvers;
 
 namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
 {
-    public class LinearFemAnalysis2DGeneral : ILinearFemAnalysis
+    public class LinearIgaAnalysis2DGeneral:ILinearAnalysis
     {
         private readonly Model model;
-        private readonly Subdomain subdomain;
+        private readonly Patch subdomain;
         private readonly ISolver solver;
-        private readonly ContinuumElement2D[] elementTypes;
+        private readonly IList<Element> modelElements;
         private readonly IElement[] elementWrappers;
         private readonly ScalingDofEnumerator[] penalizers;
         private readonly IElementMatrixProvider problemMatrixProvider = new ElementStructuralStiffnessProvider();
         private bool isFirstAnalysis = true;
         private ProblemStructural problem;
+        private readonly ContinuumElement2D[] elementTypes;
         private LinearAnalyzer linearAnalyzer;
         private StaticAnalyzer staticAnalyzer;
         private Vector elementVolumes;
         private IVectorView globalDisplacements;
 
-        public LinearFemAnalysis2DGeneral(Model model, ISolver solver)
+        public LinearIgaAnalysis2DGeneral(Model model, ISolver solver)
         {
-            if (model.SubdomainsDictionary.Count != 1) throw new NotImplementedException(
+            if (model.PatchesDictionary.Count != 1) throw new NotImplementedException(
                 "Cannot perform topology optimization with multiple subdomains yet.");
             this.model = model;
-            subdomain = model.SubdomainsDictionary.First().Value;
+            subdomain = model.PatchesDictionary.First().Value;
             this.solver = solver;
 
             // Elements
-            IList<Element> modelElements = model.Elements;
+            modelElements = model.Elements;
             NumElements = modelElements.Count;
             elementTypes = new ContinuumElement2D[NumElements];
             elementWrappers = new IElement[NumElements];
@@ -48,11 +50,11 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
             {
                 if (modelElements[e].ElementType is ContinuumElement2D continuum) elementTypes[e] = continuum;
                 else throw new ArgumentException("2D topology optimization only works with 2D continuum elements,"
-                    + $" but the element with ID = {modelElements[e].ID} was not.");
+                                                 + $" but the element with ID = {modelElements[e].ID} was not.");
                 elementWrappers[e] = modelElements[e];
                 penalizers[e] = new ScalingDofEnumerator();
             }
-            NumLoadCases = 1; //TODO: implement multiple load cases in Model, analyzers and solvers
+            NumLoadCases = 1;
         }
 
         public int NumElements { get; }
@@ -66,7 +68,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
                 elementWrappers[elementIdx], globalDisplacements));
 
         public IMatrixView GetElementStiffnessForCurrentMaterial(int elementIdx)
-            => elementTypes[elementIdx].BuildStiffnessMatrix();
+            => elementTypes[elementIdx].StiffnessMatrix(modelElements[elementIdx]);
 
         public IMatrixView GetElementStiffnessForUnitMaterial(int elementIdx)
         {
@@ -119,7 +121,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
             var volumes = new double[NumElements];
             for (int e = 0; e < NumElements; ++e)
             {
-                volumes[e] = elementTypes[e].Thickness * elementTypes[e].CalculateArea();
+                volumes[e] = elementTypes[e].Thickness * elementTypes[e].CalculateArea(modelElements[e]);
             }
             return Vector.CreateFromArray(volumes);
         }

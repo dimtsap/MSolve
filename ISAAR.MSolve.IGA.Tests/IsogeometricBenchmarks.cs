@@ -36,7 +36,7 @@ namespace ISAAR.MSolve.IGA.Tests
             };
 			var modelReader = new IsogeometricReader(filename,material2D:material);
 			var model=modelReader.CreateModelFromFile();
-
+			
 			// Forces and Boundary Conditions
 			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[1].ControlPointsDictionary
 				.Values)

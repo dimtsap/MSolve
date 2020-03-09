@@ -19,7 +19,6 @@
     <Compile Remove="Entities\CollocationPoint3D.cs" />
     <Compile Remove="Entities\ControlPoint_v2.cs" />
     <Compile Remove="ModelCreator.cs" />
-    <Compile Remove="Postprocessing\ParaviewNurbs2D.cs" />
     <Compile Remove="Postprocessing\ParaviewNurbs3D.cs" />
     <Compile Remove="Postprocessing\ParaviewNurbsShells.cs" />
     <Compile Remove="Postprocessing\ParaviewTsplines2D.cs" />
@@ -40,10 +39,6 @@
     <ProjectReference Include="..\ISAAR.MSolve.FEM\ISAAR.MSolve.FEM.csproj" />
     <ProjectReference Include="..\ISAAR.MSolve.Logging\ISAAR.MSolve.Logging.csproj" />
     <ProjectReference Include="..\ISAAR.MSolve.Solvers\ISAAR.MSolve.Solvers.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Postprocessing\" />
   </ItemGroup>
 
 </Project>

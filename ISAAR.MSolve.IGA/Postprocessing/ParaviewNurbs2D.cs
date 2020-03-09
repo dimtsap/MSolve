@@ -1,6 +1,7 @@
 using System.IO;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
@@ -12,6 +13,7 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 	public class ParaviewNurbs2D
 	{
 		private readonly Model _model;
+		private readonly IsogeometricReader _reader;
 		private readonly IVectorView _solution;
 		private readonly string _filename;
 
@@ -21,9 +23,10 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 		/// <param name="model">An isogeometric <see cref="Model"/>.</param>
 		/// <param name="solution">An <see cref="IVectorView"/> containing the solution of the linear system.</param>
 		/// <param name="filename">The name of the paraview file to be generated.</param>
-		public ParaviewNurbs2D(Model model, IVectorView solution, string filename)
+		public ParaviewNurbs2D(Model model, IsogeometricReader reader, IVectorView solution, string filename)
 		{
 			_model = model;
+            _reader = reader;
 			_solution = solution;
 			_filename = filename;
 		}
@@ -31,17 +34,18 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 		/// <summary>
 		/// Creates Paraview File of the 2D NURBS geometry.
 		/// </summary>
-		public void CreateParaview2DFile()
+		public void CreateParaview2DFile(Vector knotVectorKsi, Vector knotVectorHeta, int degreeKsi, int degreeHeta)
 		{
-			var uniqueKnotsKsi = _model.PatchesDictionary[0].KnotValueVectorKsi.RemoveDuplicatesFindMultiplicity();
-			var uniqueKnotsHeta = _model.PatchesDictionary[0].KnotValueVectorHeta.RemoveDuplicatesFindMultiplicity();
+			var uniqueKnotsKsi = knotVectorKsi.RemoveDuplicatesFindMultiplicity();
+			var uniqueKnotsHeta = knotVectorHeta.RemoveDuplicatesFindMultiplicity();
 
 			var numberOfKnotsKsi = uniqueKnotsKsi[0].Length;
 			var numberOfKnotsHeta = uniqueKnotsHeta[0].Length;
+            var numberOfCpKsi = knotVectorKsi.Length - degreeKsi - 1;
+            var numberOfCpHeta = knotVectorHeta.Length - degreeHeta - 1;
 
 			var knots = new double[numberOfKnotsKsi * numberOfKnotsHeta, 3];
 			var count = 0;
-			var patch = _model.PatchesDictionary[0];
 
 			var projectiveControlPoints = CalculateProjectiveControlPoints();
 
@@ -51,9 +55,9 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 				{
 					var hetaCoordinate = uniqueKnotsHeta[0][knotHetaIndex];
 					var ksiCoordinate = uniqueKnotsKsi[0][knotKsiIndex];
-					var point3D = SurfacePoint2D(patch.NumberOfControlPointsKsi - 1, patch.DegreeKsi,
-						patch.KnotValueVectorKsi, patch.NumberOfControlPointsHeta - 1, patch.DegreeHeta,
-						patch.KnotValueVectorHeta, projectiveControlPoints, ksiCoordinate, hetaCoordinate);
+					var point3D = SurfacePoint2D(numberOfCpKsi - 1, degreeKsi,
+                        knotVectorKsi, numberOfCpHeta - 1, degreeHeta,
+                        knotVectorHeta, projectiveControlPoints, ksiCoordinate, hetaCoordinate);
 					knots[count, 0] = point3D[0] / point3D[3];
 					knots[count, 1] = point3D[1] / point3D[3];
 					knots[count++, 2] = point3D[2] / point3D[3];

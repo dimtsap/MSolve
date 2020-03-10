@@ -6,7 +6,7 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
 {
     public static class VolumeFraction
     {
-        public static (double volumeFraction, double weightFraction) CalculatePercentage()
+        public static (double volumeFraction, double weightFraction) CalculatePercentage(int numberOfCnts)
         {
             var a = 0.241;
             var cntDensity = 1.8;
@@ -17,7 +17,7 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
             //CNT Geometry
             var mi = 8.0;
             var ni = 8.0;
-            var numberOfCNTs = 790;
+            var numberOfCNTs = numberOfCnts;
             var cntLength = 98.0;
 
             var cntDiameter = (a / Math.PI) * Math.Sqrt(ni * ni + ni * mi + mi * mi);

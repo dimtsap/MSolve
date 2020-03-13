@@ -26,6 +26,65 @@ namespace ISAAR.MSolve.IGA.Tests
     public class IsogeometricBenchmarks
 	{
 		[Fact]
+		public void Isogeometric2x2()
+		{
+			string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","Cantilever2x2.txt");
+			var material=new ElasticMaterial2D(StressState2D.PlaneStrain)
+            {
+				YoungModulus = 1,
+				PoissonRatio = 0.3
+            };
+			var modelReader = new IsogeometricReader(filename,material2D:material);
+			var model=modelReader.CreateModelFromFile();
+			
+			// Forces and Boundary Conditions
+			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[1].ControlPointsDictionary
+				.Values)
+				model.Loads.Add(new Load()
+				{
+					Amount = -100,
+					Node = model.ControlPoints.ToList()[controlPoint.ID],
+					DOF = StructuralDof.TranslationY
+				});
+
+			// Boundary Conditions - Dirichlet
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
+			//	.Values)
+			//{
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+			//}
+
+			var solverBuilder = new DenseMatrixSolver.Builder();
+			solverBuilder.DofOrderer = new DofOrderer(
+				new NodeMajorDofOrderingStrategy(), new NullReordering());
+			ISolver solver = solverBuilder.BuildSolver(model);
+
+			// Structural problem provider
+			var provider = new ProblemStructural(model, solver);
+
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+			// Run the analysis
+			parentAnalyzer.Initialize();
+
+            var k = solver.LinearSystems[0].Matrix;
+            Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
+            for (int i = 0; i < k.NumRows; i++)
+            {
+                for (int j = 0; j < k.NumColumns; j++)
+                {
+                    kmatlab[i, j] = k[i, j];
+                }
+            }
+            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"K2x2.mat"), kmatlab, "KMSolve");
+        }
+
+
+
+		[Fact]
 		public void IsogeometricQuadraticCantilever2D()
 		{
 			string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","Cantilever2D.txt");

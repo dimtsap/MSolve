@@ -20,7 +20,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
         private readonly Model model;
         private readonly Patch subdomain;
         private readonly ISolver solver;
-        private readonly IList<Element> modelElements;
+        //private readonly IList<Element> modelElements;
         private readonly IElement[] elementWrappers;
         private readonly ScalingDofEnumerator[] penalizers;
         private readonly IElementMatrixProvider problemMatrixProvider = new ElementStructuralStiffnessProvider();
@@ -41,7 +41,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
             this.solver = solver;
 
             // Elements
-            modelElements = model.Elements;
+            var modelElements = model.Elements;
             NumElements = modelElements.Count;
             elementTypes = new ContinuumElement2D[NumElements];
             elementWrappers = new IElement[NumElements];
@@ -68,7 +68,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
                 elementWrappers[elementIdx], globalDisplacements));
 
         public IMatrixView GetElementStiffnessForCurrentMaterial(int elementIdx)
-            => elementTypes[elementIdx].StiffnessMatrix(modelElements[elementIdx]);
+            => elementTypes[elementIdx].StiffnessMatrix(elementWrappers[elementIdx]);
 
         public IMatrixView GetElementStiffnessForUnitMaterial(int elementIdx)
         {
@@ -121,7 +121,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Topology.SIMP.Analysis
             var volumes = new double[NumElements];
             for (int e = 0; e < NumElements; ++e)
             {
-                volumes[e] = elementTypes[e].Thickness * elementTypes[e].CalculateArea(modelElements[e]);
+                volumes[e] = elementTypes[e].Thickness * elementTypes[e].CalculateArea(elementWrappers[e]);
             }
             return Vector.CreateFromArray(volumes);
         }

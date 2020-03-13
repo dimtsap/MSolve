@@ -60,7 +60,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
             model.SubdomainsDictionary.Add(subdomainID, new Subdomain(subdomainID));
 
             // Generate mesh
-            int numElementsX = 32, numElementsY = 20;
+            int numElementsX = 2, numElementsY = 2;
             double lengthX = numElementsX;
             double depthY = numElementsY;
             var mesher = new UniformMeshGenerator2D<Node>(0, 0, lengthX, depthY, numElementsX, numElementsY);
@@ -91,10 +91,10 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 
             // Apply concentrated load at the bottom right corner
             double load = 1.0;
-            var cornerNode = model.Nodes.Where(
-                node => (Math.Abs(node.X - lengthX) <= tol) && (Math.Abs(node.Y - depthY) <= tol));
-            Assert.True(cornerNode.Count() == 1);
-            model.Loads.Add(new Load() { Amount = load, Node = cornerNode.First(), DOF = StructuralDof.TranslationY });
+            //var cornerNode = model.Nodes.Where(
+            //    node => (Math.Abs(node.X - lengthX) <= tol) && (Math.Abs(node.Y - depthY) <= tol));
+            //Assert.True(cornerNode.Count() == 1);
+            model.Loads.Add(new Load() { Amount = load, Node = model.NodesDictionary[7], DOF = StructuralDof.TranslationY });
 
             // Define the solver
             SkylineSolver solver = (new SkylineSolver.Builder()).BuildSolver(model);
@@ -128,7 +128,7 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
         private static void TestCantileverBeam(ILinearAnalysis fem, IDensityFilter filter)
         {
             // Parameters
-            double volumeFraction = 0.4, penalty = 3.0;
+            double volumeFraction = 0.5, penalty = 3.0;
 
             // Define the optimization
             var materialInterpolation = new PowerLawMaterialInterpolation(youngModulus, penalty, 1E-3);

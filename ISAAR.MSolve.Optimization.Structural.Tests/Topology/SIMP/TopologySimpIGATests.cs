@@ -31,12 +31,11 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
 {
     public class TopologySimpIGATests
     {
-
         [Fact]
         public void TestCantileverBeam()
         {
-            string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","Cantilever2D.txt");
-            var youngModulus = 1000.0;
+            string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","Cantilever2x2.txt");
+            var youngModulus = 1;
             var material=new ElasticMaterial2D(StressState2D.PlaneStress)
             {
                 YoungModulus = youngModulus,
@@ -46,14 +45,18 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
             var model=modelReader.CreateModelFromFile();
 
             // Forces and Boundary Conditions
-            foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[1].ControlPointsDictionary
-                .Values)
-                model.Loads.Add(new Load()
-                {
-                    Amount = -1,
-                    Node = model.ControlPoints.ToList()[controlPoint.ID],
-                    DOF = StructuralDof.TranslationY
-                });
+            //model.Loads.Add(new Load()
+            //    {
+            //        Amount = -1,
+            //        Node = model.ControlPointsDictionary[55],
+            //        DOF = StructuralDof.TranslationY
+            //    });
+            model.Loads.Add(new Load()
+            {
+                Amount = -1,
+                Node = model.ControlPointsDictionary[12],
+                DOF = StructuralDof.TranslationY
+            });
 
             // Boundary Conditions - Dirichlet
             foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
@@ -63,15 +66,16 @@ namespace ISAAR.MSolve.Optimization.Structural.Tests.Topology.SIMP
                 model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
             }
 
-            var solverBuilder = new SuiteSparseSolver.Builder();
+            var solverBuilder = new DenseMatrixSolver.Builder();
             var solver = solverBuilder.BuildSolver(model);
 
-            double filterAreaRadius = 1.2;
+            double filterAreaRadius = 1.5;
+            double volumeFraction = 0.5;
+            var penalty = 3.0;
+
+
             var iga = new LinearIgaAnalysis2DGeneral(model, solver);
             var filter = new ProximityDensityFilterIGA2D(model, filterAreaRadius);
-
-            double volumeFraction = 0.4;
-            var penalty = 3.0;
 
             // Define the optimization
             var materialInterpolation = new PowerLawMaterialInterpolation(youngModulus, penalty, 1E-3);

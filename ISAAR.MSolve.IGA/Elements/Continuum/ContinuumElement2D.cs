@@ -45,7 +45,7 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		private readonly IShapeFunction2D _centroidShapeFunctions;
 		private readonly GaussLegendrePoint3D[] _gaussPoints;
         private readonly double _thickness;
-		public double Thickness { get; }
+        public double Thickness => _thickness;
         /// <summary>
         /// Retrieves the type of Finite Element used. Since the element is Isogeometric its type is defined as unknown.
         /// </summary>
@@ -216,72 +216,74 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		/// <returns>An <see cref="IMatrix"/> containing the mass matrix of an <see cref="NURBSElement2D"/>.</returns>
 		public IMatrix MassMatrix(IElement element) => throw new NotImplementedException();
 
-		/// <summary>
-		/// Calculates the stiffness matrix of the element.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NURBSElement2D"/>.</param>
-		/// <returns>An <see cref="IMatrix"/> containing the stiffness matrix of an <see cref="NURBSElement2D"/>.</returns>
-		public IMatrix StiffnessMatrix(IElement element)
-		{
-			Contract.Requires(element != null, "The element cannot be null");
+        /// <summary>
+        /// Calculates the stiffness matrix of the element.
+        /// </summary>
+        /// <param name="element">An element of type <see cref="NURBSElement2D"/>.</param>
+        /// <returns>An <see cref="IMatrix"/> containing the stiffness matrix of an <see cref="NURBSElement2D"/>.</returns>
+        public IMatrix StiffnessMatrix(IElement element) => DofEnumerator.GetTransformedMatrix(BuildStiffnessMatrix(element));
+
+        private IMatrix BuildStiffnessMatrix(IElement element)
+        {
+            Contract.Requires(element != null, "The element cannot be null");
             var numberOfCP = element.Nodes.Count;
-			var stiffnessMatrixElement = Matrix.CreateZero(
+            var stiffnessMatrixElement = Matrix.CreateZero(
                 numberOfCP * 2, numberOfCP * 2);
             var elementControlPoints = element.Nodes.ToArray();
 
-			for (var j = 0; j < _gaussPoints.Length; j++)
-			{
-				var jacobianMatrix = Matrix.CreateZero(2, 2);
+            for (var j = 0; j < _gaussPoints.Length; j++)
+            {
+                var jacobianMatrix = Matrix.CreateZero(2, 2);
 
-				for (int k = 0; k < numberOfCP; k++)
-				{
-					jacobianMatrix[0, 0] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].X;
-					jacobianMatrix[0, 1] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].Y;
-					jacobianMatrix[1, 0] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].X;
-					jacobianMatrix[1, 1] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].Y;
-				}
+                for (int k = 0; k < numberOfCP; k++)
+                {
+                    jacobianMatrix[0, 0] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].X;
+                    jacobianMatrix[0, 1] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].Y;
+                    jacobianMatrix[1, 0] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].X;
+                    jacobianMatrix[1, 1] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].Y;
+                }
 
-				double jacdet = (jacobianMatrix[0, 0] * jacobianMatrix[1, 1])
-								- (jacobianMatrix[1, 0] * jacobianMatrix[0, 1]);
+                double jacdet = (jacobianMatrix[0, 0] * jacobianMatrix[1, 1])
+                                - (jacobianMatrix[1, 0] * jacobianMatrix[0, 1]);
 
-				Matrix B1 = Matrix.CreateZero(3, 4);
+                Matrix B1 = Matrix.CreateZero(3, 4);
 
-				B1[0, 0] += jacobianMatrix[1, 1] / jacdet;
-				B1[0, 1] += -jacobianMatrix[0, 1] / jacdet;
-				B1[1, 2] += -jacobianMatrix[1, 0] / jacdet;
-				B1[1, 3] += jacobianMatrix[0, 0] / jacdet;
-				B1[2, 0] += -jacobianMatrix[1, 0] / jacdet;
-				B1[2, 1] += jacobianMatrix[0, 0] / jacdet;
-				B1[2, 2] += jacobianMatrix[1, 1] / jacdet;
-				B1[2, 3] += -jacobianMatrix[0, 1] / jacdet;
+                B1[0, 0] += jacobianMatrix[1, 1] / jacdet;
+                B1[0, 1] += -jacobianMatrix[0, 1] / jacdet;
+                B1[1, 2] += -jacobianMatrix[1, 0] / jacdet;
+                B1[1, 3] += jacobianMatrix[0, 0] / jacdet;
+                B1[2, 0] += -jacobianMatrix[1, 0] / jacdet;
+                B1[2, 1] += jacobianMatrix[0, 0] / jacdet;
+                B1[2, 2] += jacobianMatrix[1, 1] / jacdet;
+                B1[2, 3] += -jacobianMatrix[0, 1] / jacdet;
 
-				Matrix B2 = Matrix.CreateZero(4, 2 * numberOfCP);
-				for (int column = 0; column < 2 * numberOfCP; column += 2)
-				{
-					B2[0, column] += _shapeFunctions.DerivativeValuesKsi[column / 2, j];
-					B2[1, column] += _shapeFunctions.DerivativeValuesHeta[column / 2, j];
-					B2[2, column + 1] += _shapeFunctions.DerivativeValuesKsi[column / 2, j];
-					B2[3, column + 1] += _shapeFunctions.DerivativeValuesHeta[column / 2, j];
-				}
+                Matrix B2 = Matrix.CreateZero(4, 2 * numberOfCP);
+                for (int column = 0; column < 2 * numberOfCP; column += 2)
+                {
+                    B2[0, column] += _shapeFunctions.DerivativeValuesKsi[column / 2, j];
+                    B2[1, column] += _shapeFunctions.DerivativeValuesHeta[column / 2, j];
+                    B2[2, column + 1] += _shapeFunctions.DerivativeValuesKsi[column / 2, j];
+                    B2[3, column + 1] += _shapeFunctions.DerivativeValuesHeta[column / 2, j];
+                }
 
-				Matrix B = B1 * B2;
-				IMatrixView elasticityMatrix = _material.ConstitutiveMatrix;
-				Matrix stiffnessMatrixGaussPoint = B.ThisTransposeTimesOtherTimesThis(elasticityMatrix);
-				stiffnessMatrixGaussPoint *= jacdet * _gaussPoints[j].WeightFactor * _thickness;
+                Matrix B = B1 * B2;
+                IMatrixView elasticityMatrix = _material.ConstitutiveMatrix;
+                Matrix stiffnessMatrixGaussPoint = B.ThisTransposeTimesOtherTimesThis(elasticityMatrix);
+                stiffnessMatrixGaussPoint *= jacdet * _gaussPoints[j].WeightFactor * _thickness;
 
-				for (int m = 0; m < numberOfCP * 2; m++)
-				{
-					for (int n = 0; n < numberOfCP * 2; n++)
-					{
-						stiffnessMatrixElement[m, n] += stiffnessMatrixGaussPoint[m, n];
-					}
-				}
-			}
+                for (int m = 0; m < numberOfCP * 2; m++)
+                {
+                    for (int n = 0; n < numberOfCP * 2; n++)
+                    {
+                        stiffnessMatrixElement[m, n] += stiffnessMatrixGaussPoint[m, n];
+                    }
+                }
+            }
 
-			return stiffnessMatrixElement;
-		}
+            return stiffnessMatrixElement;
+        }
 
-		private static void CalculateNeumannLoad2D(Element element, NeumannBoundaryCondition neumann, Dictionary<int, double> neumannLoad,
+        private static void CalculateNeumannLoad2D(Element element, NeumannBoundaryCondition neumann, Dictionary<int, double> neumannLoad,
             IShapeFunction2D nurbs, int j, double jacdet, IList<GaussLegendrePoint3D> gaussPoints, double xGaussPoint, double yGaussPoint, double zGaussPoint,
 			Vector surfaceBasisVector3)
 		{

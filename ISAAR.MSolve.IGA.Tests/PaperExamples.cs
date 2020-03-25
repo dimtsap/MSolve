@@ -149,7 +149,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 for (int realization = 0; realization < numberOfRealizations; realization++)
                 {
-                    var randomCnts = trandom.DiscreteUniform(220, 790);
+                    var randomCnts = (int)trandom.Normal(500, 50);
                     youngModulusSolutionPairs[realization, 0] = randomCnts;
                     var outterMaterial = new ElasticMaterial3DtotalStrain()
                     {
@@ -204,16 +204,16 @@ namespace ISAAR.MSolve.IGA.Tests
 
                     // Run the analysis
                     parentAnalyzer.Initialize();
-                    var k = solver.LinearSystems[0].Matrix;
-                    Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
-                    for (int i = 0; i < k.NumRows; i++)
-                    {
-                        for (int j = 0; j < k.NumColumns; j++)
-                        {
-                            kmatlab[i, j] = k[i, j];
-                        }
-                    }
-                    MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"KBumper.mat"), kmatlab, "Kff");
+                    //var k = solver.LinearSystems[0].Matrix;
+                    //Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
+                    //for (int i = 0; i < k.NumRows; i++)
+                    //{
+                    //    for (int j = 0; j < k.NumColumns; j++)
+                    //    {
+                    //        kmatlab[i, j] = k[i, j];
+                    //    }
+                    //}
+                    //MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"KBumper.mat"), kmatlab, "Kff");
 
 
                     parentAnalyzer.Solve();

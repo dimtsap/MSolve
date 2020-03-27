@@ -85,9 +85,9 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
                         .Where(x => x.Key <= hostElements).Select(kv => kv.Value), model.ElementsDictionary.Where(x => x.Key > hostElements)
                         .Select(kv => kv.Value), true);
 
-            var paraviewEmbedded =
-                new ParaviewEmbedded3D(model, null, Path.Combine(Directory.GetCurrentDirectory(), "ParaviewCNT"));
-            paraviewEmbedded.CreateParaviewFile();
+            //var paraviewEmbedded =
+            //    new ParaviewEmbedded3D(model, null, Path.Combine(Directory.GetCurrentDirectory(), "ParaviewCNT"));
+            //paraviewEmbedded.CreateParaviewFile();
 
             var boundaryNodesIds = GetBoundaryNodeIds();
             boundaryNodesIds.Sort();

@@ -98,10 +98,10 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
                 cntNodeIds[i] += 100000;
             }
 
-            for (int c = 0; c < elementConnectivity.GetLength(0); c++)
+            for (int c = 0; c < cntElementConnectivity.GetLength(0); c++)
             {
-                elementConnectivity[c, 0] += 100000;
-                elementConnectivity[c, 1] += 100000;
+                cntElementConnectivity[c, 0] += 100000;
+                cntElementConnectivity[c, 1] += 100000;
             }
 
             AddCntBeamElements(model, cntNodeIds, cntNodeCoords, cntElementConnectivity);

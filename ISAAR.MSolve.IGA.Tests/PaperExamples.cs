@@ -149,16 +149,16 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 for (int realization = 0; realization < numberOfRealizations; realization++)
                 {
-                    var randomCnts = (int)trandom.Normal(500, 50);
+                    var randomCnts = 300;
                     youngModulusSolutionPairs[realization, 0] = randomCnts;
                     var outterMaterial = new ElasticMaterial3DtotalStrain()
                     {
                         YoungModulus = 4, //2.79e9,
                         PoissonRatio = 0.4 //0.4
                     };
-                    var homogeneousRveBuilder1 = new CntReinforcedElasticNanocomposite(outterMaterial, 200);
+                    var homogeneousRveBuilder1 = new CntReinforcedElasticNanocomposite(outterMaterial, randomCnts);
 
-                    var material4 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
+                    var material4 = new Shell2dRVEMaterialHostConst(1000, 1, 1, homogeneousRveBuilder1,
                         constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
 
                     var model = new Model();

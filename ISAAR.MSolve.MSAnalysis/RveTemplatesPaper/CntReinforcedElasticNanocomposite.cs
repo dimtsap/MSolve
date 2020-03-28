@@ -94,6 +94,8 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
                 cntNodeCoords[i, 0] -= L01 / 2;
                 cntNodeCoords[i, 1] -= L02 / 2;
                 cntNodeCoords[i, 2] -= L03 / 2;
+
+                cntNodeIds[i] += 100000;
             }
 
             AddCntBeamElements(model, cntNodeIds, cntNodeCoords, cntElementConnectivity);
@@ -317,7 +319,10 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
 
         public IRVEbuilder Clone(int a)
         {
-            return new CntReinforcedElasticNanocomposite(this.matrixMaterial, numberOfCnts);
+            var random= new TRandom();
+            var randomCnts = (int)random.Normal(numberOfCnts, 100);
+            var cnts=randomCnts>0?1:randomCnts;
+            return new CntReinforcedElasticNanocomposite(this.matrixMaterial, cnts);
         }
     }
 }

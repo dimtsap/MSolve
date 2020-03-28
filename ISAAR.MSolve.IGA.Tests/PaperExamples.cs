@@ -144,7 +144,6 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int d = 0; d < 1; d++)
             {
                 var numberOfRealizations = 1;
-                //var trandom = new TRandom();
                 var youngModulusSolutionPairs = new double[numberOfRealizations, 2];
 
                 for (int realization = 0; realization < numberOfRealizations; realization++)
@@ -162,11 +161,6 @@ namespace ISAAR.MSolve.IGA.Tests
                         constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
 
                     var model = new Model();
-                    //var material4= new ShellElasticMaterial2Dtransformationb()
-                    //{
-                    //    YoungModulus = 100,
-                    //    PoissonRatio = 0.3
-                    //};
                     var modelReader = new IgaFileReader(model, filepath);
                     modelReader.CreateTSplineShellsModelFromFile(IgaFileReader.TSplineShellType.Thickness, material4);
 
@@ -204,23 +198,9 @@ namespace ISAAR.MSolve.IGA.Tests
 
                     // Run the analysis
                     parentAnalyzer.Initialize();
-                    //var k = solver.LinearSystems[0].Matrix;
-                    //Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
-                    //for (int i = 0; i < k.NumRows; i++)
-                    //{
-                    //    for (int j = 0; j < k.NumColumns; j++)
-                    //    {
-                    //        kmatlab[i, j] = k[i, j];
-                    //    }
-                    //}
-                    //MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"KBumper.mat"), kmatlab, "Kff");
-
 
                     parentAnalyzer.Solve();
-
-
-                    //var max=solver.LinearSystems[0].Solution.CopyToArray().Select(Math.Abs).Max();
-
+                    
                     youngModulusSolutionPairs[realization, 1] = solver.LinearSystems[0].Solution[46448];
                 }
 
@@ -229,9 +209,6 @@ namespace ISAAR.MSolve.IGA.Tests
                     Path.Combine(Directory.GetCurrentDirectory(), $"BumperMultiscaleResults_{d}"));
             }
 
-
-            //var paraview= new ParaviewTsplineShells(model, solver.LinearSystems[0].Solution,filename);
-            //paraview.CreateParaviewFile();
         }
 
         [Fact]

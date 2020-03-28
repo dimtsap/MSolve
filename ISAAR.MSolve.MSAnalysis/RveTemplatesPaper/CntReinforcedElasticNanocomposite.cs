@@ -321,7 +321,7 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
         {
             var random= new TRandom();
             var randomCnts = (int)random.Normal(numberOfCnts, 100);
-            var cnts=randomCnts>0?1:randomCnts;
+            var cnts=randomCnts<0?1:randomCnts;
             return new CntReinforcedElasticNanocomposite(this.matrixMaterial, cnts);
         }
     }

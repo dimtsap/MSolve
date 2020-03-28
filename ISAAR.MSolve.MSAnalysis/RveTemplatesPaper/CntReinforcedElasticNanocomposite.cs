@@ -98,6 +98,12 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
                 cntNodeIds[i] += 100000;
             }
 
+            for (int c = 0; c < elementConnectivity.GetLength(0); c++)
+            {
+                elementConnectivity[c, 0] += 100000;
+                elementConnectivity[c, 1] += 100000;
+            }
+
             AddCntBeamElements(model, cntNodeIds, cntNodeCoords, cntElementConnectivity);
             var embeddedGrouping = EmbeddedBeam3DGrouping.CreateFullyBonded(model, model.ElementsDictionary
                         .Where(x => x.Key <= hostElements).Select(kv => kv.Value), model.ElementsDictionary.Where(x => x.Key > hostElements)

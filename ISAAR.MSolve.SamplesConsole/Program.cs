@@ -53,7 +53,7 @@ namespace ISAAR.MSolve.SamplesConsole
 
             //StochasticEmbeddedExample_10.Run2a_Elastic.SingleMatrix_NewtonRaphson_Stochastic(1);
             //StochasticEmbeddedExample_10.Run2a_Elastic.EBEembeddedInMatrix_NewtonRaphson_Stochastic(1);
-            //var (volumeFraction, weightFraction) = VolumeFraction.CalculatePercentage(261);
+            var (volumeFraction, weightFraction) = VolumeFraction.CalculatePercentage(100);
             //(volumeFraction, weightFraction) = VolumeFraction.CalculatePercentage(321);
             //(volumeFraction, weightFraction) = VolumeFraction.CalculatePercentage(394);
             //(volumeFraction, weightFraction) = VolumeFraction.CalculatePercentage(439);
@@ -65,8 +65,8 @@ namespace ISAAR.MSolve.SamplesConsole
             //(volumeFraction, weightFraction) = VolumeFraction.CalculatePercentage(321);
             //Console.WriteLine($"{volumeFraction*100}%");
 
-            var randomCnt= new RandomCntGeometryGenerator(1,2,100,2,0.0,0.0,100,100,100);
-            randomCnt.GenerateCnts();
+            //var randomCnt= new RandomCntGeometryGenerator(1,2,100,2,0.0,0.0,100,100,100);
+            //randomCnt.GenerateCnts();
         }
 
         private static void SolveBuildingInNoSoilSmall()

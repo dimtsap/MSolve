@@ -289,5 +289,20 @@ namespace ISAAR.MSolve.IGA.Tests
             };
             material4.UpdateMaterial(new double[]{0,0,0});
         }
+
+
+        [Fact]
+        public void BenchmarkEmbedding()
+        {
+            var outterMaterial = new ElasticMaterial3DtotalStrain()
+            {
+                YoungModulus = 4, //2.79e9,
+                PoissonRatio = 0.4 //0.4
+            };
+            var homogeneousRveBuilder1 = new CntReinforcedElasticNanocomposite(outterMaterial, 300);
+
+            var material4 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
+                constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+        }
     }
 }

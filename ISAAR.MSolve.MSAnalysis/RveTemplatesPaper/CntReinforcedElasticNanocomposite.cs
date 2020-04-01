@@ -106,8 +106,8 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
 
             AddCntBeamElements(model, cntNodeIds, cntNodeCoords, cntElementConnectivity);
             var embeddedGrouping = EmbeddedBeam3DGrouping.CreateFullyBonded(model, model.ElementsDictionary
-                        .Where(x => x.Key <= hostElements).Select(kv => kv.Value), model.ElementsDictionary.Where(x => x.Key > hostElements)
-                        .Select(kv => kv.Value), true);
+                        .Where(x => x.Key <= hostElements).Select(kv => kv.Value).ToArray(), model.ElementsDictionary.Where(x => x.Key > hostElements)
+                        .Select(kv => kv.Value).ToArray(), true);
 
             //var paraviewEmbedded =
             //    new ParaviewEmbedded3D(model, null, Path.Combine(Directory.GetCurrentDirectory(), "ParaviewCNT"));
@@ -325,9 +325,10 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
 
         public IRVEbuilder Clone(int a)
         {
-            var random= new TRandom();
-            var randomCnts = (int)random.Normal(numberOfCnts, 100);
-            var cnts=randomCnts<0?1:randomCnts;
+        //    var random= new TRandom();
+        //    var randomCnts = (int)random.Normal(numberOfCnts, 100);
+        //    var cnts=randomCnts<0?1:randomCnts;
+            var cnts = numberOfCnts;
             return new CntReinforcedElasticNanocomposite(this.matrixMaterial, cnts);
         }
     }

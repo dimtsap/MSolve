@@ -179,8 +179,8 @@ namespace ISAAR.MSolve.SamplesConsole
                     HostElements(model);
                     EmbeddedElements_Stochastic(model, i);
                     var embeddedGrouping = EmbeddedBeam3DGrouping.CreateFullyBonded(model, model.ElementsDictionary
-                        .Where(x => x.Key <= hostElements).Select(kv => kv.Value), model.ElementsDictionary.Where(x => x.Key > hostElements)
-                        .Select(kv => kv.Value), true);
+                        .Where(x => x.Key <= hostElements).Select(kv => kv.Value).ToArray(), model.ElementsDictionary.Where(x => x.Key > hostElements)
+                        .Select(kv => kv.Value).ToArray(), true);
                 }
 
                 private static void HostElements(Model model)

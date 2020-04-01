@@ -811,16 +811,17 @@ namespace ISAAR.MSolve.FEM.Elements
 
         private double[] GetNaturalCoordinates(IElement element, Node node)
         {
-            double[] mins = new double[] { element.Nodes[0].X, element.Nodes[0].Y, element.Nodes[0].Z };
-            double[] maxes = new double[] { element.Nodes[0].X, element.Nodes[0].Y, element.Nodes[0].Z };
-            for (int i = 0; i < element.Nodes.Count; i++)
+            var elementNodes = element.Nodes as INode[];
+            double[] mins = new double[] { elementNodes[0].X, elementNodes[0].Y, elementNodes[0].Z };
+            double[] maxes = new double[] { elementNodes[0].X, elementNodes[0].Y, elementNodes[0].Z };
+            for (int i = 0; i < elementNodes.Length; i++)
             {
-                mins[0] = mins[0] > element.Nodes[i].X ? element.Nodes[i].X : mins[0];
-                mins[1] = mins[1] > element.Nodes[i].Y ? element.Nodes[i].Y : mins[1];
-                mins[2] = mins[2] > element.Nodes[i].Z ? element.Nodes[i].Z : mins[2];
-                maxes[0] = maxes[0] < element.Nodes[i].X ? element.Nodes[i].X : maxes[0];
-                maxes[1] = maxes[1] < element.Nodes[i].Y ? element.Nodes[i].Y : maxes[1];
-                maxes[2] = maxes[2] < element.Nodes[i].Z ? element.Nodes[i].Z : maxes[2];
+                mins[0] = mins[0] > elementNodes[i].X ? elementNodes[i].X : mins[0];
+                mins[1] = mins[1] > elementNodes[i].Y ? elementNodes[i].Y : mins[1];
+                mins[2] = mins[2] > elementNodes[i].Z ? elementNodes[i].Z : mins[2];
+                maxes[0] = maxes[0] < elementNodes[i].X ? elementNodes[i].X : maxes[0];
+                maxes[1] = maxes[1] < elementNodes[i].Y ? elementNodes[i].Y : maxes[1];
+                maxes[2] = maxes[2] < elementNodes[i].Z ? elementNodes[i].Z : maxes[2];
             }
             //return new double[] { (node.X - mins[0]) / ((maxes[0] - mins[0]) / 2) - 1,
             //    (node.Y - mins[1]) / ((maxes[1] - mins[1]) / 2) - 1,
@@ -846,9 +847,9 @@ namespace ISAAR.MSolve.FEM.Elements
                 double[] coordinateDifferences = new double[] { 0, 0, 0 };
                 for (int i = 0; i < shapeFunctions.Length; i++)
                 {
-                    coordinateDifferences[0] += shapeFunctions[i] * element.Nodes[i].X;
-                    coordinateDifferences[1] += shapeFunctions[i] * element.Nodes[i].Y;
-                    coordinateDifferences[2] += shapeFunctions[i] * element.Nodes[i].Z;
+                    coordinateDifferences[0] += shapeFunctions[i] * elementNodes[i].X;
+                    coordinateDifferences[1] += shapeFunctions[i] * elementNodes[i].Y;
+                    coordinateDifferences[2] += shapeFunctions[i] * elementNodes[i].Z;
                 }
                 coordinateDifferences[0] = node.X - coordinateDifferences[0];
                 coordinateDifferences[1] = node.Y - coordinateDifferences[1];

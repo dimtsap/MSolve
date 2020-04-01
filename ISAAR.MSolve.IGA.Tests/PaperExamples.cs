@@ -157,7 +157,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     };
                     var homogeneousRveBuilder1 = new CntReinforcedElasticNanocomposite(outterMaterial, randomCnts);
 
-                    var material4 = new Shell2dRVEMaterialHostConst(100, 1, 1, homogeneousRveBuilder1,
+                    var material4 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
                         constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
 
                     var model = new Model();
@@ -294,15 +294,19 @@ namespace ISAAR.MSolve.IGA.Tests
         [Fact]
         public void BenchmarkEmbedding()
         {
-            var outterMaterial = new ElasticMaterial3DtotalStrain()
+            for (int i = 0; i < 10; i++)
             {
-                YoungModulus = 4, //2.79e9,
-                PoissonRatio = 0.4 //0.4
-            };
-            var homogeneousRveBuilder1 = new CntReinforcedElasticNanocomposite(outterMaterial, 300);
+                var outterMaterial = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = 4, //2.79e9,
+                    PoissonRatio = 0.4 //0.4
+                };
+                var homogeneousRveBuilder1 = new CntReinforcedElasticNanocomposite(outterMaterial, 300);
 
-            var material4 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
-                constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+                var material4 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
+                    constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+            }
+            
         }
     }
 }

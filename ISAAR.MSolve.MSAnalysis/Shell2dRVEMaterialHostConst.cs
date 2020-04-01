@@ -40,8 +40,8 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
             this.gpCounter = gpCounter;
             coreMaterials = new Dictionary<int, IShellMaterial>();
             this.rveBuilderToClone = rVEbuilder;
-            CreateConstitutiveTensorsDatabase();
             this.rveSolver = rveSolver;
+            CreateConstitutiveTensorsDatabase();
         }
 
         private void CreateConstitutiveTensorsDatabase()

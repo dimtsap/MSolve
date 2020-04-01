@@ -27,7 +27,22 @@ namespace ISAAR.MSolve.FEM.Entities
 
         public Dictionary<IDofType, AbsorptionType> Absorptions => absorptions;
 
-        IReadOnlyList<INode> IElement.Nodes => nodesDictionary.Values.ToList<INode>();
+        IReadOnlyList<INode> IElement.Nodes
+        {
+            get
+            {
+                var numberOfNodes = nodesDictionary.Count;
+                INode[] nodes=new INode[numberOfNodes];
+                var counter = 0;
+                foreach (var keyValuePair in nodesDictionary)
+                {
+                    nodes[counter++] = keyValuePair.Value;
+                }
+
+                return nodes;
+            }
+        }
+
         public IList<Node> Nodes => nodesDictionary.Values.ToList();
 
 

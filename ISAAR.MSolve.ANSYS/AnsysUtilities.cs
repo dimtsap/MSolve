@@ -16,6 +16,8 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Mesh;
 using ISAAR.MSolve.FEM.Elements;
 using ISAAR.MSolve.FEM.Entities;
+using ISAAR.MSolve.FEM.Loading;
+using ISAAR.MSolve.FEM.Loading.SurfaceLoads;
 using ISAAR.MSolve.Materials;
 using Model = ISAAR.MSolve.FEM.Entities.Model;
 
@@ -26,6 +28,11 @@ namespace AnsysMSolve
 		private static readonly Dictionary<ElementTypeEnum, CellType> _ansysMSolveElementDictionary =
 			new Dictionary<ElementTypeEnum, CellType>
 			{
+                {ElementTypeEnum.kTri3, CellType.Tri3 },
+                {ElementTypeEnum.kTri6, CellType.Tri6 },
+                {ElementTypeEnum.kQuad4, CellType.Quad4 },
+                {ElementTypeEnum.kQuad8, CellType.Quad8 },
+
 				{ElementTypeEnum.kHex8, CellType.Hexa8},
 				{ElementTypeEnum.kHex20, CellType.Hexa20},
 				{ElementTypeEnum.kTet4, CellType.Tet4},
@@ -39,6 +46,11 @@ namespace AnsysMSolve
 		private static readonly Dictionary<ElementTypeEnum, int[]> _ansysMSolveElementLocalCoordinates =
 			new Dictionary<ElementTypeEnum, int[]>()
 			{
+                {ElementTypeEnum.kTri3, new int[3]{0,1,2} },
+                {ElementTypeEnum.kTri6, new int[6]{0,1,2,3,4,5} },
+                {ElementTypeEnum.kQuad4, new int[4] {0,1,2,3} },
+                {ElementTypeEnum.kQuad8, new int[8]{0,1,2,3,4,5,6,7} },
+
 				{ElementTypeEnum.kHex8, new[] {4,5,1,0,7,6,2,3}},
 				{ElementTypeEnum.kHex20, new int[20] {4,5,1,0,7,6,2,3,12,16,15,17,13,8,9,11,14,19,18,10}},
 				{ElementTypeEnum.kTet4, new int[4]{0,3,1,2} },
@@ -208,16 +220,6 @@ namespace AnsysMSolve
 		
         public static void CalculatePressure(IMechanicalExtAPI _api,IMechanicalUserSolver solver, Model model)
         {
-            solver.Analysis.MeshData.GetQuad4ExteriorFaces(out int[] quad4Elements);
-            solver.Analysis.MeshData.GetQuad8ExteriorFaces(out int[] quad8Elements);
-            solver.Analysis.MeshData.GetTri3ExteriorFaces(out int[] tri3Elements);
-            solver.Analysis.MeshData.GetTri6ExteriorFaces(out int[] tri6Elements);
-
-            List<ElementFace> quad4ExteriorFaces=ConvertToElementFacePair(quad4Elements);
-            List<ElementFace> quad8ExteriorFaces=ConvertToElementFacePair(quad8Elements);
-            List<ElementFace> tri3ExteriorFaces=ConvertToElementFacePair(tri3Elements);
-            List<ElementFace> tri6ExteriorFaces=ConvertToElementFacePair(tri6Elements);
-
             var pressures =
                 _api.Application.InvokeUIThread(() => _api.DataModel.Project.Model.Analyses[0].Children
                     .Where(c => c.GetType() == typeof(Pressure)).ToList()) as List<DataModelObject>;
@@ -229,98 +231,135 @@ namespace AnsysMSolve
 				var pressureLocation = _api.Application.InvokeUIThread(() => pressure.Location) as ISelectionInfo;
                 var pressureSurfaceId = pressureLocation.Ids[0];
                 var elements = solver.Analysis.MeshData.MeshRegionById(pressureSurfaceId).Elements;
-
+                solver.Analysis.MeshData.MeshRegionById(pressureSurfaceId)
+                    .GetFaces(out int[] tri6SurfaceFaces, out int[] quad8SurfaceFaces, out int[] tri3SurfaceFaces, out int[] quad4SurfaceFaces);
+                
                 switch (defineBy)
                 {
                     case LoadDefineBy.NormalToOrTangential:
                     case LoadDefineBy.Vector:
-                        CalculateVectorPressure(_api, model, elements, pressure, quad4ExteriorFaces, quad8ExteriorFaces,
-                            tri3ExteriorFaces, tri6ExteriorFaces);
+                        CalculateVectorPressure(_api, model, pressure, quad4SurfaceFaces, quad8SurfaceFaces,
+                            tri3SurfaceFaces, tri6SurfaceFaces);
                         break;
 					case LoadDefineBy.Components:
-                        CalculateComponentsPressure(_api,model, elements, pressure, quad4ExteriorFaces, quad8ExteriorFaces,
-                            tri3ExteriorFaces, tri6ExteriorFaces);
+                        CalculateComponentsPressure(_api,model,  pressure, quad4SurfaceFaces, quad8SurfaceFaces,
+                            tri3SurfaceFaces, tri6SurfaceFaces);
                         break;
                 }
             }
         }
 
-		private static void CalculateVectorPressure(IMechanicalExtAPI _api, Model model, IList<IElement> elements,
-            Pressure pressure, List<ElementFace> quad4ExteriorFaces, List<ElementFace> quad8ExteriorFaces,
-            List<ElementFace> tri3ExteriorFaces, List<ElementFace> tri6ExteriorFaces)
-		{
-            var magnitude = _api.Application.InvokeUIThread(() => pressure.Magnitude);
-
-            var magnitudeValue = _api.Application.InvokeUIThread(() => pressure.Magnitude.Output.DiscreteValues[1]) as Quantity;
-
-            foreach (var element in elements)
-            {
-                var a = pressure.Magnitude;
-                var quads4 = quad4ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-                var quads8 = quad8ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-                var tri3 = tri3ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-                var tri6 = tri6ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-
-                foreach (var face in quads4)
-                    CreateGeometryElement(CellType.Quad4, element, model);
-
-                foreach (var face in quads8)
-                    CreateGeometryElement(CellType.Quad8, element, model);
-
-                foreach (var face in tri3)
-                    CreateGeometryElement(CellType.Tri3, element, model);
-
-                foreach (var face in tri6)
-                    CreateGeometryElement(CellType.Tri6, element, model);
-            }
-		}
-
-		private static void CalculateComponentsPressure(IMechanicalExtAPI _api,Model model, IList<IElement> elements, Pressure pressure, List<ElementFace> quad4ExteriorFaces,
-            List<ElementFace> quad8ExteriorFaces, List<ElementFace> tri3ExteriorFaces, List<ElementFace> tri6ExteriorFaces)
+		private static void CalculateVectorPressure(IMechanicalExtAPI _api, Model model, 
+            Pressure pressure, int[] quad4Nodes, int[] quad8Nodes,
+            int[] tri3Nodes, int[] tri6Nodes)
         {
-            var magnitude = _api.Application.InvokeUIThread(() => pressure.Magnitude);
-
             var magnitudeValue = _api.Application.InvokeUIThread(() => pressure.Magnitude.Output.DiscreteValues[1]) as Quantity;
-            foreach (var element in elements)
-            {
-                var a = pressure.Magnitude;
-                var quads4 = quad4ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-                var quads8 = quad8ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-                var tri3 = tri3ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-                var tri6 = tri6ExteriorFaces.Where(x => x.ElementId == element.Id).ToList();
-
-                foreach (var face in quads4)
-                    CreateGeometryElement(CellType.Quad4, element, model);
-
-                foreach (var face in quads8)
-                    CreateGeometryElement(CellType.Quad8, element, model);
-
-                foreach (var face in tri3)
-                    CreateGeometryElement(CellType.Tri3, element, model);
-
-                foreach (var face in tri6)
-                    CreateGeometryElement(CellType.Tri6, element, model);
-            }
+            var pressureValue = magnitudeValue?.Value ?? 0;
+			var pressureLoad= new PressureLoad(pressureValue);
+			var factory = new SurfaceLoadElementFactory(pressureLoad);
+            CreateSurfaceLoadElements(model, quad4Nodes, quad8Nodes, tri3Nodes, tri6Nodes,factory);
         }
 
-        private static void CreateGeometryElement(CellType quad4, IElement element, Model model)
-		{
-		}
-
-		private static List<ElementFace> ConvertToElementFacePair(int[] elements)
-		{
-			var list= new List<ElementFace>();
-            if (elements == null) return list;
-            for (int i = 0; i < elements.Length; i+=2)
+        private static void CreateSurfaceLoadElements(Model model, int[] quad4Nodes, int[] quad8Nodes, int[] tri3Nodes,
+            int[] tri6Nodes, SurfaceLoadElementFactory elementFactory)
+        {
+            
+            if (quad4Nodes.Length != 0)
             {
-                list.Add(new ElementFace()
+                var numberOfQuad4 = quad4Nodes.Length / 4;
+                for (int i = 0; i < numberOfQuad4; i++)
                 {
-					ElementId = elements[i],
-					FaceId =elements[i+1]
-                });
+                    var elementNodes = new List<Node>();
+                    for (int j = 0; j < 4; j++)
+                    {
+                        elementNodes.Add(model.NodesDictionary[quad4Nodes[i * 4 + j]]);
+                    }
+
+                    var quad4SurfaceElement=elementFactory.CreateElement(CellType.Quad4, elementNodes);
+                    model.SurfaceLoads.Add(quad4SurfaceElement);
+                }
             }
-            return list;
+
+            if (quad8Nodes.Length != 0)
+            {
+                var numberOfQuad8 = quad8Nodes.Length / 8;
+                for (int i = 0; i < numberOfQuad8; i++)
+                {
+                    var elementNodes = new List<Node>();
+                    for (int j = 0; j < 8; j++)
+                    {
+                        elementNodes.Add(model.NodesDictionary[quad4Nodes[i * 8 + j]]);
+                    }
+
+                    var quad8SurfaceElement=elementFactory.CreateElement(CellType.Quad8, elementNodes);
+                    model.SurfaceLoads.Add(quad8SurfaceElement);
+                }
+            }
+
+
+            if (tri3Nodes.Length != 0)
+            {
+                var numberOfTri3 = tri3Nodes.Length / 3;
+                for (int i = 0; i < numberOfTri3; i++)
+                {
+                    var elementNodes = new List<Node>();
+                    for (int j = 0; j < 3; j++)
+                    {
+                        elementNodes.Add(model.NodesDictionary[quad4Nodes[i * 3 + j]]);
+                    }
+
+                    var tri3SurfaceElement=elementFactory.CreateElement(CellType.Tri3, elementNodes);
+                    model.SurfaceLoads.Add(tri3SurfaceElement);
+                }
+            }
+
+            if (tri6Nodes.Length != 0)
+            {
+                var numberOfTri6 = tri6Nodes.Length / 6;
+                for (int i = 0; i < numberOfTri6; i++)
+                {
+                    var elementNodes = new List<Node>();
+                    for (int j = 0; j < 6; j++)
+                    {
+                        elementNodes.Add(model.NodesDictionary[quad4Nodes[i * 6 + j]]);
+                    }
+
+                    var tri6SurfaceElement=elementFactory.CreateElement(CellType.Tri6, elementNodes);
+                    model.SurfaceLoads.Add(tri6SurfaceElement);
+                }
+            }
         }
+
+        private static void CalculateComponentsPressure(IMechanicalExtAPI _api,Model model,  Pressure pressure, 
+            int[] quad4Nodes, int[] quad8Nodes, int[] tri3Nodes, int[] tri6Nodes)
+        {
+            var valueX = _api.Application.InvokeUIThread(() => pressure.XComponent.Output.DiscreteValues[1]) as Quantity;
+            var valueY = _api.Application.InvokeUIThread(() => pressure.YComponent.Output.DiscreteValues[1]) as Quantity;
+            var valueZ = _api.Application.InvokeUIThread(() => pressure.ZComponent.Output.DiscreteValues[1]) as Quantity;
+
+            var distributedValueX = valueX?.Value ?? 0;
+            var distributedValueY = valueY?.Value ?? 0;
+            var distributedValueZ = valueZ?.Value ?? 0;
+
+            var distributedLoad= new DistributedLoad(distributedValueX, distributedValueY, distributedValueZ);
+            var factory = new SurfaceLoadElementFactory(distributedLoad);
+            CreateSurfaceLoadElements(model, quad4Nodes, quad8Nodes, tri3Nodes, tri6Nodes,factory);
+        }
+
+        private static void CreateGeometryElement(CellType quad4, IElement element, Model model, ElementFace face)
+        {
+            var nodeNumbering = _elementFacesNodes[element.Type, face.FaceId];
+            var ansysNodes = element.Nodes.ToList();
+            var msolveBoundaryNodes = new List<Node>();
+
+            for (int i = 0; i < ansysNodes.Count; i++)
+            {
+                var node = model.NodesDictionary[ansysNodes[nodeNumbering[i]].Id];
+                msolveBoundaryNodes.Add(node);
+            }
+			//renumberNodesAndCreateBoundaryElement;
+        }
+		
 
 		//public static void CalculateAcceleration(IMechanicalExtAPI _api, IMechanicalUserSolver solver, Model model)
 		//{

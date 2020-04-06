@@ -7,6 +7,7 @@ using ISAAR.MSolve.Discretization.Commons;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.FEM.Interfaces;
+using ISAAR.MSolve.FEM.Loading.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 //TODO: find what is going on with the dynamic loads and refactor them. That 564000000 in AssignMassAccelerationHistoryLoads()
@@ -36,6 +37,9 @@ namespace ISAAR.MSolve.FEM.Entities
         public IList<ElementMassAccelerationLoad> ElementMassAccelerationLoads { get; } 
             = new List<ElementMassAccelerationLoad>();
         public IList<Load> Loads { get; private set; } = new List<Load>();
+
+        public IList<ISurfaceLoadElement> SurfaceLoads { get; private set; }= new List<ISurfaceLoadElement>();
+
         public IList<MassAccelerationLoad> MassAccelerationLoads { get; } = new List<MassAccelerationLoad>();
         public IList<IMassAccelerationHistoryLoad> MassAccelerationHistoryLoads { get; } = new List<IMassAccelerationHistoryLoad>();
 
@@ -55,6 +59,7 @@ namespace ISAAR.MSolve.FEM.Entities
         {
             foreach (Subdomain subdomain in SubdomainsDictionary.Values) subdomain.Forces.Clear();
             AssignNodalLoads(distributeNodalLoads);
+            AssignSurfaceLoads(distributeNodalLoads);
             AssignElementMassLoads();
             AssignMassAccelerationLoads();
         }
@@ -105,6 +110,33 @@ namespace ISAAR.MSolve.FEM.Entities
                 SubdomainsDictionary[idSubdomainLoads.Key].Forces.AddIntoThis(idSubdomainLoads.Value);
             }
         }
+
+        public void AssignSurfaceLoads(NodalLoadsToSubdomainsDistributor distributeNodalLoads)
+        {
+            var globalNodalLoads = new Table<INode, IDofType, double>();
+            foreach (var surfaceLoadElement in SurfaceLoads)
+            {
+                var surfaceLoadTable = surfaceLoadElement.CalculateSurfaceLoad();
+                foreach ((INode node, IDofType dof, double load) tuple in surfaceLoadTable)
+                {
+                    if (globalNodalLoads.Contains(tuple.node, tuple.dof))
+                    {
+                        globalNodalLoads[tuple.node, tuple.dof] += tuple.load;
+                    }
+                    else
+                    {
+                        globalNodalLoads.TryAdd(tuple.node, tuple.dof, tuple.load);
+                    }
+                }
+            }
+
+            Dictionary<int, SparseVector> subdomainNodalLoads = distributeNodalLoads(globalNodalLoads);
+            foreach (var idSubdomainLoads in subdomainNodalLoads)
+            {
+                SubdomainsDictionary[idSubdomainLoads.Key].Forces.AddIntoThis(idSubdomainLoads.Value);
+            }
+        }
+
 
         public void AssignTimeDependentNodalLoads(int timeStep, NodalLoadsToSubdomainsDistributor distributeNodalLoads)
         {

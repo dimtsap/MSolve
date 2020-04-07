@@ -346,20 +346,6 @@ namespace AnsysMSolve
             CreateSurfaceLoadElements(model, quad4Nodes, quad8Nodes, tri3Nodes, tri6Nodes,factory);
         }
 
-        private static void CreateGeometryElement(CellType quad4, IElement element, Model model, ElementFace face)
-        {
-            var nodeNumbering = _elementFacesNodes[element.Type, face.FaceId];
-            var ansysNodes = element.Nodes.ToList();
-            var msolveBoundaryNodes = new List<Node>();
-
-            for (int i = 0; i < ansysNodes.Count; i++)
-            {
-                var node = model.NodesDictionary[ansysNodes[nodeNumbering[i]].Id];
-                msolveBoundaryNodes.Add(node);
-            }
-			//renumberNodesAndCreateBoundaryElement;
-        }
-		
 
 		//public static void CalculateAcceleration(IMechanicalExtAPI _api, IMechanicalUserSolver solver, Model model)
 		//{
@@ -458,9 +444,4 @@ namespace AnsysMSolve
 
 	}
 
-    public class ElementFace
-    {
-		public int ElementId { get; set; }
-		public int FaceId { get; set; }
-    }
 }

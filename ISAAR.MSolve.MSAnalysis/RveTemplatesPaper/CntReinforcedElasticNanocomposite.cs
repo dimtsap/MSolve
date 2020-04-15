@@ -78,40 +78,40 @@ namespace ISAAR.MSolve.MSAnalysis.RveTemplatesPaper
             var hostNodes = model.Nodes.Count();
 
 
-            //(int[] cntNodeIds, double[,] cntNodecoords, int[,] cntElementConnectivity) = GetCntBeamsNodesData(hostNodes, hostElements);
-            var numberOfSimulations = 1;
-            var numberOfElementsPerCnt = 1;
-            var cntLength = 50;
-            var standardDeviation = 0.0;
-            var upperAngleBound = 0.0;
+            (int[] cntNodeIds, double[,] cntNodeCoords, int[,] cntElementConnectivity) = GetCntBeamsNodesData(hostNodes, hostElements);
+            //var numberOfSimulations = 1;
+            //var numberOfElementsPerCnt = 1;
+            //var cntLength = 50;
+            //var standardDeviation = 0.0;
+            //var upperAngleBound = 0.0;
 
-            var randomCnts = new RandomCntGeometryGenerator(numberOfSimulations, numberOfElementsPerCnt, cntLength,
-                this.numberOfCnts * 2, standardDeviation, upperAngleBound, L01, L02, L03);
-            (int[] cntNodeIds, double[,] cntNodeCoords, int[,] cntElementConnectivity) = randomCnts.GenerateCnts();
+            //var randomCnts = new RandomCntGeometryGenerator(numberOfSimulations, numberOfElementsPerCnt, cntLength,
+            //    this.numberOfCnts * 2, standardDeviation, upperAngleBound, L01, L02, L03);
+            //(int[] cntNodeIds, double[,] cntNodeCoords, int[,] cntElementConnectivity) = randomCnts.GenerateCnts();
 
-            for (int i = 0; i < cntNodeCoords.GetLength(0); i++)
-            {
-                cntNodeCoords[i, 0] -= L01 / 2;
-                cntNodeCoords[i, 1] -= L02 / 2;
-                cntNodeCoords[i, 2] -= L03 / 2;
+            //for (int i = 0; i < cntNodeCoords.GetLength(0); i++)
+            //{
+            //    cntNodeCoords[i, 0] -= L01 / 2;
+            //    cntNodeCoords[i, 1] -= L02 / 2;
+            //    cntNodeCoords[i, 2] -= L03 / 2;
 
-                cntNodeIds[i] += 100000;
-            }
+            //    cntNodeIds[i] += 100000;
+            //}
 
-            for (int c = 0; c < cntElementConnectivity.GetLength(0); c++)
-            {
-                cntElementConnectivity[c, 0] += 100000;
-                cntElementConnectivity[c, 1] += 100000;
-            }
+            //for (int c = 0; c < cntElementConnectivity.GetLength(0); c++)
+            //{
+            //    cntElementConnectivity[c, 0] += 100000;
+            //    cntElementConnectivity[c, 1] += 100000;
+            //}
 
             AddCntBeamElements(model, cntNodeIds, cntNodeCoords, cntElementConnectivity);
             var embeddedGrouping = EmbeddedBeam3DGrouping.CreateFullyBonded(model, model.ElementsDictionary
                         .Where(x => x.Key <= hostElements).Select(kv => kv.Value).ToArray(), model.ElementsDictionary.Where(x => x.Key > hostElements)
                         .Select(kv => kv.Value).ToArray(), true);
 
-            //var paraviewEmbedded =
-            //    new ParaviewEmbedded3D(model, null, Path.Combine(Directory.GetCurrentDirectory(), "ParaviewCNT"));
-            //paraviewEmbedded.CreateParaviewFile();
+            var paraviewEmbedded =
+                new ParaviewEmbedded3D(model, null, Path.Combine(Directory.GetCurrentDirectory(), "ParaviewCNT"));
+            paraviewEmbedded.CreateParaviewFile();
 
             var boundaryNodesIds = GetBoundaryNodeIds();
             boundaryNodesIds.Sort();

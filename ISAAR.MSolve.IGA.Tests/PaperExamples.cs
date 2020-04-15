@@ -148,7 +148,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 for (int realization = 0; realization < numberOfRealizations; realization++)
                 {
-                    var randomCnts = 300;
+                    var randomCnts = 800;
                     youngModulusSolutionPairs[realization, 0] = randomCnts;
                     var outterMaterial = new ElasticMaterial3DtotalStrain()
                     {

@@ -844,7 +844,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-			string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","4x4.txt");
+			string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","Collocation50K.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
 			modelReader.CreateCollocationModelFromFile();
 
@@ -871,12 +871,13 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			var k = solver.LinearSystems[0].Matrix;
 
-			Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows, k.NumColumns);
+			Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
 			for (int i = 0; i < k.NumRows; i++)
 			{
 				for (int j = 0; j < k.NumColumns; j++)
-				{
-					kmatlab[i, j] = k[i, j];
+                {
+                    if (k[i, j] != 0) 
+                        kmatlab[i, j] = k[i, j];
 				}
 			}
 			MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), "K4x4Collocation.mat"), kmatlab, "KC");

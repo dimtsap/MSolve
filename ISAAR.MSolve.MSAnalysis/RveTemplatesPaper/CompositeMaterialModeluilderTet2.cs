@@ -42,7 +42,12 @@ namespace ISAAR.MSolve.MultiscaleAnalysis
         public IRVEbuilder Clone(int a)
         {
             var trandom = new TRandom();
-            var randomOutterE = trandom.Normal(3.4e9, 1e9);
+            var randomOutterE = trandom.Lognormal(21.9056, 0.2880);
+            //var trandom = new TRandom();
+            //var randomOutterE = trandom.Normal(3.4e9, 1e9);
+            //trandom.Lognormal()
+
+
             var material= new ElasticMaterial3DtotalStrain()
             {
                 YoungModulus = randomOutterE

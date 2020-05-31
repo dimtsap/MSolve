@@ -40,11 +40,10 @@ namespace ISAAR.MSolve.IGA.Elements
         private bool isInitialized;
         internal double[] _solution;
 
-        public NurbsKirchhoffLoveShellElementNL(IShellMaterial shellMaterial, IList<Knot> elementKnots,
+        public NurbsKirchhoffLoveShellElementNL(List<IShellMaterial> shellMaterials, IList<Knot> elementKnots,
             Nurbs2D nurbs, IList<ControlPoint> elementControlPoints, Patch patch, double thickness, 
             int degreeKsi, int degreeHeta)
         {
-            Contract.Requires(shellMaterial != null);
             this.Patch = patch;
             this.Thickness = thickness;
             _degreeKsi = degreeKsi;
@@ -68,10 +67,14 @@ namespace ISAAR.MSolve.IGA.Elements
             foreach (var medianSurfaceGP in thicknessIntegrationPoints.Keys)
             {
                 materialsAtThicknessGP.Add(medianSurfaceGP, new Dictionary<GaussLegendrePoint3D, IShellMaterial>());
-                foreach (var point in thicknessIntegrationPoints[medianSurfaceGP])
-                {
-                    materialsAtThicknessGP[medianSurfaceGP].Add(point, shellMaterial.Clone());
-                }
+                //foreach (var point in thicknessIntegrationPoints[medianSurfaceGP])
+                //{
+                //    materialsAtThicknessGP[medianSurfaceGP].Add(point, shellMaterial.Clone());
+                //}
+                materialsAtThicknessGP[medianSurfaceGP].Add(thicknessIntegrationPoints[medianSurfaceGP][0], shellMaterials[0].Clone());
+                materialsAtThicknessGP[medianSurfaceGP].Add(thicknessIntegrationPoints[medianSurfaceGP][1], shellMaterials[1].Clone());
+                materialsAtThicknessGP[medianSurfaceGP].Add(thicknessIntegrationPoints[medianSurfaceGP][2], shellMaterials[2].Clone());
+
             }
 
             _controlPoints = elementControlPoints.ToArray();

@@ -67,6 +67,35 @@ namespace ISAAR.MSolve.IGA.Elements.Structural
             _controlPoints = elementControlPoints.ToArray();
         }
 
+        public KirchhoffLoveShellNL(List<IShellMaterial> shellMaterials, IList<Knot> elementKnots,
+            IShapeFunction2D shapeFunctions, IList<ControlPoint> elementControlPoints, Patch patch, double thickness,
+            int degreeKsi, int degreeHeta)
+        {
+            this.Patch = patch;
+            this.Thickness = thickness;
+            _degreeKsi = degreeKsi;
+            _degreeHeta = degreeHeta;
+            foreach (var knot in elementKnots)
+            {
+                if (!KnotsDictionary.ContainsKey(knot.ID))
+                    this.KnotsDictionary.Add(knot.ID, knot);
+            }
+
+            _shapeFunctions = shapeFunctions;
+            _solution = new double[3 * elementControlPoints.Count];
+            
+            CreateElementGaussPoints(this);
+            foreach (var medianSurfaceGP in thicknessIntegrationPoints.Keys)
+            {
+                materialsAtThicknessGP.Add(medianSurfaceGP, new Dictionary<GaussLegendrePoint3D, IShellMaterial>());
+                materialsAtThicknessGP[medianSurfaceGP].Add(thicknessIntegrationPoints[medianSurfaceGP][0], shellMaterials[0].Clone());
+                materialsAtThicknessGP[medianSurfaceGP].Add(thicknessIntegrationPoints[medianSurfaceGP][1], shellMaterials[1].Clone());
+                materialsAtThicknessGP[medianSurfaceGP].Add(thicknessIntegrationPoints[medianSurfaceGP][2], shellMaterials[2].Clone());
+            }
+
+            _controlPoints = elementControlPoints.ToArray();
+        }
+
         public CellType CellType { get; } = CellType.Unknown;
 
         public IElementDofEnumerator DofEnumerator { get; set; } = new GenericDofEnumerator();

@@ -163,6 +163,110 @@ namespace ISAAR.MSolve.IGA.Readers
 		}
 
 
+		public void CreateTSplineShellsModelFromFile(TSplineShellType shellType = TSplineShellType.Linear, 
+            List<IShellMaterial> shellMaterials=null, IShellSectionMaterial sectionMaterial=null, double thickness = 1)
+		{
+			char[] delimeters = { ' ', '=', '\t' };
+			Attributes? name = null;
+
+			String[] text = System.IO.File.ReadAllLines(_filename);
+
+			_model.PatchesDictionary.Add(0, new Patch());
+			for (int i = 0; i < text.Length; i++)
+			{
+				var line = text[i].Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
+				if (line.Length == 0) continue;
+				try
+				{
+					name = (Attributes)Enum.Parse(typeof(Attributes), line[0].ToLower());
+				}
+				catch (Exception exception)
+				{
+					throw new KeyNotFoundException($"Variable name {line[0]} is not found. {exception.Message}");
+				}
+				switch (name)
+				{
+					case Attributes.type:
+						Types type;
+						try
+						{
+							type = (Types)Enum.Parse(typeof(Types), line[1].ToLower());
+						}
+						catch (Exception exception)
+						{
+							throw new KeyNotFoundException($"Variable name {line[0]} is not found. {exception.Message}");
+						}
+						numberOfDimensions = type == Types.plane ? 2 : 3;
+						break;
+
+					case Attributes.noden:
+						break;
+
+					case Attributes.elemn:
+						var numberOfElements = int.Parse(line[1]);
+						break;
+
+					case Attributes.node:
+						var controlPoint = new ControlPoint
+						{
+							ID = controlPointIDcounter,
+							X = double.Parse(line[1], CultureInfo.InvariantCulture),
+							Y = double.Parse(line[2], CultureInfo.InvariantCulture),
+							Z = double.Parse(line[3], CultureInfo.InvariantCulture),
+							WeightFactor = double.Parse(line[4], CultureInfo.InvariantCulture)
+						};
+						_model.ControlPointsDictionary.Add(controlPointIDcounter, controlPoint);
+						((List<ControlPoint>)_model.PatchesDictionary[0].ControlPoints).Add(controlPoint);
+						controlPointIDcounter++;
+						break;
+
+					case Attributes.belem:
+						var numberOfElementNodes = int.Parse(line[1]);
+						var elementDegreeKsi = int.Parse(line[2]);
+						var elementDegreeHeta = int.Parse(line[3]);
+						i++;
+						line = text[i].Split(delimeters);
+						int[] connectivity = new int[numberOfElementNodes];
+						for (int j = 0; j < numberOfElementNodes; j++)
+							connectivity[j] = Int32.Parse(line[j]);
+
+						var extractionOperator = Matrix.CreateZero(numberOfElementNodes,
+							(elementDegreeKsi + 1) * (elementDegreeHeta + 1));
+						for (int j = 0; j < numberOfElementNodes; j++)
+						{
+							line = text[++i].Split(delimeters);
+							for (int k = 0; k < (elementDegreeKsi + 1) * (elementDegreeHeta + 1); k++)
+							{
+								extractionOperator[j, k] = double.Parse(line[k]);
+							}
+						}
+
+						if (numberOfDimensions == 2)
+						{
+							throw new NotImplementedException("TSpline2D not yet implemented");
+						}
+						else
+						{
+							switch (shellType)
+							{
+								case TSplineShellType.Linear:
+									CreateLinearShell(elementDegreeKsi, elementDegreeHeta, extractionOperator, connectivity, sectionMaterial, thickness);
+									break;
+
+								case TSplineShellType.Thickness:
+									CreateThicknessShell(elementDegreeKsi, elementDegreeHeta, extractionOperator, connectivity, shellMaterials, thickness);
+									break;
+							}
+						}
+						break;
+
+					case Attributes.set:
+						break;
+				}
+			}
+		}
+
+
 		private void CreateLinearShell(int elementDegreeKsi, int elementDegreeHeta, Matrix extractionOperator,
 			int[] connectivity, IShellSectionMaterial material, double thickness)
 		{
@@ -209,17 +313,34 @@ namespace ISAAR.MSolve.IGA.Readers
 					_model.PatchesDictionary[0], thickness, elementDegreeKsi, elementDegreeHeta)
 			};
                 
-                
-   //             new TSplineKirchhoffLoveShellElementMaterial(elementIDCounter, null,
-			//		elementDegreeKsi, elementDegreeHeta, thickness, extractionOperator, shellMaterial,
-   //                 tsplines)
-			//{
-			//	ElementType = new TSplineKirchhoffLoveShellElementMaterial(elementIDCounter, null,
-			//		elementDegreeKsi, elementDegreeHeta, thickness, extractionOperator, shellMaterial, tsplines)
-			//};
             element.AddControlPoints(elementControlPoints);
 			_model.ElementsDictionary.Add(elementIDCounter++, element);
 			_model.PatchesDictionary[0].Elements.Add(element);
 		}
+
+        private void CreateThicknessShell(int elementDegreeKsi, int elementDegreeHeta, Matrix extractionOperator,
+            int[] connectivity, List<IShellMaterial> shellMaterials, double thickness)
+        {
+            var elementControlPoints = connectivity.Select(t => _model.ControlPointsDictionary[t]).ToArray();
+            var tsplines = new ShapeTSplines2DFromBezierExtraction(elementDegreeKsi, elementDegreeHeta,
+                extractionOperator, elementControlPoints);
+            Element element = new Element
+            {
+                ID = elementIDCounter,
+                Patch = _model.PatchesDictionary[0],
+                ElementType = new KirchhoffLoveShellNL(shellMaterials, new List<Knot>
+                    {
+                        new Knot() {ID = 0, Ksi = -1, Heta = -1, Zeta = 0},
+                        new Knot() {ID = 1, Ksi = -1, Heta = 1, Zeta = 0},
+                        new Knot() {ID = 2, Ksi = 1, Heta = -1, Zeta = 0},
+                        new Knot() {ID = 3, Ksi = 1, Heta = 1, Zeta = 0},
+                    }, tsplines, elementControlPoints,
+                    _model.PatchesDictionary[0], thickness, elementDegreeKsi, elementDegreeHeta)
+            };
+                
+            element.AddControlPoints(elementControlPoints);
+            _model.ElementsDictionary.Add(elementIDCounter++, element);
+            _model.PatchesDictionary[0].Elements.Add(element);
+        }
 	}
 }

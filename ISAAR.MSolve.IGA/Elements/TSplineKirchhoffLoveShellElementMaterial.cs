@@ -46,7 +46,7 @@ namespace ISAAR.MSolve.IGA.Elements
 		/// <param name="extractionOperator">Bezier extraction operation from TSplines to Bezier elements.</param>
 		/// <param name="shellMaterial">Material of the shell element.</param>
 		public TSplineKirchhoffLoveShellElementMaterial(int id, Patch patch, int degreeKsi, int degreeHeta,
-			double thickness, Matrix extractionOperator, IShellMaterial shellMaterial,
+			double thickness, Matrix extractionOperator, List<IShellMaterial> shellMaterials,
             ShapeTSplines2DFromBezierExtraction tsplines)
 		{
 			this.ID = id;
@@ -61,10 +61,13 @@ namespace ISAAR.MSolve.IGA.Elements
 			foreach (var medianSurfaceGP in _thicknessIntegrationPoints.Keys)
 			{
 				_materialsAtThicknessGp.Add(medianSurfaceGP, new Dictionary<GaussLegendrePoint3D, IShellMaterial>());
-				foreach (var point in _thicknessIntegrationPoints[medianSurfaceGP])
-				{
-					_materialsAtThicknessGp[medianSurfaceGP].Add(point, shellMaterial.Clone());
-				}
+				//foreach (var point in _thicknessIntegrationPoints[medianSurfaceGP])
+				//{
+				//	_materialsAtThicknessGp[medianSurfaceGP].Add(point, shellMaterial.Clone());
+				//}
+                _materialsAtThicknessGp[medianSurfaceGP].Add(_thicknessIntegrationPoints[medianSurfaceGP][0], shellMaterials[0].Clone());
+                _materialsAtThicknessGp[medianSurfaceGP].Add(_thicknessIntegrationPoints[medianSurfaceGP][1], shellMaterials[1].Clone());
+                _materialsAtThicknessGp[medianSurfaceGP].Add(_thicknessIntegrationPoints[medianSurfaceGP][2], shellMaterials[2].Clone());
 			}
 		}
 

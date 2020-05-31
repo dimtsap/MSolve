@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ISAAR.MSolve.Analyzers;
@@ -11,6 +12,7 @@ using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Output;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Materials;
+using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.Problems;
 using ISAAR.MSolve.Solvers;
 using ISAAR.MSolve.Solvers.Direct;
@@ -31,7 +33,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var filename = "CantileverShell";
             string filepath = $"..\\..\\..\\InputFiles\\{filename}.iga";
             var modelReader = new IgaFileReader(model, filepath);
-            modelReader.CreateTSplineShellsModelFromFile(IgaFileReader.TSplineShellType.Linear,
+            modelReader.CreateTSplineShellsModelFromFile(IgaFileReader.TSplineShellType.Linear,new List<IShellMaterial>(),
                 sectionMaterial: new ShellElasticSectionMaterial2D()
                 {
                     YoungModulus = 100,

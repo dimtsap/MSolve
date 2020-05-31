@@ -495,7 +495,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 YoungModulus = 1.2e06,
                 PoissonRatio = 0.0
             };
-            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear,filepath, material);
+            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear,filepath, null);
             var model=modelReader.GenerateModelFromFile();
 
             Value verticalDistributedLoad = delegate (double x, double y, double z)

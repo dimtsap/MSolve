@@ -117,7 +117,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     ElementControlPoints().ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
 
                 var element =
-                    new NurbsKirchhoffLoveShellElementNL(Material, ElementKnots().ToArray(),nurbs,
+                    new NurbsKirchhoffLoveShellElementNL(null, ElementKnots().ToArray(),nurbs,
                         ElementControlPoints(), patch, 0.1, degreeKsi, degreeHeta);
                 element._solution= localSolution;
                 return element;
@@ -169,7 +169,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 YoungModulus = 1.2e06,
                 PoissonRatio = 0.0
             };
-            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath,material);
+            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath,null);
             var model = modelReader.GenerateModelFromFile();
 
             Value verticalDistributedLoad = delegate (double x, double y, double z)
@@ -217,7 +217,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 YoungModulus = 21000000,
                 PoissonRatio = 0.0
             };
-            IsogeometricShellReader modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath,material);
+            IsogeometricShellReader modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath,null);
             var model=modelReader.GenerateModelFromFile();
 
             Value verticalDistributedLoad = delegate (double x, double y, double z)

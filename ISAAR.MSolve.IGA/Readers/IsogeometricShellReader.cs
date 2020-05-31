@@ -27,7 +27,7 @@ namespace ISAAR.MSolve.IGA.Readers
 	{
 		private readonly string _filename;
         private readonly GeometricalFormulation _formulation;
-        private readonly IShellMaterial _material;
+        private readonly List<IShellMaterial> _material;
         private readonly IShellSectionMaterial _sectionMaterial;
 
         private enum Attributes
@@ -48,11 +48,11 @@ namespace ISAAR.MSolve.IGA.Readers
 		/// <param name="modelCreator">An <see cref="ModelCreator"/> object responsible for generating the model.</param>
 		/// <param name="filename">The name of the file to be read.</param>
 		public IsogeometricShellReader(GeometricalFormulation formulation,
-            string filename, IShellMaterial material=null,IShellSectionMaterial sectionMaterial=null )
+            string filename, List<IShellMaterial> materials=null,IShellSectionMaterial sectionMaterial=null )
 		{
 			_filename = filename;
             _formulation = formulation;
-            _material = material;
+            _material = materials;
             _sectionMaterial = sectionMaterial;
         }
 

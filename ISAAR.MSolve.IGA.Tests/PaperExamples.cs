@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Output;
 using ISAAR.MSolve.Materials;
+using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.MSAnalysis.RveTemplatesPaper;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.Problems;
@@ -38,34 +40,85 @@ namespace ISAAR.MSolve.IGA.Tests
             var filename = "ScordelisLoShell";
             var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt")
                 .ToString(CultureInfo.InvariantCulture);
-            var numberOfRealizations = 10;
+            var numberOfRealizations = 1000;
 
-            var outterMaterial = new ElasticMaterial3DtotalStrain()
+            var trandom1 = new TRandom();
+            var trandom2 = new TRandom();
+            var trandom3 = new TRandom();
+            Stopwatch watch= new Stopwatch();
+            watch.Start();
+            for (int it = 0; it < 20; it++)
             {
-                YoungModulus = 4.3210e8,
-                PoissonRatio = 0.0
-            };
-            var innerMaterial = new ElasticMaterial3DtotalStrain()
-            {
-                YoungModulus = 3.4e9,
-                PoissonRatio = 0.0
-            };
-
-            var homogeneousRveBuilder1 =
-                new CompositeMaterialModeluilderTet2(outterMaterial, innerMaterial, 100, 100, 100);
-            //var material4 = new MicrostructureShell2D(homogeneousRveBuilder1,
-            //    microModel => (new SuiteSparseSolver.Builder()).BuildSolver(microModel), false, 1);
-
-            var material4 = new Shell2dRVEMaterialHostConst(1000, 1, 1, homogeneousRveBuilder1,
-                constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
-
-            var youngModulusSolutionPairs = new double[numberOfRealizations, 1];
+                var youngModulusSolutionPairs = new double[numberOfRealizations, 1];
             Parallel.For(0, numberOfRealizations, realization =>
             {
-                // Data from https://www.researchgate.net/figure/Mechanical-properties-of-the-nano-hydroxyapatite-polyetheretherketone-nha-PeeK_tbl1_265175039
+                #region mat1
+                var randomOutterE1 = trandom1.Lognormal(21.9056, 0.2880);
 
+                var outterMaterial1 = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = randomOutterE1,
+                    PoissonRatio = 0.0
+                };
+                var innerMaterial1 = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = 1,
+                    PoissonRatio = 0.0
+                };
 
-                var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, material4);
+                var homogeneousRveBuilder1 =
+                    new CompositeMaterialModeluilderTet2(outterMaterial1, innerMaterial1, 100, 100, 100);
+
+                var material1 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder1,
+                    constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+                #endregion
+                #region mat2
+                var randomOutterE2 = trandom2.Lognormal(21.9056, 0.2880);
+
+                var outterMaterial2 = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = randomOutterE2,
+                    PoissonRatio = 0.0
+                };
+                var innerMaterial2 = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = 1,
+                    PoissonRatio = 0.0
+                };
+
+                var homogeneousRveBuilder2 =
+                    new CompositeMaterialModeluilderTet2(outterMaterial2, innerMaterial2, 100, 100, 100);
+
+                var material2 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder2,
+                    constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+                #endregion
+                #region mat3
+                var randomOutterE3 = trandom3.Lognormal(21.9056, 0.2880);
+
+                var outterMaterial3 = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = randomOutterE3,
+                    PoissonRatio = 0.0
+                };
+                var innerMaterial3 = new ElasticMaterial3DtotalStrain()
+                {
+                    YoungModulus = 1,
+                    PoissonRatio = 0.0
+                };
+
+                var homogeneousRveBuilder3 =
+                    new CompositeMaterialModeluilderTet2(outterMaterial3, innerMaterial3, 100, 100, 100);
+
+                var material3 = new Shell2dRVEMaterialHostConst(1, 1, 1, homogeneousRveBuilder3,
+                    constModel => (new SuiteSparseSolver.Builder()).BuildSolver(constModel));
+                #endregion
+
+                var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, materials:new List<IShellMaterial>()
+                {
+                    material1,
+                    material2, 
+                    material3
+                });
                 var model = modelReader.GenerateModelFromFile();
 
                 model.SurfaceLoads.Add(new SurfaceDistributedLoad(-90, StructuralDof.TranslationY));
@@ -132,8 +185,17 @@ namespace ISAAR.MSolve.IGA.Tests
 
             var writer = new Array2DWriter();
             writer.WriteToFile(youngModulusSolutionPairs,
-                Path.Combine(Directory.GetCurrentDirectory(), "ScordelisLoMultiscaleResults"));
+                Path.Combine(Directory.GetCurrentDirectory(), $"ScordelisLoMultiscaleResultsThicknessLayers_{it}.txt"));
+            }
+            watch.Stop();
+            TimeSpan ts = watch.Elapsed;
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Console.WriteLine("RunTime " + elapsedTime);
         }
+
+
 
         [Fact]
         public void SimpleHoodBenchmark()

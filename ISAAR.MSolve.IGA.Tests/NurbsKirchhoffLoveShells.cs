@@ -381,136 +381,136 @@ namespace ISAAR.MSolve.IGA.Tests
 			}
 		}
 
-		[Fact]
-		public void IsogeometricCantileverShell()
-		{
-			Model model = new Model();
-			string filename = "..\\..\\..\\InputFiles\\CantileverShell.txt";
-			IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filename);
-			modelReader.CreateShellModelFromFile();
+		//[Fact]
+		//public void IsogeometricCantileverShell()
+		//{
+		//	Model model = new Model();
+		//	string filename = "..\\..\\..\\InputFiles\\CantileverShell.txt";
+		//	IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filename);
+		//	modelReader.CreateShellModelFromFile();
 
-			model.Loads.Add(new Load()
-			{
-				Amount = -1,
-				ControlPoint = model.ControlPoints[9],
-				DOF = StructuralDof.TranslationZ
-			});
-			model.Loads.Add(new Load()
-			{
-				Amount = -1,
-				ControlPoint = model.ControlPoints[10],
-				DOF = StructuralDof.TranslationZ
-			});
-			model.Loads.Add(new Load()
-			{
-				Amount = -1,
-				ControlPoint = model.ControlPoints[11],
-				DOF = StructuralDof.TranslationZ
-			});
+		//	model.Loads.Add(new Load()
+		//	{
+		//		Amount = -1,
+		//		ControlPoint = model.ControlPoints[9],
+		//		DOF = StructuralDof.TranslationZ
+		//	});
+		//	model.Loads.Add(new Load()
+		//	{
+		//		Amount = -1,
+		//		ControlPoint = model.ControlPoints[10],
+		//		DOF = StructuralDof.TranslationZ
+		//	});
+		//	model.Loads.Add(new Load()
+		//	{
+		//		Amount = -1,
+		//		ControlPoint = model.ControlPoints[11],
+		//		DOF = StructuralDof.TranslationZ
+		//	});
 
-			for (int i = 0; i < 6; i++)
-			{
-				model.ControlPointsDictionary[i].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-				model.ControlPointsDictionary[i].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationY});
-				model.ControlPointsDictionary[i].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
-			}
+		//	for (int i = 0; i < 6; i++)
+		//	{
+		//		model.ControlPointsDictionary[i].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+		//		model.ControlPointsDictionary[i].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationY});
+		//		model.ControlPointsDictionary[i].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
+		//	}
 
-			// Solvers
-			var solverBuilder = new SkylineSolver.Builder();
-			ISolver solver = solverBuilder.BuildSolver(model);
+		//	// Solvers
+		//	var solverBuilder = new SkylineSolver.Builder();
+		//	ISolver solver = solverBuilder.BuildSolver(model);
 
-			// Structural problem provider
-			var provider = new ProblemStructural(model, solver);
+		//	// Structural problem provider
+		//	var provider = new ProblemStructural(model, solver);
 
-			// Linear static analysis
-			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
-			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+		//	// Linear static analysis
+		//	var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+		//	var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-			// Run the analysis
-			parentAnalyzer.Initialize();
-			parentAnalyzer.Solve();
+		//	// Run the analysis
+		//	parentAnalyzer.Initialize();
+		//	parentAnalyzer.Solve();
 
-			var expectedSolution = new double[18]
-			{
-				0.0, 0.0, -7499.999986865148, 0.0, 0.0, -7499.99998660616, 0.0, 0.0, -7499.999986347174, 0.0, 0.0,
-				-14999.999980230163, 0.0, 0.0, -14999.999980050825, 0.0, 0.0, -14999.999979871487
-			};
-			for (int i = 0; i < expectedSolution.Length; i++)
-				Utilities.AreValuesEqual(expectedSolution[i], solver.LinearSystems[0].Solution[i], 7);
-		}
-
-
-		[Fact]
-		public void IsogeometricSquareShell()
-		{
-			Model model = new Model();
-			var filename = "SquareShell";
-			string filepath = $"..\\..\\..\\InputFiles\\{filename}.txt";
-			IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
-			modelReader.CreateShellModelFromFile();
+		//	var expectedSolution = new double[18]
+		//	{
+		//		0.0, 0.0, -7499.999986865148, 0.0, 0.0, -7499.99998660616, 0.0, 0.0, -7499.999986347174, 0.0, 0.0,
+		//		-14999.999980230163, 0.0, 0.0, -14999.999980050825, 0.0, 0.0, -14999.999979871487
+		//	};
+		//	for (int i = 0; i < expectedSolution.Length; i++)
+		//		Utilities.AreValuesEqual(expectedSolution[i], solver.LinearSystems[0].Solution[i], 7);
+		//}
 
 
-			Matrix<double> loadVector =
-				MatlabReader.Read<double>("..\\..\\..\\InputFiles\\SquareShell.mat", "LoadVector");
+		//[Fact]
+		//public void IsogeometricSquareShell()
+		//{
+		//	Model model = new Model();
+		//	var filename = "SquareShell";
+		//	string filepath = $"..\\..\\..\\InputFiles\\{filename}.txt";
+		//	IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
+		//	modelReader.CreateShellModelFromFile();
 
 
-			for (int i = 0; i < loadVector.ColumnCount; i += 3)
-			{
-				var indexCP = i / 3;
-				model.Loads.Add(new Load()
-				{
-					Amount = loadVector.At(0, i),
-					ControlPoint = model.ControlPoints[indexCP],
-					DOF = StructuralDof.TranslationX
-				});
-				model.Loads.Add(new Load()
-				{
-					Amount = loadVector.At(0, i + 1),
-					ControlPoint = model.ControlPoints[indexCP],
-					DOF = StructuralDof.TranslationY
-				});
-				model.Loads.Add(new Load()
-				{
-					Amount = loadVector.At(0, i + 2),
-					ControlPoint = model.ControlPoints[indexCP],
-					DOF = StructuralDof.TranslationZ
-				});
-			}
+		//	Matrix<double> loadVector =
+		//		MatlabReader.Read<double>("..\\..\\..\\InputFiles\\SquareShell.mat", "LoadVector");
 
-			foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
-			{
-				foreach (var controlPoint in edge.ControlPointsDictionary.Values)
-				{
-					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationY});
-					model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
-				}
-			}
 
-			// Solvers
-			var solverBuilder = new SkylineSolver.Builder();
-			ISolver solver = solverBuilder.BuildSolver(model);
+		//	for (int i = 0; i < loadVector.ColumnCount; i += 3)
+		//	{
+		//		var indexCP = i / 3;
+		//		model.Loads.Add(new Load()
+		//		{
+		//			Amount = loadVector.At(0, i),
+		//			ControlPoint = model.ControlPoints[indexCP],
+		//			DOF = StructuralDof.TranslationX
+		//		});
+		//		model.Loads.Add(new Load()
+		//		{
+		//			Amount = loadVector.At(0, i + 1),
+		//			ControlPoint = model.ControlPoints[indexCP],
+		//			DOF = StructuralDof.TranslationY
+		//		});
+		//		model.Loads.Add(new Load()
+		//		{
+		//			Amount = loadVector.At(0, i + 2),
+		//			ControlPoint = model.ControlPoints[indexCP],
+		//			DOF = StructuralDof.TranslationZ
+		//		});
+		//	}
 
-			// Structural problem provider
-			var provider = new ProblemStructural(model, solver);
+		//	foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
+		//	{
+		//		foreach (var controlPoint in edge.ControlPointsDictionary.Values)
+		//		{
+		//			model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+		//			model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationY});
+		//			model.ControlPointsDictionary[controlPoint.ID].Constrains.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
+		//		}
+		//	}
 
-			// Linear static analysis
-			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
-			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+		//	// Solvers
+		//	var solverBuilder = new SkylineSolver.Builder();
+		//	ISolver solver = solverBuilder.BuildSolver(model);
 
-			// Run the analysis
-			parentAnalyzer.Initialize();
-			parentAnalyzer.Solve();
+		//	// Structural problem provider
+		//	var provider = new ProblemStructural(model, solver);
 
-			var paraview = new ParaviewNurbsShells(model, solver.LinearSystems[0].Solution, filename);
-			paraview.CreateParaview2DFile();
+		//	// Linear static analysis
+		//	var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+		//	var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-			Matrix<double> solutionVectorExpected =
-				MatlabReader.Read<double>("..\\..\\..\\InputFiles\\SquareShell.mat", "SolutionVector");
+		//	// Run the analysis
+		//	parentAnalyzer.Initialize();
+		//	parentAnalyzer.Solve();
 
-			for (int i = 0; i < solutionVectorExpected.ColumnCount; i++)
-				Assert.True(Utilities.AreValuesEqual(solutionVectorExpected.At(0, i), solver.LinearSystems[0].Solution[i],
-					1e-9));
-		}
+		//	var paraview = new ParaviewNurbsShells(model, solver.LinearSystems[0].Solution, filename);
+		//	paraview.CreateParaview2DFile();
+
+		//	Matrix<double> solutionVectorExpected =
+		//		MatlabReader.Read<double>("..\\..\\..\\InputFiles\\SquareShell.mat", "SolutionVector");
+
+		//	for (int i = 0; i < solutionVectorExpected.ColumnCount; i++)
+		//		Assert.True(Utilities.AreValuesEqual(solutionVectorExpected.At(0, i), solver.LinearSystems[0].Solution[i],
+		//			1e-9));
+		//}
 	}
 }

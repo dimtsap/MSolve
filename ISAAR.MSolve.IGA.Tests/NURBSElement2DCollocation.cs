@@ -880,7 +880,7 @@ namespace ISAAR.MSolve.IGA.Tests
                         kmatlab[i, j] = k[i, j];
 				}
 			}
-			MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), "K4x4Collocation.mat"), kmatlab, "KC");
+			MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), "K45Collocation.mat"), kmatlab, "KTotal");
 
 
 			var coarsePoints = new List<NaturalPoint>();

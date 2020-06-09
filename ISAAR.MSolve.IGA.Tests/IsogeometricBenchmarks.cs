@@ -965,11 +965,52 @@ namespace ISAAR.MSolve.IGA.Tests
 			}
 		}
 		#endregion
-		
+
+
+		[Fact]
+		public void IsogeometricHorseshoe3D()
+		{
+            Model model = new Model();
+			string filename = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles","Cube3D.txt");
+			IsogeometricReader modelReader = new IsogeometricReader(filename,null,new ElasticMaterial3D()
+            {
+				YoungModulus = 1.0,
+				PoissonRatio = 0.3
+            });
+			modelReader.CreateModelFromFile();
+
+			// Boundary Conditions - Dirichlet
+			
+            //model.ControlPointsDictionary.Last().Value.Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+			//model.Loads.Add(new Load(){Amount = 100, DOF = StructuralDof.TranslationX, Node = model.PatchesDictionary[0].ControlPoints.Last()});
+
+			// Solvers
+			var solverBuilder = new SkylineSolver.Builder();
+			ISolver solver = solverBuilder.BuildSolver(model);
+
+			// Structural problem provider
+			var provider = new ProblemStructural(model, solver);
+
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+			// Run the analysis
+			parentAnalyzer.Initialize();
+			parentAnalyzer.Solve();
+
+			Matrix<double> forceVectorExpected = MatlabReader.Read<double>("..\\..\\..\\InputFiles\\Horseshoe.mat", "forceVector");
+
+
+		}
+
+
+
+
 		//[Fact]
 		//public void IsogeometricHorseshoe3D()
 		//{
-			
+
 		//	Model model = new Model();
 		//	ModelCreator modelCreator = new ModelCreator(model);
 		//	string filename = "..\\..\\..\\InputFiles\\Horseshoe.txt";
@@ -1030,11 +1071,11 @@ namespace ISAAR.MSolve.IGA.Tests
 		//		Assert.Equal(displacementVectorExpected.At(i, 0), solver.LinearSystems[0].Solution[i], 7);
 
 		//}
-		
+
 		//[Fact]
 		//public void IsogeometricPlaneStrainRing()
 		//{
-			
+
 		//	Model model = new Model();
 		//	ModelCreator modelCreator = new ModelCreator(model);
 		//	string filename = "..\\..\\..\\InputFiles\\SquareMixedBC.txt";
@@ -1595,7 +1636,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		//public void IsogeometricPlateWithHole()
 		//{
 		//	// Model
-			
+
 		//	Model model = new Model();
 		//	ModelCreator modelCreator = new ModelCreator(model);
 		//	string filename = "..\\..\\..\\IGA\\InputFiles\\PlateTension.txt";
@@ -1618,7 +1659,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		//	}
 
 		//	model.ControlPointsDictionary[0].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationY});
-			
+
 		//	// Solvers
 		//	var solverBuilder = new SkylineSolver.Builder();
 		//	ISolver solver = solverBuilder.BuildSolver(model);
@@ -1655,7 +1696,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		//public void IsogeometricCurvedBeamBenchmark()
 		//{
 		//	// Model
-			
+
 		//	Model model = new Model();
 		//	ModelCreator modelCreator = new ModelCreator(model);
 		//	string filename = "..\\..\\..\\InputFiles\\CurvedBeam.txt";
@@ -1695,7 +1736,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		//	parentAnalyzer.Solve();
 
 		//	Matrix<double> forceVectorExpected= MatlabReader.Read<double>("CurvedBeam.mat", "forceVector");
-			
+
 		//	for (int i = 0; i < forceVectorExpected.RowCount; i++)
 		//		Assert.Equal(forceVectorExpected.At(i,0), model.PatchesDictionary[0].Forces[i], 7);
 
@@ -1705,11 +1746,11 @@ namespace ISAAR.MSolve.IGA.Tests
 		//		Assert.Equal(displacementVectorExpected.At(i,0), solver.LinearSystems[0].Solution[i], 7);
 		//}
 
-		
+
 		//[Fact]
 		//public void IsogeometricBeam3D()
 		//{
-			
+
 		//	Model model = new Model();
 		//	//ModelCreator modelCreator = new ModelCreator(model);
 		//	string filename = "Beam3D";
@@ -1770,7 +1811,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		//[Fact]
 		//public void TSplinesShellsBenchmark()
 		//{
-			
+
 		//	Model model = new Model();
 		//	string filename = "..\\..\\..\\InputFiles\\surface.iga";
 		//	var modelReader = new IgaFileReader(model, filename);

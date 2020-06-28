@@ -167,6 +167,19 @@ namespace ISAAR.MSolve.IGA.Elements
 
                 IntegratedStressesOverThickness(gaussPoints[j], ref MembraneForces, ref BendingMoments);
 
+                if (j == ElementStiffnesses.gpNumberToCheck)
+                {
+                    var Bmem_matrix = Matrix.CreateFromArray(Bmembrane);
+                    var Bben_matrix = Matrix.CreateFromArray(Bbending);
+                    for (int i1 = 0; i1 < Bmembrane.GetLength(1); i1++)
+                    {
+                        ElementStiffnesses.ProccessVariable(4, Bmem_matrix.GetColumn(i1).CopyToArray(), true, i1);
+                        ElementStiffnesses.ProccessVariable(5, Bben_matrix.GetColumn(i1).CopyToArray(), true, i1);
+
+                    }
+                }
+
+
                 var wfactor = InitialJ1[j] * gaussPoints[j].WeightFactor;
 
                 for (int i = 0; i < Bmembrane.GetLength(1); i++)
@@ -240,6 +253,13 @@ namespace ISAAR.MSolve.IGA.Elements
                 var surfaceBasisVectorDerivative2 = CalculateSurfaceBasisVector1(hessianMatrix, 1);
                 var surfaceBasisVectorDerivative12 = CalculateSurfaceBasisVector1(hessianMatrix, 2);
 
+                if (j == ElementStiffnesses.gpNumberToCheck)
+                {
+                    ElementStiffnesses.ProccessVariable(1, surfaceBasisVectorDerivative1, false);
+                    ElementStiffnesses.ProccessVariable(2, surfaceBasisVectorDerivative2, false);
+                    ElementStiffnesses.ProccessVariable(3, surfaceBasisVectorDerivative12, false);
+                }
+
                 var A11 = initialSurfaceBasisVectors1[j][0] * initialSurfaceBasisVectors1[j][0] +
                           initialSurfaceBasisVectors1[j][1] * initialSurfaceBasisVectors1[j][1] +
                           initialSurfaceBasisVectors1[j][2] * initialSurfaceBasisVectors1[j][2];
@@ -267,6 +287,11 @@ namespace ISAAR.MSolve.IGA.Elements
 
                 var membraneStrain = new double[] {0.5 * (a11 - A11), 0.5 * (a22 - A22), a12 - A12};
 
+                if (j == ElementStiffnesses.gpNumberToCheck)
+                {
+                    ElementStiffnesses.ProccessVariable(4, membraneStrain, false);
+                }
+
                 var B11 = initialSurfaceBasisVectorDerivative1[j][0] * initialUnitSurfaceBasisVectors3[j][0] +
                           initialSurfaceBasisVectorDerivative1[j][1] * initialUnitSurfaceBasisVectors3[j][1] +
                           initialSurfaceBasisVectorDerivative1[j][2] * initialUnitSurfaceBasisVectors3[j][2];
@@ -292,6 +317,11 @@ namespace ISAAR.MSolve.IGA.Elements
                           surfaceBasisVectorDerivative12[2] * surfaceBasisVector3[2];
 
                 var bendingStrain = new double[] {b11 - B11, b22 - B22, 2 * b12 - 2 * B12};
+
+                if (j == ElementStiffnesses.gpNumberToCheck)
+                {
+                    ElementStiffnesses.ProccessVariable(5, bendingStrain, false);
+                }
 
                 //var bendingStrain = new double[] { -(b11 - B11), -(b22 - B22), -(2 * b12 - 2 * B12) };
 
@@ -517,8 +547,15 @@ namespace ISAAR.MSolve.IGA.Elements
             var MembraneForces = new Forces();
             var BendingMoments = new Forces();
 
+            var KmembraneNL_total = new double[bCols, bCols];
+            var KbendingNL_total = new double[bCols, bCols];
+
+            //var KL_total = new double[bCols, bCols];
+
             for (int j = 0; j < gaussPoints.Length; j++)
             {
+                ElementStiffnesses.gpNumber = j;
+
                 CalculateJacobian(elementControlPoints, nurbs, j, jacobianMatrix);
 
                 var hessianMatrix = CalculateHessian(elementControlPoints, nurbs, j);
@@ -556,8 +593,29 @@ namespace ISAAR.MSolve.IGA.Elements
                     surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, surfaceBasisVectorDerivative1,
                     surfaceBasisVectorDerivative2, surfaceBasisVectorDerivative12, J1, stiffnessMatrix, wFactor,
                     ref MembraneForces, ref BendingMoments);
+
+                for (var i = 0; i < stiffnessMatrix.GetLength(0); i++)
+                {
+                    for (var k = 0; k < stiffnessMatrix.GetLength(1); k++)
+                    {
+                        
+                        if (ElementStiffnesses.saveOriginalState)
+                        {
+                            KmembraneNL_total[i, k] += KmembraneNL[i, k] * wFactor;
+                            KbendingNL_total[i, k] += KbendingNL[i, k] * wFactor;
+                        }
+
+
+                    }
+                }
+
             }
 
+           
+            {
+                ElementStiffnesses.SaveStiffnessMatrixes((Matrix.CreateFromArray(stiffnessMatrix)- Matrix.CreateFromArray(KmembraneNL_total) - Matrix.CreateFromArray(KbendingNL_total)).CopytoArray2D(), KmembraneNL_total, KbendingNL_total, Matrix.CreateFromArray(KbendingNL_total) + Matrix.CreateFromArray(KmembraneNL_total), element);
+            }
+            
             return Matrix.CreateFromArray(stiffnessMatrix);
         }
 
@@ -883,6 +941,23 @@ namespace ISAAR.MSolve.IGA.Elements
                 var d2Ksi_dr2 = nurbs.NurbsSecondDerivativeValueKsi[i, j];
                 var d2Heta_dr2 = nurbs.NurbsSecondDerivativeValueHeta[i, j];
                 var d2KsiHeta_dr2 = nurbs.NurbsSecondDerivativeValueKsiHeta[i, j];
+
+                var a1r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesKsi[i, j]);
+                var a2r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[i, j]);
+
+                var a11r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsi[i, j]);
+                var a22r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueHeta[i, j]);
+                var a12r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsiHeta[i, j]);
+
+                if (ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)
+                {
+                    for (int i1 = 0; i1 < 3; i1++)
+                    {
+                        ElementStiffnesses.ProccessVariable(1, a11r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
+                        ElementStiffnesses.ProccessVariable(2, a22r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
+                        ElementStiffnesses.ProccessVariable(3, a12r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
+                    }
+                }
 
                 for (int k = 0; k < controlPoints.Length; k++)
                 {

@@ -225,6 +225,57 @@ namespace ISAAR.MSolve.IGA.Tests
         }
 
         [Fact]
+        public void IsogeometricSquareShell10x10Straight()
+        {
+            Model model = new Model();
+            var filename = "SquareShell10x10Straight";
+            string filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt");
+            IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
+            modelReader.CreateShellModelFromFile(GeometricalFormulation.NonLinear);
+
+            for (int i = 0; i < 20; i++)
+            {
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
+            }
+
+            Value verticalDistributedLoad = delegate (double x, double y, double z)
+            {
+                return new double[] { 0, 0, 1 };
+            };
+            model.Patches[0].EdgesDictionary[1].LoadingConditions.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
+
+
+            // Solvers
+            var solverBuilder = new SkylineSolver.Builder();
+            ISolver solver = solverBuilder.BuildSolver(model);
+
+            // Structural problem provider
+            var provider = new ProblemStructural(model, solver);
+
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 10000);
+            var childAnalyzer = newtonRaphsonBuilder.Build();
+            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 10000,
+                model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "squarePlate.txt");
+            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+                model.ControlPointsDictionary[1], StructuralDof.TranslationZ, "squareplate.txt");
+            childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            childAnalyzer.IncrementalLogs.Add(1, loggerB);
+
+            // Run the analysis
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+
+            //var paraview = new ParaviewNurbsShells(model, solver.LinearSystems[0].Solution, filename);
+            //paraview.CreateParaview2DFile();
+
+            //var a = solver.LinearSystems[0].Solution;
+        }
+
+        [Fact]
         public void JacobianTest()
         {
             var controlPoints = ElementControlPoints().ToArray();

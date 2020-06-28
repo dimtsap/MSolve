@@ -221,10 +221,12 @@ namespace ISAAR.MSolve.IGA.Entities
 			{
 				double[] localSolution = CalculateElementDisplacements(element, solution);
 				double[] localdSolution = CalculateElementDisplacements(element, dSolution);
+				ElementStiffnesses.ProcessElement(localSolution, localSolution, element);
 				element.ElementType.CalculateStresses(element, localSolution, localdSolution);
 				if (element.ElementType.MaterialModified)
 					element.Patch.StiffnessModified = true;
 				var f = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+				ElementStiffnesses.AccessChecks();
 				FreeDofOrdering.AddVectorElementToSubdomain(element, f, forces);
 			}
 

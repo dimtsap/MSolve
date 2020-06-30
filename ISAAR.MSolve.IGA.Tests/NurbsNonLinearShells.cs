@@ -178,7 +178,7 @@ namespace ISAAR.MSolve.IGA.Tests
             parentAnalyzer.Solve();
         }
 
-        //[Fact]
+        [Fact]
         public void SlitAnnularPlate()
         {
             Model model = new Model();
@@ -201,23 +201,23 @@ namespace ISAAR.MSolve.IGA.Tests
             }
 
             // Solvers
-            var solverBuilder = new DenseMatrixSolver.Builder();
+            var solverBuilder = new SuiteSparseSolver.Builder();
             ISolver solver = solverBuilder.BuildSolver(model);
 
             // Structural problem provider
             var provider = new ProblemStructural(model, solver);
 
             // Linear static analysis
-            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 10000);
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 1000);
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 10000,
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
                 model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
-            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
-                model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
+            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
             childAnalyzer.IncrementalLogs.Add(0, loggerA);
-            childAnalyzer.IncrementalLogs.Add(1, loggerB);
+            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
 
             // Run the analysis
             parentAnalyzer.Initialize();
@@ -260,10 +260,10 @@ namespace ISAAR.MSolve.IGA.Tests
 
             var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 10000,
                 model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "squarePlate.txt");
-            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
-                model.ControlPointsDictionary[1], StructuralDof.TranslationZ, "squareplate.txt");
+            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            //    model.ControlPointsDictionary[1], StructuralDof.TranslationZ, "squareplate.txt");
             childAnalyzer.IncrementalLogs.Add(0, loggerA);
-            childAnalyzer.IncrementalLogs.Add(1, loggerB);
+            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
 
             // Run the analysis
             parentAnalyzer.Initialize();

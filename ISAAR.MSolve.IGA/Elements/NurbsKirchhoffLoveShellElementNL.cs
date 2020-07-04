@@ -115,6 +115,8 @@ namespace ISAAR.MSolve.IGA.Elements
         {
             var shellElement = (NurbsKirchhoffLoveShellElementNL) element;
             var elementNodalForces = new double[shellElement.ControlPointsDictionary.Count * 3];
+            var elementNodalMembraneForces = new double[shellElement.ControlPointsDictionary.Count * 3];
+            var elementNodalBendingForces = new double[shellElement.ControlPointsDictionary.Count * 3];
 
             _solution = localDisplacements;
 
@@ -206,7 +208,38 @@ namespace ISAAR.MSolve.IGA.Elements
                         (Bmembrane[0, i] * MembraneForces.v0 * wfactor + Bbending[0, i] * BendingMoments.v0 * wfactor)+
                         (Bmembrane[1, i] * MembraneForces.v1 * wfactor + Bbending[1, i] * BendingMoments.v1 * wfactor)+
                         (Bmembrane[2, i] * MembraneForces.v2 * wfactor + Bbending[2, i] * BendingMoments.v2 * wfactor);
+
+                    if ((ElementStiffnesses.saveForcesState1|ElementStiffnesses.saveForcesState2s)|ElementStiffnesses.saveForcesState0)
+                    {
+                        elementNodalMembraneForces[i] +=
+                         (Bmembrane[0, i] * MembraneForces.v0 * wfactor ) +
+                         (Bmembrane[1, i] * MembraneForces.v1 * wfactor ) +
+                         (Bmembrane[2, i] * MembraneForces.v2 * wfactor );
+
+                        elementNodalBendingForces[i] +=
+                         (  Bbending[0, i] * BendingMoments.v0 * wfactor) +
+                         (  Bbending[1, i] * BendingMoments.v1 * wfactor) +
+                         (  Bbending[2, i] * BendingMoments.v2 * wfactor);
+                    }
                 }
+
+                if (j == ElementStiffnesses.gpNumberToCheck)
+                {
+                    if (ElementStiffnesses.saveForcesState1) { ElementStiffnesses.saveVariationStates = true; }
+
+                    ElementStiffnesses.ProccessVariable(8, surfaceBasisVector3, false);
+                    //ElementStiffnesses.ProccessVariable(9, surfaceBasisVector2, false);
+                    ElementStiffnesses.ProccessVariable(10, new double[] { surfaceBasisVector3[0] * J1, surfaceBasisVector3[1] * J1, surfaceBasisVector3[2] * J1 }, false);
+
+                    if (ElementStiffnesses.saveForcesState1) { ElementStiffnesses.saveVariationStates = false; }
+                }
+
+
+            }
+
+            if ((ElementStiffnesses.saveForcesState1 | ElementStiffnesses.saveForcesState2s) | ElementStiffnesses.saveForcesState0)
+            {
+                ElementStiffnesses.SaveNodalForces(elementNodalMembraneForces, elementNodalBendingForces, element);
             }
 
             return elementNodalForces;
@@ -886,6 +919,18 @@ namespace ISAAR.MSolve.IGA.Elements
                 BbendingOut[2, column] = -2 * d2KsiHeta * s30 - (2 * ((dheta * (s11 * s32 - s12 * s31) - dksi * (s21 * s32 - s22 * s31)) * (s12_0 * s30 + s12_1 * s31 + s12_2 * s32) - dheta * (s11 * s12_2 - s12 * s12_1) + dksi * (s21 * s12_2 - s22 * s12_1))) / J1;
                 BbendingOut[2, column + 1] = (2 * ((dheta * (s10 * s32 - s12 * s30) - dksi * (s20 * s32 - s22 * s30)) * (s12_0 * s30 + s12_1 * s31 + s12_2 * s32) - dheta * (s10 * s12_2 - s12 * s12_0) + dksi * (s20 * s12_2 - s22 * s12_0))) / J1 - 2 * d2KsiHeta * s31;
                 BbendingOut[2, column + 2] = -2 * d2KsiHeta * s32 - (2 * ((dheta * (s10 * s31 - s11 * s30) - dksi * (s20 * s31 - s21 * s30)) * (s12_0 * s30 + s12_1 * s31 + s12_2 * s32) - dheta * (s10 * s12_1 - s11 * s12_0) + dksi * (s20 * s12_1 - s21 * s12_0))) / J1;
+
+                //BbendingOut[0, column] = -BbendingOut[0, column];
+                //BbendingOut[0, column + 1] = -BbendingOut[0, column + 1];
+                //BbendingOut[0, column + 2] = -BbendingOut[0, column + 2];
+
+                //BbendingOut[1, column] = -BbendingOut[1, column];
+                //BbendingOut[1, column + 1] = -BbendingOut[1, column + 1];
+                //BbendingOut[1, column + 2] = -BbendingOut[1, column + 2];
+
+                //BbendingOut[2, column] = -BbendingOut[2, column];
+                //BbendingOut[2, column + 1] = -BbendingOut[2, column + 1];
+                //BbendingOut[2, column + 2] = -BbendingOut[2, column + 2];
             }
         }
 
@@ -1011,6 +1056,49 @@ namespace ISAAR.MSolve.IGA.Elements
                     CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2, 
                         surfaceBasisVectorDerivative12, d2Ksi_dr2, ref a3s, d2Ksi_ds2, ref a3r, ref a3rs, d2Heta_dr2, 
                         d2Heta_ds2, d2KsiHeta_dr2, d2KsiHeta_ds2, ref Bab_rs);
+
+                    if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)&&ElementStiffnesses.saveStiffnessMatrixState)
+                    {
+                        ElementStiffnesses.saveOriginalState = true;
+                        ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r00, a3r.a3r01, a3r.a3r02 }, true, 3 * i+ 0);
+                        ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r10, a3r.a3r11, a3r.a3r12 }, true, 3 * i + 1);
+                        ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r20, a3r.a3r21, a3r.a3r22 }, true, 3 * i + 2);
+
+                        if (i == 0) // ennoume thn paragwgo ws pros r gia k=0 kai gai to x dof
+                        {
+                            ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs00_0, a3rs.a3rs00_1, a3rs.a3rs00_2 }, true, 3 * k + 0);
+                            ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs01_0, a3rs.a3rs01_1, a3rs.a3rs01_2 }, true, 3 * k + 1);
+                            ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs02_0, a3rs.a3rs02_1, a3rs.a3rs02_2 }, true, 3 * k + 2);
+                            ElementStiffnesses.ProccessVariable(9, new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, false);
+
+                        }
+
+
+                        ElementStiffnesses.saveOriginalState = false;
+
+                    }
+
+                    if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck) && ElementStiffnesses.saveVariationStates)
+                    {
+                        //ElementStiffnesses.saveOriginalState = true;
+                        //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r00, a3r.a3r01, a3r.a3r02 }, true, 3 * i + 0);
+                        //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r10, a3r.a3r11, a3r.a3r12 }, true, 3 * i + 1);
+                        //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r20, a3r.a3r21, a3r.a3r22 }, true, 3 * i + 2);
+
+                        //ElementStiffnesses.ProccessVariable(8, surfaceBasisVector3, false);
+
+                        if (i == 0) // ennoume thn paragwgo ws pros r gia k=0 kai gai to x dof
+                        {
+                            ElementStiffnesses.ProccessVariable(9,new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, false);
+                            //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs00_0, a3rs.a3rs00_1, a3rs.a3rs00_2 }, true, 3 * k + 0);
+                            //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs01_0, a3rs.a3rs01_1, a3rs.a3rs01_2 }, true, 3 * k + 1);
+                            //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs02_0, a3rs.a3rs02_1, a3rs.a3rs02_2 }, true, 3 * k + 2);
+                        }
+
+                        ElementStiffnesses.saveOriginalState = false;
+
+                    }
+
 
 
                     KbendingNLOut[i * 3 + 0, k * 3 + 0] -= (Bab_rs.Bab_rs00_0 * bendingMoments.v0 + Bab_rs.Bab_rs00_1 * bendingMoments.v1 + Bab_rs.Bab_rs00_2 * bendingMoments.v2);
@@ -1322,17 +1410,17 @@ namespace ISAAR.MSolve.IGA.Elements
             var dnorma3_dr2 = s30 * da3_tilde_dr02 +
                               s31 * da3_tilde_dr12;
 
-            da3_unit_dr_out.a3r00 = -s30 * dnorma3_dr0;
-            da3_unit_dr_out.a3r10 = da3_tilde_dr10 - s31 * dnorma3_dr0;
-            da3_unit_dr_out.a3r20 = da3_tilde_dr20 - s32 * dnorma3_dr0;
+            da3_unit_dr_out.a3r00 = -s30 * dnorma3_dr0/J1;
+            da3_unit_dr_out.a3r10 = (da3_tilde_dr10 - s31 * dnorma3_dr0) / J1;
+            da3_unit_dr_out.a3r20 = (da3_tilde_dr20 - s32 * dnorma3_dr0) / J1;
 
-            da3_unit_dr_out.a3r01 = da3_tilde_dr01 - s30 * dnorma3_dr1;
-            da3_unit_dr_out.a3r11 = -s31 * dnorma3_dr1;
-            da3_unit_dr_out.a3r21 = da3_tilde_dr21 - s32 * dnorma3_dr1;
-
-            da3_unit_dr_out.a3r02 = da3_tilde_dr02 - s30 * dnorma3_dr2;
-            da3_unit_dr_out.a3r12 = da3_tilde_dr12 - s31 * dnorma3_dr2;
-            da3_unit_dr_out.a3r22 = -s32 * dnorma3_dr2;
+            da3_unit_dr_out.a3r01 = (da3_tilde_dr01 - s30 * dnorma3_dr1) / J1;
+            da3_unit_dr_out.a3r11 = (-s31 * dnorma3_dr1)/J1;
+            da3_unit_dr_out.a3r21 = (da3_tilde_dr21 - s32 * dnorma3_dr1)/J1;
+                                    
+            da3_unit_dr_out.a3r02 = (da3_tilde_dr02 - s30 * dnorma3_dr2)/J1;
+            da3_unit_dr_out.a3r12 = (da3_tilde_dr12 - s31 * dnorma3_dr2)/J1;
+            da3_unit_dr_out.a3r22 = (-s32 * dnorma3_dr2)/J1;
         }
 
         internal void CalculateKmembraneNL(ControlPoint[] controlPoints, ref Forces membraneForces, Nurbs2D nurbs,

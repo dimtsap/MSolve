@@ -1641,6 +1641,46 @@ namespace ISAAR.MSolve.IGA.Elements
         }
 
 
+        //private void CalculateA3r(double[] surfaceBasisVector1,
+        //    double[] surfaceBasisVector2, double[] surfaceBasisVector3,
+        //    double dksi_r, double dheta_r, double J1, ref a3r da3_unit_dr_out)
+        //{
+        //    var s30 = surfaceBasisVector3[0];
+        //    var s31 = surfaceBasisVector3[1];
+        //    var s32 = surfaceBasisVector3[2];
+
+        //    var da3_tilde_dr10 = dheta_r * surfaceBasisVector1[2] - dksi_r * surfaceBasisVector2[2];
+        //    var da3_tilde_dr20 = dksi_r * surfaceBasisVector2[1] - dheta_r * surfaceBasisVector1[1];
+
+        //    var da3_tilde_dr01 = dksi_r * surfaceBasisVector2[2] - dheta_r * surfaceBasisVector1[2];
+        //    var da3_tilde_dr21 = dheta_r * surfaceBasisVector1[0] - dksi_r * surfaceBasisVector2[0];
+
+        //    var da3_tilde_dr02 = dheta_r * surfaceBasisVector1[1] - dksi_r * surfaceBasisVector2[1];
+        //    var da3_tilde_dr12 = dksi_r * surfaceBasisVector2[0] - dheta_r * surfaceBasisVector1[0];
+
+
+        //    var dnorma3_dr0 = s31 * da3_tilde_dr10 +
+        //                      s32 * da3_tilde_dr20;
+
+        //    var dnorma3_dr1 = s30 * da3_tilde_dr01 +
+        //                      s32 * da3_tilde_dr21;
+
+        //    var dnorma3_dr2 = s30 * da3_tilde_dr02 +
+        //                      s31 * da3_tilde_dr12;
+
+        //    da3_unit_dr_out.a3r00 = -s30 * dnorma3_dr0/J1;
+        //    da3_unit_dr_out.a3r10 = (da3_tilde_dr10 - s31 * dnorma3_dr0) / J1;
+        //    da3_unit_dr_out.a3r20 = (da3_tilde_dr20 - s32 * dnorma3_dr0) / J1;
+
+        //    da3_unit_dr_out.a3r01 = (da3_tilde_dr01 - s30 * dnorma3_dr1) / J1;
+        //    da3_unit_dr_out.a3r11 = (-s31 * dnorma3_dr1)/J1;
+        //    da3_unit_dr_out.a3r21 = (da3_tilde_dr21 - s32 * dnorma3_dr1)/J1;
+                                    
+        //    da3_unit_dr_out.a3r02 = (da3_tilde_dr02 - s30 * dnorma3_dr2)/J1;
+        //    da3_unit_dr_out.a3r12 = (da3_tilde_dr12 - s31 * dnorma3_dr2)/J1;
+        //    da3_unit_dr_out.a3r22 = (-s32 * dnorma3_dr2)/J1;
+        //}
+
         private void CalculateA3r(double[] surfaceBasisVector1,
             double[] surfaceBasisVector2, double[] surfaceBasisVector3,
             double dksi_r, double dheta_r, double J1, ref a3r da3_unit_dr_out)
@@ -1649,36 +1689,61 @@ namespace ISAAR.MSolve.IGA.Elements
             var s31 = surfaceBasisVector3[1];
             var s32 = surfaceBasisVector3[2];
 
-            var da3_tilde_dr10 = dheta_r * surfaceBasisVector1[2] - dksi_r * surfaceBasisVector2[2];
-            var da3_tilde_dr20 = dksi_r * surfaceBasisVector2[1] - dheta_r * surfaceBasisVector1[1];
+            var a1r = Matrix3by3.CreateIdentity().Scale(dksi_r);
+            var a2r = Matrix3by3.CreateIdentity().Scale(dheta_r);
+            Vector[] da3tilde_dr = new Vector[3];
+            //5.24
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                da3tilde_dr[r1] = a1r.GetColumn(r1).CrossProduct(Vector.CreateFromArray(surfaceBasisVector2)) +
+                    Vector.CreateFromArray(surfaceBasisVector1).CrossProduct(a2r.GetColumn(r1));
+            }
 
-            var da3_tilde_dr01 = dksi_r * surfaceBasisVector2[2] - dheta_r * surfaceBasisVector1[2];
-            var da3_tilde_dr21 = dheta_r * surfaceBasisVector1[0] - dksi_r * surfaceBasisVector2[0];
+            var da3_tilde_dr00 = da3tilde_dr[0][0];
+            var da3_tilde_dr10 = da3tilde_dr[0][1];
+            var da3_tilde_dr20 = da3tilde_dr[0][2];
 
-            var da3_tilde_dr02 = dheta_r * surfaceBasisVector1[1] - dksi_r * surfaceBasisVector2[1];
-            var da3_tilde_dr12 = dksi_r * surfaceBasisVector2[0] - dheta_r * surfaceBasisVector1[0];
+            var da3_tilde_dr01 = da3tilde_dr[1][0];
+            var da3_tilde_dr11 = da3tilde_dr[1][1];
+            var da3_tilde_dr21 = da3tilde_dr[1][2];
+
+            var da3_tilde_dr02 = da3tilde_dr[2][0];
+            var da3_tilde_dr12 = da3tilde_dr[2][1];
+            var da3_tilde_dr22 = da3tilde_dr[2][2];
+
+            //var da3_tilde_dr10 = dheta_r * surfaceBasisVector1[2] - dksi_r * surfaceBasisVector2[2];
+            //var da3_tilde_dr20 = dksi_r * surfaceBasisVector2[1] - dheta_r * surfaceBasisVector1[1];
+
+            //var da3_tilde_dr01 = dksi_r * surfaceBasisVector2[2] - dheta_r * surfaceBasisVector1[2];
+            //var da3_tilde_dr21 = dheta_r * surfaceBasisVector1[0] - dksi_r * surfaceBasisVector2[0];
+
+            //var da3_tilde_dr02 = dheta_r * surfaceBasisVector1[1] - dksi_r * surfaceBasisVector2[1];
+            //var da3_tilde_dr12 = dksi_r * surfaceBasisVector2[0] - dheta_r * surfaceBasisVector1[0];
 
 
-            var dnorma3_dr0 = s31 * da3_tilde_dr10 +
+            var dnorma3_dr0 = s30 * da3_tilde_dr00 +
+                              s31 * da3_tilde_dr10 +
                               s32 * da3_tilde_dr20;
 
             var dnorma3_dr1 = s30 * da3_tilde_dr01 +
+                              s31 * da3_tilde_dr11 +
                               s32 * da3_tilde_dr21;
 
             var dnorma3_dr2 = s30 * da3_tilde_dr02 +
-                              s31 * da3_tilde_dr12;
+                              s31 * da3_tilde_dr12 +
+                              s32 * da3_tilde_dr22;
 
-            da3_unit_dr_out.a3r00 = -s30 * dnorma3_dr0/J1;
+            da3_unit_dr_out.a3r00 = (da3_tilde_dr00 - s30 * dnorma3_dr0) / J1;
             da3_unit_dr_out.a3r10 = (da3_tilde_dr10 - s31 * dnorma3_dr0) / J1;
             da3_unit_dr_out.a3r20 = (da3_tilde_dr20 - s32 * dnorma3_dr0) / J1;
 
             da3_unit_dr_out.a3r01 = (da3_tilde_dr01 - s30 * dnorma3_dr1) / J1;
-            da3_unit_dr_out.a3r11 = (-s31 * dnorma3_dr1)/J1;
-            da3_unit_dr_out.a3r21 = (da3_tilde_dr21 - s32 * dnorma3_dr1)/J1;
-                                    
-            da3_unit_dr_out.a3r02 = (da3_tilde_dr02 - s30 * dnorma3_dr2)/J1;
-            da3_unit_dr_out.a3r12 = (da3_tilde_dr12 - s31 * dnorma3_dr2)/J1;
-            da3_unit_dr_out.a3r22 = (-s32 * dnorma3_dr2)/J1;
+            da3_unit_dr_out.a3r11 = (da3_tilde_dr11 - s31 * dnorma3_dr1) / J1;
+            da3_unit_dr_out.a3r21 = (da3_tilde_dr21 - s32 * dnorma3_dr1) / J1;
+
+            da3_unit_dr_out.a3r02 = (da3_tilde_dr02 - s30 * dnorma3_dr2) / J1;
+            da3_unit_dr_out.a3r12 = (da3_tilde_dr12 - s31 * dnorma3_dr2) / J1;
+            da3_unit_dr_out.a3r22 = (da3_tilde_dr22 - s32 * dnorma3_dr2) / J1;
         }
 
         internal void CalculateKmembraneNL(ControlPoint[] controlPoints, ref Forces membraneForces, Nurbs2D nurbs,

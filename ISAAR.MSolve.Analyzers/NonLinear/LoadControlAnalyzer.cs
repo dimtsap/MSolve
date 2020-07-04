@@ -52,7 +52,7 @@ namespace ISAAR.MSolve.Analyzers.NonLinear
                     {
                         foreach (var subdomainLogPair in IncrementalLogs)
                         {
-                            int subdomainID = subdomainLogPair.Key;
+                            int subdomainID = model.Subdomains[0].ID;
                             TotalLoadsDisplacementsPerIncrementLog log = subdomainLogPair.Value;
                             log.LogTotalDataForIncrement(increment, iteration, errorNorm,
                                 uPlusdu[subdomainID], internalRhsVectors[subdomainID]);
@@ -68,6 +68,8 @@ namespace ISAAR.MSolve.Analyzers.NonLinear
                         provider.Reset();
                         BuildMatrices();
                     }
+
+
                 }
                 //double rhsNormInc = solver.LinearSystems.First().Value.RhsVector.Norm2();
                 //double xNormInc = solver.LinearSystems.First().Value.Solution.Norm2();

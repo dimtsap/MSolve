@@ -208,11 +208,11 @@ namespace ISAAR.MSolve.IGA.Tests
             var provider = new ProblemStructural(model, solver);
 
             // Linear static analysis
-            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 1000);
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 500);
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
                 model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
             //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
             //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
@@ -240,9 +240,11 @@ namespace ISAAR.MSolve.IGA.Tests
                 model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
             }
 
+            double load_factor = 2;
+            int increments = 10;
             Value verticalDistributedLoad = delegate (double x, double y, double z)
             {
-                return new double[] { 0, 0, 1 };
+                return new double[] { 0, 0, load_factor };
             };
             model.Patches[0].EdgesDictionary[1].LoadingConditions.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
 
@@ -254,11 +256,11 @@ namespace ISAAR.MSolve.IGA.Tests
             // Structural problem provider
             var provider = new ProblemStructural(model, solver);
 
-            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 10000);
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, increments);
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 10000,
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], increments,
                 model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "squarePlate.txt");
             //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
             //    model.ControlPointsDictionary[1], StructuralDof.TranslationZ, "squareplate.txt");

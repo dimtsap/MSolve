@@ -14,14 +14,17 @@ using ISAAR.MSolve.Materials.Interfaces;
 namespace ISAAR.MSolve.IGA.Entities
 {
     public static class ElementStiffnesses
-    { 
+    {
 
         public static bool saveStiffnessMatrixState { get; set; } = false;
+        public static bool saveForcesState1 { get; set; } = false;
+        public static bool saveForcesState2s { get; set; } = false;
+        public static bool saveForcesState0 { get; set; } = false;
         public static bool saveOriginalState { get; set; } = false;
 
         public static bool saveVariationStates { get; set; } = false;
 
-        
+
         public static Dictionary<int, double[,]> OriginalLinearStiffnesses = new Dictionary<int, double[,]>(); // element, StiffnesMatrix
         public static Dictionary<int, double[,]> OriginalMembraneNLStiffnesses = new Dictionary<int, double[,]>(); // element, StiffnesMatrix
         public static Dictionary<int, double[,]> OriginalBendingNLStiffnesses = new Dictionary<int, double[,]>(); // element, StiffnesMatrix
@@ -34,11 +37,32 @@ namespace ISAAR.MSolve.IGA.Entities
 
         public static Dictionary<int, double[,]> Stiffnesses2FromVariations = new Dictionary<int, double[,]>(); //element, StiffnessMatrix
 
+        public static Dictionary<int, double[,]> MembraneStiffnesses1FromVariations = new Dictionary<int, double[,]>(); //element, StiffnessMatrix
+
+        public static Dictionary<int, double[,]> MembraneStiffnesses2FromVariations = new Dictionary<int, double[,]>(); //element, StiffnessMatrix
+
+        public static Dictionary<int, double[,]> BendingStiffnesses1FromVariations = new Dictionary<int, double[,]>(); //element, StiffnessMatrix
+
+        public static Dictionary<int, double[,]> BendingStiffnesses2FromVariations = new Dictionary<int, double[,]>(); //element, StiffnessMatrix
+
         public static Dictionary<int, double[,]> variatedForcesStep1 = new Dictionary<int, double[,]>(); // element, Forces
 
         public static Dictionary<int, double[,]> variatedForcesStep2 = new Dictionary<int, double[,]>(); // element, Forces
 
         public static Dictionary<int, double[]> originalForces = new Dictionary<int, double[]>(); // element, Forces
+
+        public static Dictionary<int, double[,]> variatedMembraneForcesStep1 = new Dictionary<int, double[,]>(); // element, Forces
+
+        public static Dictionary<int, double[,]> variatedMembraneForcesStep2 = new Dictionary<int, double[,]>(); // element, Forces
+
+        public static Dictionary<int, double[]> originalMemebraneForces = new Dictionary<int, double[]>(); // element, Forces
+
+        public static Dictionary<int, double[,]> variatedBendingForcesStep1 = new Dictionary<int, double[,]>(); // element, Forces
+
+        public static Dictionary<int, double[,]> variatedBendingForcesStep2 = new Dictionary<int, double[,]>(); // element, Forces
+
+        public static Dictionary<int, double[]> originalBendingForces = new Dictionary<int, double[]>(); // element, Forces
+
 
         public static Dictionary<int, Dictionary<int, double[,]>> derivativesCalculated = new Dictionary<int, Dictionary<int, double[,]>>(); // elementId,  variableId, variableDerivatives
 
@@ -53,10 +77,12 @@ namespace ISAAR.MSolve.IGA.Entities
 
         public static int variationDofOrdef;
 
+        public static int ForceVariationDofOrdef;
+
         public static double variationSize = 0.000000001;
 
-        public static int[] variableIds = new int[] { 1, 2, 3, 4,5,6,7 }; //a1,1,ur   //a2,2,ur  // a1,2,ur  // a1,r
-        public static int[] variableSizes = new int[] { 3, 3, 3, 3,3,3,3 };
+        public static int[] variableIds = new int[] { 1, 2, 3, 4, 5, 6, 7,8,9,10 }; //a1,1,ur   //a2,2,ur  // a1,2,ur  // a1,r
+        public static int[] variableSizes = new int[] { 3, 3, 3, 3, 3, 3, 3,3,3,3 };
 
         public static int elementId { get; set; }
 
@@ -81,30 +107,48 @@ namespace ISAAR.MSolve.IGA.Entities
             }
             variatedForcesStep1[elementId] = new double[localSolution.Length, localSolution.Length];
             variatedForcesStep2[elementId] = new double[localSolution.Length, localSolution.Length];
+
+            originalMemebraneForces[elementId] = new double[localSolution.Length];
+            originalBendingForces[elementId] = new double[localSolution.Length];
+
+            variatedMembraneForcesStep1[elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedBendingForcesStep1[elementId] = new double[localSolution.Length, localSolution.Length];
+
+            variatedMembraneForcesStep2[elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedBendingForcesStep2[elementId] = new double[localSolution.Length, localSolution.Length];
             #endregion
 
 
             #region original state
             saveOriginalState = true;
             element.ElementType.CalculateStresses(element, localSolution, localdSolution);
+            saveForcesState0 = true;
             originalForces[elementId] = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+            saveForcesState0 = false;
             saveOriginalState = false;
             saveStiffnessMatrixState = true;
             OriginalStiffnesses[elementId] = element.ElementType.StiffnessMatrix(element).CopytoArray2D();
             saveStiffnessMatrixState = false;
-            
+
             #endregion
 
             #region variation states
             int nDofs = localSolution.Length;
             Stiffnesses1FromVariations[element.ID] = new double[nDofs, nDofs];
             Stiffnesses2FromVariations[element.ID] = new double[nDofs, nDofs];
+            MembraneStiffnesses1FromVariations[element.ID] = new double[nDofs, nDofs];
+            MembraneStiffnesses2FromVariations[element.ID] = new double[nDofs, nDofs];
+            BendingStiffnesses1FromVariations[element.ID] = new double[nDofs, nDofs];
+            BendingStiffnesses2FromVariations[element.ID] = new double[nDofs, nDofs];
+
             for (int i1 = 0; i1 < localSolution.Length; i1++)
             {
                 variationDofOrdef = i1;
                 localSolution[i1] += variationSize;
 
+                saveForcesState1 = true; ForceVariationDofOrdef = i1;
                 var forces1 = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+                saveForcesState1 = false;
                 for (int i2 = 0; i2 < localSolution.Length; i2++) variatedForcesStep1[elementId][i2, i1] = forces1[i2];
 
                 localSolution[i1] += -variationSize;
@@ -116,11 +160,14 @@ namespace ISAAR.MSolve.IGA.Entities
                 localSolution[i1] += variationSize;
                 saveVariationStates = true;
                 element.ElementType.CalculateStresses(element, localSolution, localdSolution);
+                element.ElementType.StiffnessMatrix(element);
                 saveVariationStates = false;
+                saveForcesState2s = true; ForceVariationDofOrdef = i1;
                 var forces2 = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+                saveForcesState2s = false;
                 for (int i2 = 0; i2 < localSolution.Length; i2++) variatedForcesStep2[elementId][i2, i1] = forces2[i2];
                 localSolution[i1] += -variationSize;
-                
+
                 element.ElementType.CalculateStresses(element, localSolution, localdSolution);
 
             }
@@ -131,14 +178,19 @@ namespace ISAAR.MSolve.IGA.Entities
             {
                 for (int i3 = 0; i3 < localSolution.Length; i3++)
                 {
-                    Stiffnesses1FromVariations[element.ID][i3, i1] = (variatedForcesStep1[element.ID][i3, i1] - originalForces[element.ID][i3])/variationSize;
+                    Stiffnesses1FromVariations[element.ID][i3, i1] = (variatedForcesStep1[element.ID][i3, i1] - originalForces[element.ID][i3]) / variationSize;
                     Stiffnesses2FromVariations[element.ID][i3, i1] = (variatedForcesStep2[element.ID][i3, i1] - variatedForcesStep1[element.ID][i3, i1]) / variationSize;
+                    MembraneStiffnesses1FromVariations[element.ID][i3, i1] = (variatedMembraneForcesStep1[element.ID][i3, i1] - originalMemebraneForces[element.ID][i3]) / variationSize;
+                    MembraneStiffnesses2FromVariations[element.ID][i3, i1] = (variatedMembraneForcesStep2[element.ID][i3, i1] - variatedMembraneForcesStep1[element.ID][i3, i1]) / variationSize;
+                    BendingStiffnesses1FromVariations[element.ID][i3, i1] = (variatedBendingForcesStep1[element.ID][i3, i1] - originalBendingForces[element.ID][i3]) / variationSize;
+                    BendingStiffnesses2FromVariations[element.ID][i3, i1] = (variatedBendingForcesStep2[element.ID][i3, i1] - variatedBendingForcesStep1[element.ID][i3, i1]) / variationSize;
+
                 }
             }
 
             for (int i1 = 0; i1 < variableIds.Length; i1++)
             {
-               for (int i2 = 0; i2 < localSolution.Length; i2++)
+                for (int i2 = 0; i2 < localSolution.Length; i2++)
                 {
                     for (int i3 = 0; i3 < variableSizes[i1]; i3++)
                     {
@@ -148,6 +200,18 @@ namespace ISAAR.MSolve.IGA.Entities
                 }
 
             }
+            #endregion
+
+            #region print matrices
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneNLStiffnesses[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneNLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingNLStiffnesses[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingNLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneLStiffnesses[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingLStiffnesses[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingLStiffnesses.txt");
+
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(MembraneStiffnesses1FromVariations[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\MembraneStiffnesses1FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(MembraneStiffnesses2FromVariations[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\MembraneStiffnesses2FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(BendingStiffnesses1FromVariations[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\BendingStiffnesses1FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(BendingStiffnesses2FromVariations[250], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\BendingStiffnesses2FromVariations.txt");
             #endregion
 
         }
@@ -206,7 +270,7 @@ namespace ISAAR.MSolve.IGA.Entities
         }
 
         internal static void SaveStiffnessMatrixes(double[,] kL_total, double[,] kmembraneNL_total, double[,] kbendingNL_total, Matrix KNLTotal,
-             double[,] KmembraneL, double[,] KbendingL,IElement element)
+             double[,] KmembraneL, double[,] KbendingL, IElement element)
         {
             OriginalLinearStiffnesses[element.ID] = kL_total;
             OriginalMembraneNLStiffnesses[element.ID] = kmembraneNL_total;
@@ -214,6 +278,35 @@ namespace ISAAR.MSolve.IGA.Entities
             OriginalMembraneLStiffnesses[element.ID] = KmembraneL;
             OriginalBendingLStiffnesses[element.ID] = KbendingL;
             OriginalNLStiffnesses[element.ID] = KNLTotal.CopytoArray2D();
+        }
+
+        internal static void SaveNodalForces(double[] elementNodalMembraneForces, double[] elementNodalBendingForces, IElement element)
+        {
+            if (ElementStiffnesses.saveForcesState0)
+            {
+                originalMemebraneForces[element.ID]=elementNodalMembraneForces; // element, Forces
+                originalBendingForces[element.ID] = elementNodalBendingForces;
+            }
+
+            if (ElementStiffnesses.saveForcesState1)
+            {
+                for (int i = 0; i < elementNodalMembraneForces.Length; i++)
+                {
+                    variatedMembraneForcesStep1[element.ID][i, ForceVariationDofOrdef] = elementNodalMembraneForces[i];
+                    variatedBendingForcesStep1[element.ID][i, ForceVariationDofOrdef] = elementNodalBendingForces[i];
+
+                }
+            }
+
+            if (ElementStiffnesses.saveForcesState2s)
+            {
+                for (int i = 0; i < elementNodalMembraneForces.Length; i++)
+                {
+                    variatedMembraneForcesStep2[element.ID][i, ForceVariationDofOrdef] = elementNodalMembraneForces[i];
+                    variatedBendingForcesStep2[element.ID][i, ForceVariationDofOrdef] = elementNodalBendingForces[i];
+
+                }
+            }
         }
     }
 }

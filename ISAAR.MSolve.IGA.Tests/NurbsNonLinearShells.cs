@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
 using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Analyzers.NonLinear;
 using ISAAR.MSolve.Discretization;
@@ -629,6 +633,52 @@ namespace ISAAR.MSolve.IGA.Tests
                 Assert.True(Utilities.AreValuesEqual(expectedForces[j], f[j],
                     Tolerance));
             }
+        }
+
+        [Fact]
+        [Benchmark]
+        public void TestA3r()
+        {
+            var surfaceBasisVector1 = new double[] { 0.49281343102090647, -0.0027907619686642761, -2.0647413184286493E-07 };
+            var surfaceBasisVector2 = new double[] {0.0032374497982368571, 0.57141938776238976, 2.3218349204021492E-09};
+            var surfaceBasisVector3 = new double[] { 4.1893372881671206E-07, -6.4367991618857595E-09, 0.99999999999991229};
+
+            double dksi_r=-2.0934480533670992;
+            double dheta_r=-2.0934480533670996;
+            double J1=0.28161218398684618;
+            var a3r= new a3r();
+
+            NurbsKirchhoffLoveShellElementNL.CalculateA3r(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, dksi_r, dheta_r, J1, ref a3r);
+             
+            Assert.Equal(1.7882446740031873E-06,a3r.a3r00);
+            Assert.Equal(-2.7475877512613432E-08,a3r.a3r01);
+            Assert.Equal(4.2685621877569231,a3r.a3r02);
+                         
+            Assert.Equal(1.5246711353875095E-06,a3r.a3r10);
+            Assert.Equal(-2.3426144068498867E-08,a3r.a3r11);
+            Assert.Equal(3.639408886207,a3r.a3r12);
+
+            Assert.Equal(-7.38802532863679E-13,a3r.a3r20);
+            Assert.Equal(1.1827148338265939E-14,a3r.a3r21);
+            Assert.Equal(-1.7648185299346879E-06,a3r.a3r22);
+        }
+
+        [Fact]
+        public void TestCalculateCrossProduct()
+        {
+            var v1 = new double[] {1, 20, 50};
+            var v2 = new double[] {4, 30, 45};
+            var c = new double[3];
+            NurbsKirchhoffLoveShellElementNL.CalculateCrossProduct(v1, v2, c);
+
+            var vector1 = Vector.CreateFromArray(v1);
+            var vector2 = Vector.CreateFromArray(v2);
+
+            var cross = vector1.CrossProduct(vector2);
+
+            Assert.Equal(cross[0],c[0]);
+            Assert.Equal(cross[1],c[1]);
+            Assert.Equal(cross[2],c[2]);
         }
     }
 }

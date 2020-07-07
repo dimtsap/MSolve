@@ -934,14 +934,12 @@ namespace ISAAR.MSolve.IGA.Elements
             }
         }
 
-        private double[] CalculateCrossProduct(double[] vector1, double[] vector2)
+        internal static void CalculateCrossProduct(double[] vector1, double[] vector2, double[] result )
         {
-            return new[]
-            {
-                vector1[1] * vector2[2] - vector1[2] * vector2[1],
-                vector1[2] * vector2[0] - vector1[0] * vector2[2],
-                vector1[0] * vector2[1] - vector1[1] * vector2[0]
-            };
+            result.Clear();
+            result[0] = vector1[1] * vector2[2] - vector1[2] * vector2[1];
+            result[1] = vector1[2] * vector2[0] - vector1[0] * vector2[2];
+            result[2] = vector1[0] * vector2[1] - vector1[1] * vector2[0];
         }
 
         private double[][] initialSurfaceBasisVectors1;
@@ -973,10 +971,12 @@ namespace ISAAR.MSolve.IGA.Elements
                 var hessianMatrix = CalculateHessian(controlPoints, nurbs, j);
                 initialSurfaceBasisVectors1[j] = CalculateSurfaceBasisVector1(jacobianMatrix, 0);
                 initialSurfaceBasisVectors2[j] = CalculateSurfaceBasisVector1(jacobianMatrix, 1);
-                var s3 = CalculateCrossProduct(initialSurfaceBasisVectors1[j], initialSurfaceBasisVectors2[j]);
+                var s3 = new double[3];
+                CalculateCrossProduct(initialSurfaceBasisVectors1[j], initialSurfaceBasisVectors2[j], s3);
                 var norm = s3.Sum(t => t * t);
                 InitialJ1[j] = Math.Sqrt(norm);
-                var vector3 = CalculateCrossProduct(initialSurfaceBasisVectors1[j], initialSurfaceBasisVectors2[j]);
+                var vector3 = new double[3];
+                CalculateCrossProduct(initialSurfaceBasisVectors1[j], initialSurfaceBasisVectors2[j], vector3);
                 initialUnitSurfaceBasisVectors3[j] = new double[]
                 {
                     vector3[0] / InitialJ1[j],
@@ -1449,7 +1449,7 @@ namespace ISAAR.MSolve.IGA.Elements
             #endregion
         }
 
-        private static (a3rs ,Vector[,], Vector[], Vector[], double[], double[], double[,], Vector, Vector[,] ) Calculate_a3rs(Vector surfaceBasisVector1, Vector surfaceBasisVector2,
+        internal static (a3rs ,Vector[,], Vector[], Vector[], double[], double[], double[,], Vector, Vector[,] ) Calculate_a3rs(Vector surfaceBasisVector1, Vector surfaceBasisVector2,
             Vector surfaceBasisVector3, double J1, Matrix3by3 a1r, Matrix3by3 a2s, Matrix3by3 a1s, Matrix3by3 a2r)
         {
             var da3_drds = new Vector[3, 3];
@@ -1681,7 +1681,7 @@ namespace ISAAR.MSolve.IGA.Elements
         //    da3_unit_dr_out.a3r22 = (-s32 * dnorma3_dr2)/J1;
         //}
 
-        private void CalculateA3r(double[] surfaceBasisVector1,
+        private void CalculateA3r_OLD(double[] surfaceBasisVector1,
             double[] surfaceBasisVector2, double[] surfaceBasisVector3,
             double dksi_r, double dheta_r, double J1, ref a3r da3_unit_dr_out)
         {
@@ -1721,6 +1721,96 @@ namespace ISAAR.MSolve.IGA.Elements
             //var da3_tilde_dr12 = dksi_r * surfaceBasisVector2[0] - dheta_r * surfaceBasisVector1[0];
 
 
+            var dnorma3_dr0 = s30 * da3_tilde_dr00 +
+                              s31 * da3_tilde_dr10 +
+                              s32 * da3_tilde_dr20;
+
+            var dnorma3_dr1 = s30 * da3_tilde_dr01 +
+                              s31 * da3_tilde_dr11 +
+                              s32 * da3_tilde_dr21;
+
+            var dnorma3_dr2 = s30 * da3_tilde_dr02 +
+                              s31 * da3_tilde_dr12 +
+                              s32 * da3_tilde_dr22;
+
+            da3_unit_dr_out.a3r00 = (da3_tilde_dr00 - s30 * dnorma3_dr0) / J1;
+            da3_unit_dr_out.a3r10 = (da3_tilde_dr10 - s31 * dnorma3_dr0) / J1;
+            da3_unit_dr_out.a3r20 = (da3_tilde_dr20 - s32 * dnorma3_dr0) / J1;
+
+            da3_unit_dr_out.a3r01 = (da3_tilde_dr01 - s30 * dnorma3_dr1) / J1;
+            da3_unit_dr_out.a3r11 = (da3_tilde_dr11 - s31 * dnorma3_dr1) / J1;
+            da3_unit_dr_out.a3r21 = (da3_tilde_dr21 - s32 * dnorma3_dr1) / J1;
+
+            da3_unit_dr_out.a3r02 = (da3_tilde_dr02 - s30 * dnorma3_dr2) / J1;
+            da3_unit_dr_out.a3r12 = (da3_tilde_dr12 - s31 * dnorma3_dr2) / J1;
+            da3_unit_dr_out.a3r22 = (da3_tilde_dr22 - s32 * dnorma3_dr2) / J1;
+        }
+
+        internal static void CalculateA3r(double[] surfaceBasisVector1,
+            double[] surfaceBasisVector2, double[] surfaceBasisVector3,
+            double dksi_r, double dheta_r, double J1, ref a3r da3_unit_dr_out)
+        {
+            var s30 = surfaceBasisVector3[0];
+            var s31 = surfaceBasisVector3[1];
+            var s32 = surfaceBasisVector3[2];
+            
+            var da3tilde_dr = new double[3][];
+            //5.24
+            var a1r= new double[3];
+            var a2r= new double[3];
+            var sum1 = new double[3];
+            var sum2 = new double[3];
+
+            // da3_tilde_dr0     ...  da3tilde_dr[0][...]; r1=0
+            a1r.Clear();  
+            a2r.Clear(); 
+            a1r[0] = dksi_r;
+            a2r[0] = dheta_r;
+            CalculateCrossProduct(a1r, surfaceBasisVector2, sum1);
+            CalculateCrossProduct(surfaceBasisVector1, a2r, sum2);
+
+            sum2[0] += sum1[0];
+            sum2[1] += sum1[1];
+            sum2[2] += sum1[2];
+
+            var da3_tilde_dr00 = sum2[0];
+            var da3_tilde_dr10 = sum2[1];
+            var da3_tilde_dr20 = sum2[2];
+
+            // da3_tilde_dr1     ...  da3tilde_dr[1][...]; r1=1
+            a1r.Clear();  
+            a2r.Clear(); 
+            a1r[1] = dksi_r;
+            a2r[1] = dheta_r;
+            CalculateCrossProduct(a1r, surfaceBasisVector2, sum1);
+            CalculateCrossProduct(surfaceBasisVector1, a2r, sum2);
+
+            sum2[0] += sum1[0];
+            sum2[1] += sum1[1];
+            sum2[2] += sum1[2];
+
+            var da3_tilde_dr01 = sum2[0];
+            var da3_tilde_dr11 = sum2[1];
+            var da3_tilde_dr21 = sum2[2];
+
+
+            // da3_tilde_dr2     ...  da3tilde_dr[2][...]; r1=2
+            a1r.Clear();  
+            a2r.Clear(); 
+            a1r[2] = dksi_r;
+            a2r[2] = dheta_r;
+            CalculateCrossProduct(a1r, surfaceBasisVector2, sum1);
+            CalculateCrossProduct(surfaceBasisVector1, a2r, sum2);
+
+            sum2[0] += sum1[0];
+            sum2[1] += sum1[1];
+            sum2[2] += sum1[2];
+
+            var da3_tilde_dr02 = sum2[0];
+            var da3_tilde_dr12 = sum2[1];
+            var da3_tilde_dr22 = sum2[2];
+
+            
             var dnorma3_dr0 = s30 * da3_tilde_dr00 +
                               s31 * da3_tilde_dr10 +
                               s32 * da3_tilde_dr20;

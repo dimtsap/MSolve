@@ -936,7 +936,6 @@ namespace ISAAR.MSolve.IGA.Elements
 
         internal static void CalculateCrossProduct(double[] vector1, double[] vector2, double[] result )
         {
-            result.Clear();
             result[0] = vector1[1] * vector2[2] - vector1[2] * vector2[1];
             result[1] = vector1[2] * vector2[0] - vector1[0] * vector2[2];
             result[2] = vector1[0] * vector2[1] - vector1[1] * vector2[0];
@@ -1009,11 +1008,21 @@ namespace ISAAR.MSolve.IGA.Elements
             double[] surfaceBasisVectorDerivative1, double[] surfaceBasisVectorDerivative2,
             double[] surfaceBasisVectorDerivative12, double J1, int j, double[,] KbendingNLOut)
         {
+            var a3rArray = new a3r[controlPoints.Length];
+            for (var i = 0; i < controlPoints.Length; i++)
+            {
+                var a3r= new a3r();
+                var dksi_r = nurbs.NurbsDerivativeValuesKsi[i, j];
+                var dheta_r = nurbs.NurbsDerivativeValuesHeta[i, j];
+                CalculateA3r(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, dksi_r,
+                    dheta_r, J1, ref a3r);
+                a3rArray[i] = a3r;
+            }
+            
             for (int i = 0; i < controlPoints.Length; i++)
             {
                 var dksi_r = nurbs.NurbsDerivativeValuesKsi[i, j];
                 var dheta_r = nurbs.NurbsDerivativeValuesHeta[i, j];
-
                 var d2Ksi_dr2 = nurbs.NurbsSecondDerivativeValueKsi[i, j];
                 var d2Heta_dr2 = nurbs.NurbsSecondDerivativeValueHeta[i, j];
                 var d2KsiHeta_dr2 = nurbs.NurbsSecondDerivativeValueKsiHeta[i, j];
@@ -1024,6 +1033,7 @@ namespace ISAAR.MSolve.IGA.Elements
                 var a11r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsi[i, j]);
                 var a22r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueHeta[i, j]);
                 var a12r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsiHeta[i, j]);
+                var a3r = a3rArray[i];
 
                 if (ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)
                 {
@@ -1044,28 +1054,21 @@ namespace ISAAR.MSolve.IGA.Elements
 
                     var dksi_s = nurbs.NurbsDerivativeValuesKsi[k, j];
                     var dheta_s = nurbs.NurbsDerivativeValuesHeta[k, j];
-
-                    CalculateA3r(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, dksi_r,
-                        dheta_r, J1, ref a3r);
-                    CalculateA3r(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, dksi_s,
-                        dheta_s, J1, ref a3s);
+                    
+                    var a3s = a3rArray[k];
                     a3rs=new a3rs();//Clear struct values
                     Calculate_a3rs(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, J1, dksi_r,
                         dheta_r, dksi_s, dheta_s, ref a3rs);
-
                     var a1s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesKsi[k, j]);
                     var a2s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[k, j]);
                     (a3rs a3rsAlternative, Vector[,] da3tilde_drds, Vector[] da3tilde_dr, Vector[] da3tilde_ds,
                         double[] dnorma3_dr, double[] dnorma3_ds, double[,] dnorma3_drds, Vector a3_tilde, Vector[,] da3_drds) =
                         Calculate_a3rs(Vector.CreateFromArray(surfaceBasisVector1), Vector.CreateFromArray(surfaceBasisVector2), Vector.CreateFromArray(surfaceBasisVector3),
                         J1, a1r, a2s, a1s, a2r);
-
-                    CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2, 
-                        surfaceBasisVectorDerivative12, d2Ksi_dr2, ref a3s, d2Ksi_ds2, ref a3r, ref a3rsAlternative, d2Heta_dr2, 
-                        d2Heta_ds2, d2KsiHeta_dr2, d2KsiHeta_ds2, ref Bab_rs);
-
+                    
                     Bab_rs Bab_rsAlternative = CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2,
-                        surfaceBasisVectorDerivative12, nurbs, i, k, j, a3rsAlternative, a3r, a3s, da3_drds);
+                        surfaceBasisVectorDerivative12,d2Ksi_dr2,d2Ksi_ds2, d2Heta_dr2,d2Heta_ds2, d2KsiHeta_dr2,d2KsiHeta_ds2,
+                        a3rsAlternative, a3r, a3s, da3_drds);
                     Bab_rs = Bab_rsAlternative;
 
                     if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)&&ElementStiffnesses.saveStiffnessMatrixState)
@@ -1131,7 +1134,80 @@ namespace ISAAR.MSolve.IGA.Elements
             }
         }
 
-        private Bab_rs CalculateBab_rs(double[] surfaceBasisVectorDerivative1,
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="surfaceBasisVectorDerivative1"></param>
+        /// <param name="surfaceBasisVectorDerivative2"></param>
+        /// <param name="surfaceBasisVectorDerivative12"></param>
+        /// <param name="ddksi_r">Second derivative ksi[i,j]</param>
+        /// <param name="ddksi_s">Second derivative ksi[k,j]</param>
+        
+        /// <param name="ddheta_r">Second derivative heta[i,j]</param>
+        /// <param name="ddheta_s">Second derivative heta[i,j]</param>
+        /// <param name="dksidheta_r">Second derivative ksi and heta[i,j]</param>
+        /// <param name="dksidheta_s">Second derivative ksi and heta[k,j]</param>
+        /// <param name="a3rsAlternative"></param>
+        /// <param name="a3r"></param>
+        /// <param name="a3s"></param>
+        /// <param name="da3_drds"></param>
+        /// <returns></returns>
+        internal static Bab_rs CalculateBab_rs(double[] surfaceBasisVectorDerivative1,
+            double[] surfaceBasisVectorDerivative2, double[] surfaceBasisVectorDerivative12,
+            double ddksi_r, double ddksi_s, double ddheta_r, double ddheta_s,  double dksidheta_r,
+            double dksidheta_s,a3rs a3rsAlternative, a3r a3r, a3r a3s, Vector[,] da3_drds)
+        {
+            var a11r = Matrix3by3.CreateIdentity().Scale(ddksi_r);
+            var a22r = Matrix3by3.CreateIdentity().Scale(ddheta_r);
+            var a12r = Matrix3by3.CreateIdentity().Scale(dksidheta_r);
+
+            var a11s = Matrix3by3.CreateIdentity().Scale(ddksi_s);
+            var a22s = Matrix3by3.CreateIdentity().Scale(ddheta_s);
+            var a12s = Matrix3by3.CreateIdentity().Scale(dksidheta_s);
+
+            Vector[] a3rVecs = new Vector[3];
+            a3rVecs[0] = Vector.CreateFromArray(new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 });
+            a3rVecs[1] = Vector.CreateFromArray(new double[] { a3r.a3r01, a3r.a3r11, a3r.a3r21 });
+            a3rVecs[2] = Vector.CreateFromArray(new double[] { a3r.a3r02, a3r.a3r12, a3r.a3r22 });
+
+            Vector[] a3sVecs = new Vector[3];
+            a3sVecs[0] = Vector.CreateFromArray(new double[] { a3s.a3r00, a3s.a3r10, a3s.a3r20 });
+            a3sVecs[1] = Vector.CreateFromArray(new double[] { a3s.a3r01, a3s.a3r11, a3s.a3r21 });
+            a3sVecs[2] = Vector.CreateFromArray(new double[] { a3s.a3r02, a3s.a3r12, a3s.a3r22 });
+
+            var Bab_rsAlternative = new Bab_rs();
+
+            double[,] b11_rs = new double[3, 3];
+            double[,] b22_rs = new double[3, 3];
+            double[,] b12_rs = new double[3, 3];
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                for (int s1 = 0; s1 < 3; s1++)
+                {
+                    b11_rs[r1, s1] = a11r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a11s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[r1, s1]);
+                    b22_rs[r1, s1] = a22r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a22s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[r1, s1]);
+                    b12_rs[r1, s1] = a12r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a12s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[r1, s1])
+                        + a12r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a12s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[r1, s1]);
+                }
+            }
+
+            Bab_rsAlternative.Bab_rs00_0 = b11_rs[0, 0]; Bab_rsAlternative.Bab_rs00_1 = b22_rs[0, 0]; Bab_rsAlternative.Bab_rs00_2 = b12_rs[0, 0];
+            Bab_rsAlternative.Bab_rs01_0 = b11_rs[0, 1]; Bab_rsAlternative.Bab_rs01_1 = b22_rs[0, 1]; Bab_rsAlternative.Bab_rs01_2 = b12_rs[0, 1];
+            Bab_rsAlternative.Bab_rs02_0 = b11_rs[0, 2]; Bab_rsAlternative.Bab_rs02_1 = b22_rs[0, 2]; Bab_rsAlternative.Bab_rs02_2 = b12_rs[0, 2];
+
+            Bab_rsAlternative.Bab_rs10_0 = b11_rs[1, 0]; Bab_rsAlternative.Bab_rs10_1 = b22_rs[1, 0]; Bab_rsAlternative.Bab_rs10_2 = b12_rs[1, 0];
+            Bab_rsAlternative.Bab_rs11_0 = b11_rs[1, 1]; Bab_rsAlternative.Bab_rs11_1 = b22_rs[1, 1]; Bab_rsAlternative.Bab_rs11_2 = b12_rs[1, 1];
+            Bab_rsAlternative.Bab_rs12_0 = b11_rs[1, 2]; Bab_rsAlternative.Bab_rs12_1 = b22_rs[1, 2]; Bab_rsAlternative.Bab_rs12_2 = b12_rs[1, 2];
+
+            Bab_rsAlternative.Bab_rs20_0 = b11_rs[2, 0]; Bab_rsAlternative.Bab_rs20_1 = b22_rs[2, 0]; Bab_rsAlternative.Bab_rs20_2 = b12_rs[2, 0];
+            Bab_rsAlternative.Bab_rs21_0 = b11_rs[2, 1]; Bab_rsAlternative.Bab_rs21_1 = b22_rs[2, 1]; Bab_rsAlternative.Bab_rs21_2 = b12_rs[2, 1];
+            Bab_rsAlternative.Bab_rs22_0 = b11_rs[2, 2]; Bab_rsAlternative.Bab_rs22_1 = b22_rs[2, 2]; Bab_rsAlternative.Bab_rs22_2 = b12_rs[2, 2];
+
+            return Bab_rsAlternative;
+        }
+
+
+        private Bab_rs CalculateBab_rs_OLD(double[] surfaceBasisVectorDerivative1,
             double[] surfaceBasisVectorDerivative2, double[] surfaceBasisVectorDerivative12,
             Nurbs2D nurbs, int i, int k, int j, a3rs a3rsAlternative, a3r a3r, a3r a3s, Vector[,] da3_drds)
         {
@@ -1184,7 +1260,7 @@ namespace ISAAR.MSolve.IGA.Elements
             return Bab_rsAlternative;
         }
 
-        private static void CalculateBab_rs(double[] surfaceBasisVectorDerivative1,
+        private static void CalculateBab_rs_OLD_Dimitris(double[] surfaceBasisVectorDerivative1,
             double[] surfaceBasisVectorDerivative2, double[] surfaceBasisVectorDerivative12, double d2Ksi_dr2, ref a3r a3s,
             double d2Ksi_ds2, ref a3r a3r, ref a3rs a3rs, double d2Heta_dr2, double d2Heta_ds2, double d2KsiHeta_dr2,
             double d2KsiHeta_ds2, ref Bab_rs Bab_rsOut)
@@ -1762,8 +1838,6 @@ namespace ISAAR.MSolve.IGA.Elements
             var sum2 = new double[3];
 
             // da3_tilde_dr0     ...  da3tilde_dr[0][...]; r1=0
-            a1r.Clear();  
-            a2r.Clear(); 
             a1r[0] = dksi_r;
             a2r[0] = dheta_r;
             CalculateCrossProduct(a1r, surfaceBasisVector2, sum1);
@@ -1778,10 +1852,12 @@ namespace ISAAR.MSolve.IGA.Elements
             var da3_tilde_dr20 = sum2[2];
 
             // da3_tilde_dr1     ...  da3tilde_dr[1][...]; r1=1
-            a1r.Clear();  
-            a2r.Clear(); 
+            a1r[0] = 0.0;
+            a2r[0] = 0.0;
             a1r[1] = dksi_r;
             a2r[1] = dheta_r;
+            sum1[0] = 0.0;sum1[1] = 0.0;sum1[2] = 0.0;
+            sum2[0] = 0.0;sum2[1] = 0.0;sum2[2] = 0.0;
             CalculateCrossProduct(a1r, surfaceBasisVector2, sum1);
             CalculateCrossProduct(surfaceBasisVector1, a2r, sum2);
 
@@ -1795,10 +1871,12 @@ namespace ISAAR.MSolve.IGA.Elements
 
 
             // da3_tilde_dr2     ...  da3tilde_dr[2][...]; r1=2
-            a1r.Clear();  
-            a2r.Clear(); 
+            a1r[1] = 0.0;
+            a2r[1] = 0.0;
             a1r[2] = dksi_r;
             a2r[2] = dheta_r;
+            sum1[0] = 0.0;sum1[1] = 0.0;sum1[2] = 0.0;
+            sum2[0] = 0.0;sum2[1] = 0.0;sum2[2] = 0.0;
             CalculateCrossProduct(a1r, surfaceBasisVector2, sum1);
             CalculateCrossProduct(surfaceBasisVector1, a2r, sum2);
 

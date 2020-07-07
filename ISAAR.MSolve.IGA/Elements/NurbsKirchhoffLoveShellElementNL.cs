@@ -1057,8 +1057,6 @@ namespace ISAAR.MSolve.IGA.Elements
                     
                     var a3s = a3rArray[k];
                     a3rs=new a3rs();//Clear struct values
-                    Calculate_a3rs(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, J1, dksi_r,
-                        dheta_r, dksi_s, dheta_s, ref a3rs);
                     var a1s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesKsi[k, j]);
                     var a2s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[k, j]);
                     (a3rs a3rsAlternative, Vector[,] da3tilde_drds, Vector[] da3tilde_dr, Vector[] da3tilde_ds,
@@ -1296,7 +1294,7 @@ namespace ISAAR.MSolve.IGA.Elements
             return Bab_rsAlternative;
         }
 
-        private static void Calculate_a3rs(double[] surfaceBasisVector1, double[] surfaceBasisVector2,
+        private static void Calculate_a3rs_OLD_Dimitris(double[] surfaceBasisVector1, double[] surfaceBasisVector2,
             double[] surfaceBasisVector3, double J1, double dksi_r, double dheta_r, double dksi_s, double dheta_s, ref a3rs a3rsOut)
         {
             #region Initializations
@@ -1615,47 +1613,105 @@ namespace ISAAR.MSolve.IGA.Elements
             
         }
 
-
-        //private void CalculateA3r(double[] surfaceBasisVector1,
-        //    double[] surfaceBasisVector2, double[] surfaceBasisVector3,
-        //    double dksi_r, double dheta_r, double J1, ref a3r da3_unit_dr_out)
-        //{
-        //    var s30 = surfaceBasisVector3[0];
-        //    var s31 = surfaceBasisVector3[1];
-        //    var s32 = surfaceBasisVector3[2];
-
-        //    var da3_tilde_dr10 = dheta_r * surfaceBasisVector1[2] - dksi_r * surfaceBasisVector2[2];
-        //    var da3_tilde_dr20 = dksi_r * surfaceBasisVector2[1] - dheta_r * surfaceBasisVector1[1];
-
-        //    var da3_tilde_dr01 = dksi_r * surfaceBasisVector2[2] - dheta_r * surfaceBasisVector1[2];
-        //    var da3_tilde_dr21 = dheta_r * surfaceBasisVector1[0] - dksi_r * surfaceBasisVector2[0];
-
-        //    var da3_tilde_dr02 = dheta_r * surfaceBasisVector1[1] - dksi_r * surfaceBasisVector2[1];
-        //    var da3_tilde_dr12 = dksi_r * surfaceBasisVector2[0] - dheta_r * surfaceBasisVector1[0];
+        internal static (a3rs ,Vector[,], Vector[], Vector[], double[], double[], double[,], Vector, Vector[,] ) Calculate_a3rs_OLD(Vector surfaceBasisVector1, Vector surfaceBasisVector2,
+            Vector surfaceBasisVector3, double J1, Matrix3by3 a1r, Matrix3by3 a2s, Matrix3by3 a1s, Matrix3by3 a2r)
+        {
+            var da3_drds = new Vector[3, 3];
+            Vector[,] da3tilde_drds = new Vector[3, 3];
+            Vector[] da3tilde_dr = new Vector[3];
+            Vector[] da3tilde_ds = new Vector[3];
+            Vector a3_tilde;
+            double[] dnorma3_dr = new double[3];
+            double[] dnorma3_ds = new double[3];
+            double[,] dnorma3_drds = new double[3, 3];
 
 
-        //    var dnorma3_dr0 = s31 * da3_tilde_dr10 +
-        //                      s32 * da3_tilde_dr20;
+            //5.30
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                for (int s1 = 0; s1 < 3; s1++)
+                {
+                    da3tilde_drds[r1, s1] = a1r.GetColumn(r1).CrossProduct(a2s.GetColumn(s1)) + a1s.GetColumn(s1).CrossProduct(a2r.GetColumn(r1));
+                }
+            }
 
-        //    var dnorma3_dr1 = s30 * da3_tilde_dr01 +
-        //                      s32 * da3_tilde_dr21;
+            //5.24
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                da3tilde_dr[r1] = a1r.GetColumn(r1).CrossProduct(surfaceBasisVector2) + surfaceBasisVector1.CrossProduct(a2r.GetColumn(r1));
+            }
 
-        //    var dnorma3_dr2 = s30 * da3_tilde_dr02 +
-        //                      s31 * da3_tilde_dr12;
+            //5.24
+            for (int s1 = 0; s1 < 3; s1++)
+            {
+                da3tilde_ds[s1] = a1s.GetColumn(s1).CrossProduct(surfaceBasisVector2) + surfaceBasisVector1.CrossProduct(a2s.GetColumn(s1));
+            }
 
-        //    da3_unit_dr_out.a3r00 = -s30 * dnorma3_dr0/J1;
-        //    da3_unit_dr_out.a3r10 = (da3_tilde_dr10 - s31 * dnorma3_dr0) / J1;
-        //    da3_unit_dr_out.a3r20 = (da3_tilde_dr20 - s32 * dnorma3_dr0) / J1;
+            //5.25
+            a3_tilde = surfaceBasisVector3.Scale(J1);
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                dnorma3_dr[r1] = (a3_tilde.DotProduct(da3tilde_dr[r1])) / J1;
+            }
+            for (int s1 = 0; s1 < 3; s1++)
+            {
+                dnorma3_ds[s1] = (a3_tilde.DotProduct(da3tilde_ds[s1])) / J1;
+            }
 
-        //    da3_unit_dr_out.a3r01 = (da3_tilde_dr01 - s30 * dnorma3_dr1) / J1;
-        //    da3_unit_dr_out.a3r11 = (-s31 * dnorma3_dr1)/J1;
-        //    da3_unit_dr_out.a3r21 = (da3_tilde_dr21 - s32 * dnorma3_dr1)/J1;
-                                    
-        //    da3_unit_dr_out.a3r02 = (da3_tilde_dr02 - s30 * dnorma3_dr2)/J1;
-        //    da3_unit_dr_out.a3r12 = (da3_tilde_dr12 - s31 * dnorma3_dr2)/J1;
-        //    da3_unit_dr_out.a3r22 = (-s32 * dnorma3_dr2)/J1;
-        //}
+            //5.31
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                for (int s1 = 0; s1 < 3; s1++)
+                {
+                    double firstNumerator = da3tilde_drds[r1, s1].DotProduct(a3_tilde) + da3tilde_dr[r1].DotProduct(da3tilde_ds[s1]);
+                    double firstDenominator = J1;
+                    double secondNumerator = (da3tilde_dr[r1].DotProduct(a3_tilde)) * (da3tilde_ds[s1].DotProduct(a3_tilde));
+                    double secondDenominator = Math.Pow(J1, 3);
 
+                    dnorma3_drds[r1, s1] = (firstNumerator / firstDenominator) - (secondNumerator / secondDenominator);
+                }
+            }
+
+            //5.32
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                for (int s1 = 0; s1 < 3; s1++)
+                {
+                    Vector firstVec = da3tilde_drds[r1, s1].Scale(((double)1 / J1));
+
+                    double scale2 =-( (double)1 / (Math.Pow(J1, 2))); //denominator of vectors 2 3 and 4 and a minus.
+
+                    Vector secondVec = da3tilde_dr[r1].Scale(dnorma3_ds[s1]).Scale(scale2);
+
+                    Vector thirdVec = da3tilde_ds[s1].Scale(dnorma3_dr[r1]).Scale(scale2);
+
+                    Vector fourthVec = a3_tilde.Scale(dnorma3_drds[r1, s1]).Scale(scale2);
+
+                    double scale5 = ((double)1) / Math.Pow(J1, 3);
+
+                    Vector fifthvector = a3_tilde.Scale(2 * dnorma3_dr[r1] * dnorma3_ds[s1]).Scale(scale5);
+
+                    da3_drds[r1, s1] = firstVec + secondVec + thirdVec + fourthVec + fifthvector;
+
+                }
+            }
+
+            a3rs a3rsAlternative = new a3rs();
+            a3rsAlternative.a3rs00_0 = da3_drds[0, 0][0]; a3rsAlternative.a3rs00_1 = da3_drds[0, 0][1]; a3rsAlternative.a3rs00_2 = da3_drds[0, 0][2];
+            a3rsAlternative.a3rs01_0 = da3_drds[0, 1][0]; a3rsAlternative.a3rs01_1 = da3_drds[0, 1][1]; a3rsAlternative.a3rs01_2 = da3_drds[0, 1][2];
+            a3rsAlternative.a3rs02_0 = da3_drds[0, 2][0]; a3rsAlternative.a3rs02_1 = da3_drds[0, 2][1]; a3rsAlternative.a3rs02_2 = da3_drds[0, 2][2];
+
+            a3rsAlternative.a3rs10_0 = da3_drds[1, 0][0]; a3rsAlternative.a3rs10_1 = da3_drds[1, 0][1]; a3rsAlternative.a3rs10_2 = da3_drds[1, 0][2];
+            a3rsAlternative.a3rs11_0 = da3_drds[1, 1][0]; a3rsAlternative.a3rs11_1 = da3_drds[1, 1][1]; a3rsAlternative.a3rs11_2 = da3_drds[1, 1][2];
+            a3rsAlternative.a3rs12_0 = da3_drds[1, 2][0]; a3rsAlternative.a3rs12_1 = da3_drds[1, 2][1]; a3rsAlternative.a3rs12_2 = da3_drds[1, 2][2];
+
+            a3rsAlternative.a3rs20_0 = da3_drds[2, 0][0]; a3rsAlternative.a3rs20_1 = da3_drds[2, 0][1]; a3rsAlternative.a3rs20_2 = da3_drds[2, 0][2];
+            a3rsAlternative.a3rs21_0 = da3_drds[2, 1][0]; a3rsAlternative.a3rs21_1 = da3_drds[2, 1][1]; a3rsAlternative.a3rs21_2 = da3_drds[2, 1][2];
+            a3rsAlternative.a3rs22_0 = da3_drds[2, 2][0]; a3rsAlternative.a3rs22_1 = da3_drds[2, 2][1]; a3rsAlternative.a3rs22_2 = da3_drds[2, 2][2];
+
+            return (a3rsAlternative, da3tilde_drds, da3tilde_dr, da3tilde_ds, dnorma3_dr, dnorma3_ds, dnorma3_drds, a3_tilde, da3_drds);
+        }
+        
         private void CalculateA3r_OLD(double[] surfaceBasisVector1,
             double[] surfaceBasisVector2, double[] surfaceBasisVector3,
             double dksi_r, double dheta_r, double J1, ref a3r da3_unit_dr_out)

@@ -1157,51 +1157,74 @@ namespace ISAAR.MSolve.IGA.Elements
             double ddksi_r, double ddksi_s, double ddheta_r, double ddheta_s,  double dksidheta_r,
             double dksidheta_s,a3rs a3rsAlternative, a3r a3r, a3r a3s, Vector[,] da3_drds)
         {
-            var a11r = Matrix3by3.CreateIdentity().Scale(ddksi_r);
-            var a22r = Matrix3by3.CreateIdentity().Scale(ddheta_r);
-            var a12r = Matrix3by3.CreateIdentity().Scale(dksidheta_r);
+            
+            var a3rVecs_r0 = new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 };
+            var a3rVecs_r1 = new double[] { a3r.a3r01, a3r.a3r11, a3r.a3r21 };
+            var a3rVecs_r2 = new double[] { a3r.a3r02, a3r.a3r12, a3r.a3r22 };
 
-            var a11s = Matrix3by3.CreateIdentity().Scale(ddksi_s);
-            var a22s = Matrix3by3.CreateIdentity().Scale(ddheta_s);
-            var a12s = Matrix3by3.CreateIdentity().Scale(dksidheta_s);
-
-            Vector[] a3rVecs = new Vector[3];
-            a3rVecs[0] = Vector.CreateFromArray(new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 });
-            a3rVecs[1] = Vector.CreateFromArray(new double[] { a3r.a3r01, a3r.a3r11, a3r.a3r21 });
-            a3rVecs[2] = Vector.CreateFromArray(new double[] { a3r.a3r02, a3r.a3r12, a3r.a3r22 });
-
-            Vector[] a3sVecs = new Vector[3];
-            a3sVecs[0] = Vector.CreateFromArray(new double[] { a3s.a3r00, a3s.a3r10, a3s.a3r20 });
-            a3sVecs[1] = Vector.CreateFromArray(new double[] { a3s.a3r01, a3s.a3r11, a3s.a3r21 });
-            a3sVecs[2] = Vector.CreateFromArray(new double[] { a3s.a3r02, a3s.a3r12, a3s.a3r22 });
+            
+            var a3sVecs_s0 = new double[] { a3s.a3r00, a3s.a3r10, a3s.a3r20 };
+            var a3sVecs_s1 = new double[] { a3s.a3r01, a3s.a3r11, a3s.a3r21 };
+            var a3sVecs_s2 = new double[] { a3s.a3r02, a3s.a3r12, a3s.a3r22 };
 
             var Bab_rsAlternative = new Bab_rs();
 
-            double[,] b11_rs = new double[3, 3];
-            double[,] b22_rs = new double[3, 3];
-            double[,] b12_rs = new double[3, 3];
-            for (int r1 = 0; r1 < 3; r1++)
-            {
-                for (int s1 = 0; s1 < 3; s1++)
-                {
-                    b11_rs[r1, s1] = a11r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a11s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[r1, s1]);
-                    b22_rs[r1, s1] = a22r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a22s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[r1, s1]);
-                    b12_rs[r1, s1] = a12r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a12s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[r1, s1])
-                        + a12r.GetColumn(r1).DotProduct(a3sVecs[s1]) + a12s.GetColumn(s1).DotProduct(a3rVecs[r1]) + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[r1, s1]);
-                }
-            }
+            //[A]: 0--> b11rs , a11r ,a11s surfaceBasisVectorDerivative1,   
+            //     1--> b22rs , a22r ,a22s surfaceBasisVectorDerivative2, 
+            //     2--> b12rs , a12r ,a12s surfaceBasisVectorDerivative12, times x2
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs00_0 = ddksi_r*a3sVecs_s0[0] + ddksi_s*a3rVecs_r0[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[0, 0]);
+            Bab_rsAlternative.Bab_rs00_1 = ddheta_r*a3sVecs_s0[0] + ddheta_s*a3rVecs_r0[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[0, 0]); 
+            Bab_rsAlternative.Bab_rs00_2 = dksidheta_r*a3sVecs_s0[0] + dksidheta_s*a3rVecs_r0[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[0, 0]) 
+                                         + dksidheta_r*a3sVecs_s0[0] + dksidheta_s*a3rVecs_r0[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[0, 0]);
 
-            Bab_rsAlternative.Bab_rs00_0 = b11_rs[0, 0]; Bab_rsAlternative.Bab_rs00_1 = b22_rs[0, 0]; Bab_rsAlternative.Bab_rs00_2 = b12_rs[0, 0];
-            Bab_rsAlternative.Bab_rs01_0 = b11_rs[0, 1]; Bab_rsAlternative.Bab_rs01_1 = b22_rs[0, 1]; Bab_rsAlternative.Bab_rs01_2 = b12_rs[0, 1];
-            Bab_rsAlternative.Bab_rs02_0 = b11_rs[0, 2]; Bab_rsAlternative.Bab_rs02_1 = b22_rs[0, 2]; Bab_rsAlternative.Bab_rs02_2 = b12_rs[0, 2];
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs01_0 = ddksi_r*a3sVecs_s1[0] + ddksi_s*a3rVecs_r0[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[0, 1]);
+            Bab_rsAlternative.Bab_rs01_1 = ddheta_r*a3sVecs_s1[0] + ddheta_s*a3rVecs_r0[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[0, 1]); 
+            Bab_rsAlternative.Bab_rs01_2 = dksidheta_r*a3sVecs_s1[0] + dksidheta_s*a3rVecs_r0[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[0, 1]) 
+                                         + dksidheta_r*a3sVecs_s1[0] + dksidheta_s*a3rVecs_r0[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[0, 1]);
 
-            Bab_rsAlternative.Bab_rs10_0 = b11_rs[1, 0]; Bab_rsAlternative.Bab_rs10_1 = b22_rs[1, 0]; Bab_rsAlternative.Bab_rs10_2 = b12_rs[1, 0];
-            Bab_rsAlternative.Bab_rs11_0 = b11_rs[1, 1]; Bab_rsAlternative.Bab_rs11_1 = b22_rs[1, 1]; Bab_rsAlternative.Bab_rs11_2 = b12_rs[1, 1];
-            Bab_rsAlternative.Bab_rs12_0 = b11_rs[1, 2]; Bab_rsAlternative.Bab_rs12_1 = b22_rs[1, 2]; Bab_rsAlternative.Bab_rs12_2 = b12_rs[1, 2];
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs02_0 = ddksi_r*a3sVecs_s2[0] + ddksi_s*a3rVecs_r0[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[0, 2]);
+            Bab_rsAlternative.Bab_rs02_1 = ddheta_r*a3sVecs_s2[0] + ddheta_s*a3rVecs_r0[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[0, 2]); 
+            Bab_rsAlternative.Bab_rs02_2 = dksidheta_r*a3sVecs_s2[0] + dksidheta_s*a3rVecs_r0[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[0, 2]) 
+                                         + dksidheta_r*a3sVecs_s2[0] + dksidheta_s*a3rVecs_r0[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[0, 2]);
 
-            Bab_rsAlternative.Bab_rs20_0 = b11_rs[2, 0]; Bab_rsAlternative.Bab_rs20_1 = b22_rs[2, 0]; Bab_rsAlternative.Bab_rs20_2 = b12_rs[2, 0];
-            Bab_rsAlternative.Bab_rs21_0 = b11_rs[2, 1]; Bab_rsAlternative.Bab_rs21_1 = b22_rs[2, 1]; Bab_rsAlternative.Bab_rs21_2 = b12_rs[2, 1];
-            Bab_rsAlternative.Bab_rs22_0 = b11_rs[2, 2]; Bab_rsAlternative.Bab_rs22_1 = b22_rs[2, 2]; Bab_rsAlternative.Bab_rs22_2 = b12_rs[2, 2];
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs10_0 = ddksi_r*a3sVecs_s0[1] + ddksi_s*a3rVecs_r1[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[1, 0]);
+            Bab_rsAlternative.Bab_rs10_1 = ddheta_r*a3sVecs_s0[1] + ddheta_s*a3rVecs_r1[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[1, 0]); 
+            Bab_rsAlternative.Bab_rs10_2 = dksidheta_r*a3sVecs_s0[1] + dksidheta_s*a3rVecs_r1[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[1, 0]) 
+                                         + dksidheta_r*a3sVecs_s0[1] + dksidheta_s*a3rVecs_r1[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[1, 0]);
+
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs11_0 = ddksi_r*a3sVecs_s1[1] + ddksi_s*a3rVecs_r1[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[1, 1]); 
+            Bab_rsAlternative.Bab_rs11_1 = ddheta_r*a3sVecs_s1[1] + ddheta_s*a3rVecs_r1[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[1, 1]);  
+            Bab_rsAlternative.Bab_rs11_2 = dksidheta_r*a3sVecs_s1[1] + dksidheta_s*a3rVecs_r1[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[1, 1]) 
+                                         + dksidheta_r*a3sVecs_s1[1] + dksidheta_s*a3rVecs_r1[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[1, 1]);
+
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs12_0 = ddksi_r*a3sVecs_s2[1] + ddksi_s*a3rVecs_r1[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[1, 2]);
+            Bab_rsAlternative.Bab_rs12_1 = ddheta_r*a3sVecs_s2[1] + ddheta_s*a3rVecs_r1[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[1, 2]);  
+            Bab_rsAlternative.Bab_rs12_2 = dksidheta_r*a3sVecs_s2[1] + dksidheta_s*a3rVecs_r1[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[1, 2]) 
+                                         + dksidheta_r*a3sVecs_s2[1] + dksidheta_s*a3rVecs_r1[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[1, 2]);
+
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs20_0 = ddksi_r*a3sVecs_s0[2] + ddksi_s*a3rVecs_r2[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[2, 0]); 
+            Bab_rsAlternative.Bab_rs20_1 = ddheta_r*a3sVecs_s0[2] + ddheta_s*a3rVecs_r2[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[2, 0]); 
+            Bab_rsAlternative.Bab_rs20_2 = dksidheta_r*a3sVecs_s0[2] + dksidheta_s*a3rVecs_r2[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[2, 0]) 
+                                         + dksidheta_r*a3sVecs_s0[2] + dksidheta_s*a3rVecs_r2[0] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[2, 0]);
+
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs21_0 = ddksi_r*a3sVecs_s1[2] + ddksi_s*a3rVecs_r2[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[2, 1]); 
+            Bab_rsAlternative.Bab_rs21_1 = ddheta_r*a3sVecs_s1[2] + ddheta_s*a3rVecs_r2[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[2, 1]); 
+            Bab_rsAlternative.Bab_rs21_2 = dksidheta_r*a3sVecs_s1[2] + dksidheta_s*a3rVecs_r2[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[2, 1]) 
+                                         + dksidheta_r*a3sVecs_s1[2] + dksidheta_s*a3rVecs_r2[1] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[2, 1]);
+
+            //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
+            Bab_rsAlternative.Bab_rs22_0 = ddksi_r*a3sVecs_s2[2] + ddksi_s*a3rVecs_r2[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative1).DotProduct(da3_drds[2, 2]); 
+            Bab_rsAlternative.Bab_rs22_1 = ddheta_r*a3sVecs_s2[2] + ddheta_s*a3rVecs_r2[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative2).DotProduct(da3_drds[2, 2]); 
+            Bab_rsAlternative.Bab_rs22_2 = dksidheta_r*a3sVecs_s2[2] + dksidheta_s*a3rVecs_r2[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[2, 2]) 
+                                         + dksidheta_r*a3sVecs_s2[2] + dksidheta_s*a3rVecs_r2[2] + Vector.CreateFromArray(surfaceBasisVectorDerivative12).DotProduct(da3_drds[2, 2]);
 
             return Bab_rsAlternative;
         }

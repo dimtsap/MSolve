@@ -636,7 +636,6 @@ namespace ISAAR.MSolve.IGA.Tests
         }
 
         [Fact]
-        [Benchmark]
         public void TestA3r()
         {
             var surfaceBasisVector1 = new double[] { 0.49281343102090647, -0.0027907619686642761, -2.0647413184286493E-07 };
@@ -679,6 +678,211 @@ namespace ISAAR.MSolve.IGA.Tests
             Assert.Equal(cross[0],c[0]);
             Assert.Equal(cross[1],c[1]);
             Assert.Equal(cross[2],c[2]);
+        }
+
+        [Fact]
+        public void TestBab_rs()
+        {
+            #region Initialization
+            var surfaceBasisVectorDerivative1 = new double[3]
+            {
+                -0.0002215697315227748,
+                -0.040236627065225024,
+                -3.1283539134440684E-06
+            };
+            var surfaceBasisVectorDerivative2 = new double[3]
+            {
+                4.3550534925664095E-11,
+                1.0323258744575857E-08,
+                -1.0202863489210098E-09
+            };
+            var surfaceBasisVectorDerivative12 = new double[3]
+            {
+                0.046627259953136886,
+                -0.00026442650364636821,
+                6.5202798291920747E-08
+            };
+
+            var d2ksi_dr2 = 4.4992901171737891;
+            var d2ksi_ds2 = 4.4992901171737891;
+
+            var d2heta_dr2 = 4.49929011717379;
+            var d2heta_ds2 = 4.49929011717379;
+
+            var d2ksiheta_dr2 = 6.7489351757606837;
+            var d2ksiheta_ds2 = 6.7489351757606837;
+            var a3rs= new a3rs();
+            a3rs.a3rs00_0=	1.5266467195814444E-05	;
+            a3rs.a3rs00_1=	1.3016307114560258E-05	;
+            a3rs.a3rs00_2=	-1.1837641977763269E-11	;
+            a3rs.a3rs01_0=	6.390871065454354E-06	;
+            a3rs.a3rs01_1=	5.448905725897356E-06	;
+            a3rs.a3rs01_2=	-2.55440113505756E-12	;
+            a3rs.a3rs02_0=	18.220623150741094	;
+            a3rs.a3rs02_1=	15.535043157448497	;
+            a3rs.a3rs02_2=	-2.0715372921711805E-05	;
+            a3rs.a3rs10_0=	6.390871065454354E-06	;
+            a3rs.a3rs10_1=	5.448905725897356E-06	;
+            a3rs.a3rs10_2=	-2.55440113505756E-12	;
+            a3rs.a3rs11_0=	-1.9999190555149591E-07	;
+            a3rs.a3rs11_1=	-1.7051463378493538E-07	;
+            a3rs.a3rs11_2=	8.8817841970012523E-14	;
+            a3rs.a3rs12_0=	15.53504315745124	;
+            a3rs.a3rs12_1=	13.245297041003683	;
+            a3rs.a3rs12_2=	-6.22035643166942E-06	;
+            a3rs.a3rs20_0=	18.220623150741094	;
+            a3rs.a3rs20_1=	15.535043157448497	;
+            a3rs.a3rs20_2=	-2.0715372921711805E-05	;
+            a3rs.a3rs21_0=	15.53504315745124	;
+            a3rs.a3rs21_1=	13.245297041003683	;
+            a3rs.a3rs21_2=	-6.22035643166942E-06	;
+            a3rs.a3rs22_0=	-2.8248610566845741E-05	;
+            a3rs.a3rs22_1=	-1.2643252672057042E-05	;
+            a3rs.a3rs22_2=	-31.465920191744779	;
+
+            var a3r= new a3r();
+            a3r.a3r00=	1.7882446740031873E-06  ;
+            a3r.a3r01=	-2.7475877512613432E-08	;
+            a3r.a3r02=	4.2685621877569231	;
+            a3r.a3r10=	1.5246711353875095E-06	;
+            a3r.a3r11=	-2.3426144068498867E-08	;
+            a3r.a3r12=	3.639408886207	;
+            a3r.a3r20=	-7.38802532863679E-13	;
+            a3r.a3r21=	1.1827148338265939E-14	;
+            a3r.a3r22=	-1.7648185299346879E-06	;
+
+            var a3s= new a3r();
+            a3s.a3r00=1.7882446740031873E-06	;
+            a3s.a3r01=-2.7475877512613432E-08	;
+            a3s.a3r02=4.2685621877569231	;
+            a3s.a3r10=1.5246711353875095E-06	;
+            a3s.a3r11=-2.3426144068498867E-08	;
+            a3s.a3r12=3.639408886207	;
+            a3s.a3r20=-7.38802532863679E-13	;
+            a3s.a3r21=1.1827148338265939E-14	;
+            a3s.a3r22=	-1.7648185299346879E-06	;
+            
+            var da3_drds = new Vector[3,3];
+            da3_drds[0, 0] = Vector.CreateFromArray(new double[]
+            {
+                1.5266467195814444E-05,
+                1.3016307114560258E-05,
+                -1.1837641977763269E-11,
+            });
+            da3_drds[0,1] = Vector.CreateFromArray(new double[]
+            {
+                6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12
+            });
+            da3_drds[0, 2] = Vector.CreateFromArray(new double[]
+            {
+                18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05
+            });
+
+            da3_drds[1, 0] = Vector.CreateFromArray(new double[]
+            {
+                6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12
+            });
+            da3_drds[1, 1] = Vector.CreateFromArray(new double[]
+            {
+                -1.9999190555149591E-07,
+                -1.7051463378493538E-07,
+                8.8817841970012523E-14
+            });
+            da3_drds[1, 2] = Vector.CreateFromArray(new double[]
+            {
+                15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06
+            });
+
+            da3_drds[2, 0] = Vector.CreateFromArray(new double[]
+            {
+                18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05
+            });
+            da3_drds[2, 1] = Vector.CreateFromArray(new double[]
+            {
+                15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06
+            });
+            da3_drds[2, 2] = Vector.CreateFromArray(new double[]
+            {
+                -2.8248610566845741E-05,
+                -1.2643252672057042E-05,
+                -31.465920191744779
+            });
+
+            Bab_rs Bab_rsExpected= new Bab_rs();
+            Bab_rsExpected.Bab_rs00_0=	1.5564548295526568E-05	;
+            Bab_rsExpected.Bab_rs00_1=	1.6091663312697994E-05	;
+            Bab_rsExpected.Bab_rs00_2=	4.9691772888834864E-05	;
+            Bab_rsExpected.Bab_rs01_0=	6.5156542160513032E-06	;
+            Bab_rsExpected.Bab_rs01_1=	6.7363158837647762E-06	;
+            Bab_rsExpected.Bab_rs01_2=	2.0802043424519865E-05	;
+            Bab_rsExpected.Bab_rs02_0=	18.576384789429813	;
+            Bab_rsExpected.Bab_rs02_1=	19.205499827078938	;
+            Bab_rsExpected.Bab_rs02_2=	59.307438707759943	;
+            Bab_rsExpected.Bab_rs10_0=	6.5156542160513032E-06	;
+            Bab_rsExpected.Bab_rs10_1=	6.7363158837647762E-06	;
+            Bab_rsExpected.Bab_rs10_2=	2.0802043424519861E-05	;
+            Bab_rsExpected.Bab_rs11_0=	-2.0389679110046287E-07	;
+            Bab_rsExpected.Bab_rs11_1=	-2.1080203875074925E-07	;
+            Bab_rsExpected.Bab_rs11_2=	-6.5096608290578748E-07	;
+            Bab_rsExpected.Bab_rs12_0=	15.838368261336552	;
+            Bab_rsExpected.Bab_rs12_1=	16.374756571476876	;
+            Bab_rsExpected.Bab_rs12_2=	50.565977478394949	;
+            Bab_rsExpected.Bab_rs20_0=	18.576384789429813	;
+            Bab_rsExpected.Bab_rs20_1=	19.205499827078938	;
+            Bab_rsExpected.Bab_rs20_2=	59.307438707759943	;
+            Bab_rsExpected.Bab_rs21_0=	15.838368261336552	;
+            Bab_rsExpected.Bab_rs21_1=	16.374756571476876	;
+            Bab_rsExpected.Bab_rs21_2=	50.565977478394956	;
+            Bab_rsExpected.Bab_rs22_0=	8.3070654310999034E-05	;
+            Bab_rsExpected.Bab_rs22_1=	-1.5848757023602572E-05	;
+            Bab_rsExpected.Bab_rs22_2=	-5.4373539710938839E-05	;
+
+            #endregion
+            
+            Bab_rs Bab_rsAlternative = NurbsKirchhoffLoveShellElementNL.CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2,
+                surfaceBasisVectorDerivative12,d2ksi_dr2,d2ksi_ds2, d2heta_dr2,d2heta_ds2, d2ksiheta_dr2,d2ksiheta_ds2,
+                a3rs, a3r, a3s, da3_drds);
+
+
+            Assert.Equal(Bab_rsExpected.Bab_rs00_0,Bab_rsAlternative.Bab_rs00_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs00_1,Bab_rsAlternative.Bab_rs00_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs00_2,Bab_rsAlternative.Bab_rs00_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs01_0,Bab_rsAlternative.Bab_rs01_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs01_1,Bab_rsAlternative.Bab_rs01_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs01_2,Bab_rsAlternative.Bab_rs01_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs02_0,Bab_rsAlternative.Bab_rs02_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs02_1,Bab_rsAlternative.Bab_rs02_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs02_2,Bab_rsAlternative.Bab_rs02_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs10_0,Bab_rsAlternative.Bab_rs10_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs10_1,Bab_rsAlternative.Bab_rs10_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs10_2,Bab_rsAlternative.Bab_rs10_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs11_0,Bab_rsAlternative.Bab_rs11_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs11_1,Bab_rsAlternative.Bab_rs11_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs11_2,Bab_rsAlternative.Bab_rs11_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs12_0,Bab_rsAlternative.Bab_rs12_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs12_1,Bab_rsAlternative.Bab_rs12_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs12_2,Bab_rsAlternative.Bab_rs12_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs20_0,Bab_rsAlternative.Bab_rs20_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs20_1,Bab_rsAlternative.Bab_rs20_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs20_2,Bab_rsAlternative.Bab_rs20_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs21_0,Bab_rsAlternative.Bab_rs21_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs21_1,Bab_rsAlternative.Bab_rs21_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs21_2,Bab_rsAlternative.Bab_rs21_2  );
+            Assert.Equal(Bab_rsExpected.Bab_rs22_0,Bab_rsAlternative.Bab_rs22_0  );
+            Assert.Equal(Bab_rsExpected.Bab_rs22_1,Bab_rsAlternative.Bab_rs22_1  );
+            Assert.Equal(Bab_rsExpected.Bab_rs22_2,Bab_rsAlternative.Bab_rs22_2  );
         }
     }
 }

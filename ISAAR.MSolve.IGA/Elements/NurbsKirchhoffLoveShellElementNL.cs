@@ -1159,83 +1159,100 @@ namespace ISAAR.MSolve.IGA.Elements
             var s22 = surfaceBasisVectorDerivative2;
             var s12 = surfaceBasisVectorDerivative12;
 
-            var a3rVecs_r0 = new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 };
-            var a3rVecs_r1 = new double[] { a3r.a3r01, a3r.a3r11, a3r.a3r21 };
-            var a3rVecs_r2 = new double[] { a3r.a3r02, a3r.a3r12, a3r.a3r22 };
+            var a3rVecs_r0_0 = a3r.a3r00;
+            var a3rVecs_r0_1 = a3r.a3r10;
+            var a3rVecs_r0_2 = a3r.a3r20;
 
-            
-            var a3sVecs_s0 = new double[] { a3s.a3r00, a3s.a3r10, a3s.a3r20 };
-            var a3sVecs_s1 = new double[] { a3s.a3r01, a3s.a3r11, a3s.a3r21 };
-            var a3sVecs_s2 = new double[] { a3s.a3r02, a3s.a3r12, a3s.a3r22 };
+
+            var a3rVecs_r1_0 = a3r.a3r01;
+            var a3rVecs_r1_1 = a3r.a3r11;
+            var a3rVecs_r1_2 = a3r.a3r21;
+
+            var a3rVecs_r2_0 = a3r.a3r02;
+            var a3rVecs_r2_1 = a3r.a3r12;
+            var a3rVecs_r2_2 = a3r.a3r22;
+
+
+            var a3sVecs_s0_0 = a3s.a3r00;
+            var a3sVecs_s0_1 = a3s.a3r10;
+            var a3sVecs_s0_2 = a3s.a3r20;
+
+            var a3sVecs_s1_0 = a3s.a3r01;
+            var a3sVecs_s1_1 = a3s.a3r11;
+            var a3sVecs_s1_2 = a3s.a3r21;
+
+            var a3sVecs_s2_0 = a3s.a3r02;
+            var a3sVecs_s2_1 = a3s.a3r12;
+            var a3sVecs_s2_2 = a3s.a3r22;
 
             var Bab_rsAlternative = new Bab_rs();
 
             //................[r, s]
-            var da3 = da3_drds[0, 0];
+            var da3 = new double[3] {da3_drds[0, 0][0], da3_drds[0, 0][1], da3_drds[0, 0][2]};
             //[A]: 0--> b11rs , a11r ,a11s surfaceBasisVectorDerivative1,   
             //     1--> b22rs , a22r ,a22s surfaceBasisVectorDerivative2, 
             //     2--> b12rs , a12r ,a12s surfaceBasisVectorDerivative12, times x2
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]..........................................
-            Bab_rsAlternative.Bab_rs00_0 = ddksi_r*a3sVecs_s0[0] + ddksi_s*a3rVecs_r0[0] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs00_1 = ddheta_r*a3sVecs_s0[0] + ddheta_s*a3rVecs_r0[0] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2]; 
-            Bab_rsAlternative.Bab_rs00_2 = dksidheta_r*a3sVecs_s0[0] + dksidheta_s*a3rVecs_r0[0] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2]
-                                         + dksidheta_r*a3sVecs_s0[0] + dksidheta_s*a3rVecs_r0[0] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs00_0 = ddksi_r*a3sVecs_s0_0 + ddksi_s*a3rVecs_r0_0 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs00_1 = ddheta_r*a3sVecs_s0_0 + ddheta_s*a3rVecs_r0_0 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2]; 
+            Bab_rsAlternative.Bab_rs00_2 = dksidheta_r*a3sVecs_s0_0 + dksidheta_s*a3rVecs_r0_0 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2]
+                                         + dksidheta_r*a3sVecs_s0_0 + dksidheta_s*a3rVecs_r0_0 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[0, 1];
+            da3[0] = da3_drds[0, 1][0]; da3[1] = da3_drds[0, 1][1]; da3[2] = da3_drds[0, 1][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs01_0 = ddksi_r*a3sVecs_s1[0] + ddksi_s*a3rVecs_r0[1] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs01_1 = ddheta_r*a3sVecs_s1[0] + ddheta_s*a3rVecs_r0[1] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2]; 
-            Bab_rsAlternative.Bab_rs01_2 = dksidheta_r*a3sVecs_s1[0] + dksidheta_s*a3rVecs_r0[1] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2]
-                                         + dksidheta_r*a3sVecs_s1[0] + dksidheta_s*a3rVecs_r0[1] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs01_0 = ddksi_r*a3sVecs_s1_0 + ddksi_s*a3rVecs_r0_1 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs01_1 = ddheta_r*a3sVecs_s1_0 + ddheta_s*a3rVecs_r0_1 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2]; 
+            Bab_rsAlternative.Bab_rs01_2 = dksidheta_r*a3sVecs_s1_0 + dksidheta_s*a3rVecs_r0_1 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2]
+                                         + dksidheta_r*a3sVecs_s1_0 + dksidheta_s*a3rVecs_r0_1 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[0, 2];
+            da3[0] = da3_drds[0, 2][0]; da3[1] = da3_drds[0, 2][1]; da3[2] = da3_drds[0, 2][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs02_0 = ddksi_r*a3sVecs_s2[0] + ddksi_s*a3rVecs_r0[2] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs02_1 = ddheta_r*a3sVecs_s2[0] + ddheta_s*a3rVecs_r0[2] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
-            Bab_rsAlternative.Bab_rs02_2 = dksidheta_r*a3sVecs_s2[0] + dksidheta_s*a3rVecs_r0[2] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s2[0] + dksidheta_s*a3rVecs_r0[2] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs02_0 = ddksi_r*a3sVecs_s2_0 + ddksi_s*a3rVecs_r0_2 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs02_1 = ddheta_r*a3sVecs_s2_0 + ddheta_s*a3rVecs_r0_2 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
+            Bab_rsAlternative.Bab_rs02_2 = dksidheta_r*a3sVecs_s2_0 + dksidheta_s*a3rVecs_r0_2 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s2_0 + dksidheta_s*a3rVecs_r0_2 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[1, 0];
+            da3[0] = da3_drds[1, 0][0]; da3[1] = da3_drds[1, 0][1]; da3[2] = da3_drds[1, 0][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs10_0 = ddksi_r*a3sVecs_s0[1] + ddksi_s*a3rVecs_r1[0] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs10_1 = ddheta_r*a3sVecs_s0[1] + ddheta_s*a3rVecs_r1[0] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2]; 
-            Bab_rsAlternative.Bab_rs10_2 = dksidheta_r*a3sVecs_s0[1] + dksidheta_s*a3rVecs_r1[0] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s0[1] + dksidheta_s*a3rVecs_r1[0] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs10_0 = ddksi_r*a3sVecs_s0_1 + ddksi_s*a3rVecs_r1_0 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs10_1 = ddheta_r*a3sVecs_s0_1 + ddheta_s*a3rVecs_r1_0 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2]; 
+            Bab_rsAlternative.Bab_rs10_2 = dksidheta_r*a3sVecs_s0_1 + dksidheta_s*a3rVecs_r1_0 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s0_1 + dksidheta_s*a3rVecs_r1_0 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[1, 1];
+            da3[0] = da3_drds[1, 1][0]; da3[1] = da3_drds[1, 1][1]; da3[2] = da3_drds[1, 1][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs11_0 = ddksi_r*a3sVecs_s1[1] + ddksi_s*a3rVecs_r1[1] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2]; 
-            Bab_rsAlternative.Bab_rs11_1 = ddheta_r*a3sVecs_s1[1] + ddheta_s*a3rVecs_r1[1] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
-            Bab_rsAlternative.Bab_rs11_2 = dksidheta_r*a3sVecs_s1[1] + dksidheta_s*a3rVecs_r1[1] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s1[1] + dksidheta_s*a3rVecs_r1[1] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs11_0 = ddksi_r*a3sVecs_s1_1 + ddksi_s*a3rVecs_r1_1 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2]; 
+            Bab_rsAlternative.Bab_rs11_1 = ddheta_r*a3sVecs_s1_1 + ddheta_s*a3rVecs_r1_1 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
+            Bab_rsAlternative.Bab_rs11_2 = dksidheta_r*a3sVecs_s1_1 + dksidheta_s*a3rVecs_r1_1 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s1_1 + dksidheta_s*a3rVecs_r1_1 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[1, 2];
+            da3[0] = da3_drds[1, 2][0]; da3[1] = da3_drds[1, 2][1]; da3[2] = da3_drds[1, 2][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs12_0 = ddksi_r*a3sVecs_s2[1] + ddksi_s*a3rVecs_r1[2] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs12_1 = ddheta_r*a3sVecs_s2[1] + ddheta_s*a3rVecs_r1[2] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
-            Bab_rsAlternative.Bab_rs12_2 = dksidheta_r*a3sVecs_s2[1] + dksidheta_s*a3rVecs_r1[2] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s2[1] + dksidheta_s*a3rVecs_r1[2] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs12_0 = ddksi_r*a3sVecs_s2_1 + ddksi_s*a3rVecs_r1_2 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs12_1 = ddheta_r*a3sVecs_s2_1 + ddheta_s*a3rVecs_r1_2 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
+            Bab_rsAlternative.Bab_rs12_2 = dksidheta_r*a3sVecs_s2_1 + dksidheta_s*a3rVecs_r1_2 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s2_1 + dksidheta_s*a3rVecs_r1_2 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[2, 0];
+            da3[0] = da3_drds[2, 0][0]; da3[1] = da3_drds[2, 0][1]; da3[2] = da3_drds[2, 0][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs20_0 = ddksi_r*a3sVecs_s0[2] + ddksi_s*a3rVecs_r2[0] +s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs20_1 = ddheta_r*a3sVecs_s0[2] + ddheta_s*a3rVecs_r2[0] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
-            Bab_rsAlternative.Bab_rs20_2 = dksidheta_r*a3sVecs_s0[2] + dksidheta_s*a3rVecs_r2[0] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s0[2] + dksidheta_s*a3rVecs_r2[0] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs20_0 = ddksi_r*a3sVecs_s0_2 + ddksi_s*a3rVecs_r2_0 +s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs20_1 = ddheta_r*a3sVecs_s0_2 + ddheta_s*a3rVecs_r2_0 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
+            Bab_rsAlternative.Bab_rs20_2 = dksidheta_r*a3sVecs_s0_2 + dksidheta_s*a3rVecs_r2_0 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s0_2 + dksidheta_s*a3rVecs_r2_0 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[2, 1];
+            da3[0] = da3_drds[2, 1][0]; da3[1] = da3_drds[2, 1][1]; da3[2] = da3_drds[2, 1][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs21_0 = ddksi_r*a3sVecs_s1[2] + ddksi_s*a3rVecs_r2[1] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs21_1 = ddheta_r*a3sVecs_s1[2] + ddheta_s*a3rVecs_r2[1] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
-            Bab_rsAlternative.Bab_rs21_2 = dksidheta_r*a3sVecs_s1[2] + dksidheta_s*a3rVecs_r2[1] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s1[2] + dksidheta_s*a3rVecs_r2[1] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs21_0 = ddksi_r*a3sVecs_s1_2 + ddksi_s*a3rVecs_r2_1 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs21_1 = ddheta_r*a3sVecs_s1_2 + ddheta_s*a3rVecs_r2_1 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
+            Bab_rsAlternative.Bab_rs21_2 = dksidheta_r*a3sVecs_s1_2 + dksidheta_s*a3rVecs_r2_1 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s1_2 + dksidheta_s*a3rVecs_r2_1 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
             //............[r, s]
-            da3 = da3_drds[2, 2];
+            da3[0] = da3_drds[2, 2][0]; da3[1] = da3_drds[2, 2][1]; da3[2] = da3_drds[2, 2][2];
             //......................rs[A]..[A}..[r].........s[r]+..[A].[s]..........r[s]...........................................................................[r,s]
-            Bab_rsAlternative.Bab_rs22_0 = ddksi_r*a3sVecs_s2[2] + ddksi_s*a3rVecs_r2[2] + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
-            Bab_rsAlternative.Bab_rs22_1 = ddheta_r*a3sVecs_s2[2] + ddheta_s*a3rVecs_r2[2] + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
-            Bab_rsAlternative.Bab_rs22_2 = dksidheta_r*a3sVecs_s2[2] + dksidheta_s*a3rVecs_r2[2] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
-                                         + dksidheta_r*a3sVecs_s2[2] + dksidheta_s*a3rVecs_r2[2] + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
+            Bab_rsAlternative.Bab_rs22_0 = ddksi_r*a3sVecs_s2_2 + ddksi_s*a3rVecs_r2_2 + s11[0]*da3[0]+s11[1]*da3[1]+s11[2]*da3[2];
+            Bab_rsAlternative.Bab_rs22_1 = ddheta_r*a3sVecs_s2_2 + ddheta_s*a3rVecs_r2_2 + s22[0]*da3[0]+s22[1]*da3[1]+s22[2]*da3[2];
+            Bab_rsAlternative.Bab_rs22_2 = dksidheta_r*a3sVecs_s2_2 + dksidheta_s*a3rVecs_r2_2 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2] 
+                                         + dksidheta_r*a3sVecs_s2_2 + dksidheta_s*a3rVecs_r2_2 + s12[0]*da3[0]+s12[1]*da3[1]+s12[2]*da3[2];
 
             return Bab_rsAlternative;
         }

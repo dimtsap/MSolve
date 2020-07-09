@@ -1059,10 +1059,10 @@ namespace ISAAR.MSolve.IGA.Elements
                     a3rs=new a3rs();//Clear struct values
                     var a1s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesKsi[k, j]);
                     var a2s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[k, j]);
-                    (a3rs a3rsAlternative, Vector[,] da3tilde_drds, Vector[] da3tilde_dr, Vector[] da3tilde_ds,
-                        double[] dnorma3_dr, double[] dnorma3_ds, double[,] dnorma3_drds, Vector a3_tilde, Vector[,] da3_drds) =
+                    (a3rs a3rsAlternative, var da3tilde_drds, var da3tilde_dr, var da3tilde_ds,
+                        double[] dnorma3_dr, double[] dnorma3_ds, double[,] dnorma3_drds, var a3_tilde, var da3_drds) =
                         Calculate_a3rs(Vector.CreateFromArray(surfaceBasisVector1), Vector.CreateFromArray(surfaceBasisVector2), 
-                            Vector.CreateFromArray(surfaceBasisVector3),J1, a1r, a2s, a1s, a2r);
+                            Vector.CreateFromArray(surfaceBasisVector3),J1, dksi_r,dksi_s, dheta_r, dheta_s);
                     
                     Bab_rs Bab_rsAlternative = CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2,
                         surfaceBasisVectorDerivative12,d2Ksi_dr2,d2Ksi_ds2, d2Heta_dr2,d2Heta_ds2, d2KsiHeta_dr2,d2KsiHeta_ds2,
@@ -1153,7 +1153,7 @@ namespace ISAAR.MSolve.IGA.Elements
         internal static Bab_rs CalculateBab_rs(double[] surfaceBasisVectorDerivative1,
             double[] surfaceBasisVectorDerivative2, double[] surfaceBasisVectorDerivative12,
             double ddksi_r, double ddksi_s, double ddheta_r, double ddheta_s,  double dksidheta_r,
-            double dksidheta_s,a3rs a3rsAlternative, a3r a3r, a3r a3s, Vector[,] da3_drds)
+            double dksidheta_s,a3rs a3rsAlternative, a3r a3r, a3r a3s, double[,][] da3_drds)
         {
             var s11 = surfaceBasisVectorDerivative1;
             var s22 = surfaceBasisVectorDerivative2;
@@ -1439,42 +1439,36 @@ namespace ISAAR.MSolve.IGA.Elements
             #endregion
         }
 
-        internal static (a3rs ,Vector[,], Vector[], Vector[], double[], double[], double[,], Vector, Vector[,] ) Calculate_a3rs(Vector surfaceBasisVector1, Vector surfaceBasisVector2,
-            Vector surfaceBasisVector3, double J1, Matrix3by3 a1r, Matrix3by3 a2s, Matrix3by3 a1s, Matrix3by3 a2r)
+        internal static (a3rs ,double[,][], double[][], double[][], double[], double[], double[,], double[], double[,][] ) Calculate_a3rs(Vector surfaceBasisVector1, Vector surfaceBasisVector2,
+            Vector surfaceBasisVector3, double J1, 
+            double dKsi_r, double dKsi_s, double dHeta_r, double dHeta_s)
         {
-            var da3_drds = new Vector[3, 3];
-            Vector[,] da3tilde_drds = new Vector[3, 3];
-            Vector[] da3tilde_dr = new Vector[3];
-            Vector[] da3tilde_ds = new Vector[3];
-            Vector a3_tilde;
+            var da3_drds = new double[3, 3][];
+            var da3tilde_drds = new double[3, 3][];
+            var da3tilde_dr = new double[3][];
+            var da3tilde_ds = new double[3][];
+            double[] a3_tilde;
             double[] dnorma3_dr = new double[3];
             double[] dnorma3_ds = new double[3];
             double[,] dnorma3_drds = new double[3, 3];
 
-
             //5.30
-            for (int r1 = 0; r1 < 3; r1++)
-            {
-                for (int s1 = 0; s1 < 3; s1++)
-                {
-                    da3tilde_drds[r1, s1] = a1r.GetColumn(r1).CrossProduct(a2s.GetColumn(s1)) + a1s.GetColumn(s1).CrossProduct(a2r.GetColumn(r1));
-                }
-            }
+            Calculate_da3tilde_drds(dKsi_r, dKsi_s, dHeta_r, dHeta_s, da3tilde_drds);
 
             //5.24
-            for (int r1 = 0; r1 < 3; r1++)
-            {
-                da3tilde_dr[r1] = a1r.GetColumn(r1).CrossProduct(surfaceBasisVector2) + surfaceBasisVector1.CrossProduct(a2r.GetColumn(r1));
-            }
+            Calculate_da3tilde_dr(surfaceBasisVector1, surfaceBasisVector2, dKsi_r, dHeta_r, da3tilde_dr);
 
             //5.24
-            for (int s1 = 0; s1 < 3; s1++)
-            {
-                da3tilde_ds[s1] = a1s.GetColumn(s1).CrossProduct(surfaceBasisVector2) + surfaceBasisVector1.CrossProduct(a2s.GetColumn(s1));
-            }
+            Calculate_da3tilde_dr(surfaceBasisVector1, surfaceBasisVector2, dKsi_s, dHeta_s, da3tilde_ds);
+            
 
             //5.25
-            a3_tilde = surfaceBasisVector3.Scale(J1);
+            a3_tilde = new double[]
+            {
+                surfaceBasisVector3[0]*J1,
+                surfaceBasisVector3[1]*J1,
+                surfaceBasisVector3[2]*J1,
+            };
             for (int r1 = 0; r1 < 3; r1++)
             {
                 dnorma3_dr[r1] = (a3_tilde.DotProduct(da3tilde_dr[r1])) / J1;
@@ -1503,21 +1497,51 @@ namespace ISAAR.MSolve.IGA.Elements
             {
                 for (int s1 = 0; s1 < 3; s1++)
                 {
-                    Vector firstVec = da3tilde_drds[r1, s1].Scale(((double)1 / J1));
+                    double[] firstVec = new double[]
+                    {
+                        da3tilde_drds[r1, s1][0] / J1, da3tilde_drds[r1, s1][1] / J1, da3tilde_drds[r1, s1][2] / J1,
+                    };
 
                     double scale2 =-( (double)1 / (Math.Pow(J1, 2))); //denominator of vectors 2 3 and 4 and a minus.
 
-                    Vector secondVec = da3tilde_dr[r1].Scale(dnorma3_ds[s1]).Scale(scale2);
+                    var scale3 = dnorma3_ds[s1]*scale2;
+                    double[] secondVec = new double[]
+                    {
+                        da3tilde_dr[r1][0]*scale3, da3tilde_dr[r1][1]*scale3, da3tilde_dr[r1][2]*scale3,
+                    };
 
-                    Vector thirdVec = da3tilde_ds[s1].Scale(dnorma3_dr[r1]).Scale(scale2);
+                    var scale4 = dnorma3_dr[r1] * scale2;
+                    double[] thirdVec = new double[]
+                    {
+                        da3tilde_ds[s1][0] * scale4,
+                        da3tilde_ds[s1][1] * scale4,
+                        da3tilde_ds[s1][2] * scale4,
+                    };
 
-                    Vector fourthVec = a3_tilde.Scale(dnorma3_drds[r1, s1]).Scale(scale2);
+                    var scale6 = dnorma3_drds[r1, s1]*scale2;
+                    double[] fourthVec = new double[]
+                    {
+                        a3_tilde[0]*scale6,
+                        a3_tilde[1]*scale6,
+                        a3_tilde[2]*scale6,
+                    };
 
                     double scale5 = ((double)1) / Math.Pow(J1, 3);
 
-                    Vector fifthvector = a3_tilde.Scale(2 * dnorma3_dr[r1] * dnorma3_ds[s1]).Scale(scale5);
+                    var scale7 = 2 * dnorma3_dr[r1] * dnorma3_ds[s1] * scale5;
+                    double[] fifthvector = new double[]
+                    {
+                        a3_tilde[0] * scale7,
+                        a3_tilde[1] * scale7,
+                        a3_tilde[2] * scale7
+                    };
 
-                    da3_drds[r1, s1] = firstVec + secondVec + thirdVec + fourthVec + fifthvector;
+                    da3_drds[r1, s1] = new double[]
+                    {
+                        firstVec[0] + secondVec[0] + thirdVec[0] + fourthVec[0] + fifthvector[0],
+                        firstVec[1] + secondVec[1] + thirdVec[1] + fourthVec[1] + fifthvector[1],
+                        firstVec[2] + secondVec[2] + thirdVec[2] + fourthVec[2] + fifthvector[2],
+                    };
 
                 }
             }
@@ -1537,6 +1561,54 @@ namespace ISAAR.MSolve.IGA.Elements
 
             return (a3rsAlternative, da3tilde_drds, da3tilde_dr, da3tilde_ds, dnorma3_dr, dnorma3_ds, dnorma3_drds, a3_tilde, da3_drds);
 
+        }
+
+        private static void Calculate_da3tilde_drds(double dKsi_r, double dKsi_s, double dHeta_r, double dHeta_s,
+            double[,][] da3tilde_drds)
+        {
+            //da3tilde_drds[r1, s1] = a1r.GetColumn(r1).CrossProduct(a2s.GetColumn(s1)) +
+            //                        a1s.GetColumn(s1).CrossProduct(a2r.GetColumn(r1));
+            
+            var dksiRxdHetaS = dKsi_r*dHeta_s;
+            var dHetaRxdKsiS = dHeta_r*dKsi_s;
+            da3tilde_drds[0, 0]= new double[3];
+            da3tilde_drds[0, 1]= new double[]{0,0,dksiRxdHetaS-dHetaRxdKsiS};
+            da3tilde_drds[0, 2]= new double[]{0,dHetaRxdKsiS-dksiRxdHetaS,0};
+
+            da3tilde_drds[1, 0]= new double[]{0,0,dHetaRxdKsiS-dksiRxdHetaS};
+            da3tilde_drds[1, 1]= new double[3];
+            da3tilde_drds[1, 2]= new double[]{dksiRxdHetaS-dHetaRxdKsiS,0,0};
+
+            da3tilde_drds[2, 0]= new double[]{0,dksiRxdHetaS-dHetaRxdKsiS,0};
+            da3tilde_drds[2, 1]= new double[]{dHetaRxdKsiS-dksiRxdHetaS,0,0};
+            da3tilde_drds[2, 2]= new double[3];
+        }
+
+        private static void Calculate_da3tilde_dr(Vector surfaceBasisVector1, Vector surfaceBasisVector2, double dksi_r,
+            double dHeta_r, double[][] da3tilde_dr)
+        {
+            //da3tilde_dr[r1] = a1r.GetColumn(r1).CrossProduct(surfaceBasisVector2) + surfaceBasisVector1.CrossProduct(a2r.GetColumn(r1));
+
+            da3tilde_dr[0]=new double[]
+            {
+                0,
+                -dksi_r*surfaceBasisVector2[2]+surfaceBasisVector1[2]*dHeta_r,
+                dksi_r*surfaceBasisVector2[1]-surfaceBasisVector1[1]*dHeta_r
+            };
+
+            da3tilde_dr[1]=new double[]
+            {
+               dksi_r*surfaceBasisVector2[2]-surfaceBasisVector1[2]*dHeta_r,
+               0,
+               -dksi_r*surfaceBasisVector2[0]+surfaceBasisVector1[0]*dHeta_r
+            };
+
+            da3tilde_dr[2]=new double[]
+            {
+               -dksi_r*surfaceBasisVector2[1]+dHeta_r*surfaceBasisVector1[1],
+               dksi_r*surfaceBasisVector2[0]-dHeta_r*surfaceBasisVector1[0],
+               0
+            };
         }
 
         internal static (a3rs ,Vector[,], Vector[], Vector[], double[], double[], double[,], Vector, Vector[,] ) Calculate_a3rs_OLD(Vector surfaceBasisVector1, Vector surfaceBasisVector2,

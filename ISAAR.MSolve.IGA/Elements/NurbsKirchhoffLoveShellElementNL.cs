@@ -1061,8 +1061,8 @@ namespace ISAAR.MSolve.IGA.Elements
                     var a2s = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[k, j]);
                     (a3rs a3rsAlternative, Vector[,] da3tilde_drds, Vector[] da3tilde_dr, Vector[] da3tilde_ds,
                         double[] dnorma3_dr, double[] dnorma3_ds, double[,] dnorma3_drds, Vector a3_tilde, Vector[,] da3_drds) =
-                        Calculate_a3rs(Vector.CreateFromArray(surfaceBasisVector1), Vector.CreateFromArray(surfaceBasisVector2), Vector.CreateFromArray(surfaceBasisVector3),
-                        J1, a1r, a2s, a1s, a2r);
+                        Calculate_a3rs(Vector.CreateFromArray(surfaceBasisVector1), Vector.CreateFromArray(surfaceBasisVector2), 
+                            Vector.CreateFromArray(surfaceBasisVector3),J1, a1r, a2s, a1s, a2r);
                     
                     Bab_rs Bab_rsAlternative = CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2,
                         surfaceBasisVectorDerivative12,d2Ksi_dr2,d2Ksi_ds2, d2Heta_dr2,d2Heta_ds2, d2KsiHeta_dr2,d2KsiHeta_ds2,
@@ -1537,97 +1537,6 @@ namespace ISAAR.MSolve.IGA.Elements
 
             return (a3rsAlternative, da3tilde_drds, da3tilde_dr, da3tilde_ds, dnorma3_dr, dnorma3_ds, dnorma3_drds, a3_tilde, da3_drds);
 
-            #region original formulations
-            //var term1_532 = new Vector[3, 3];
-            //for (int m = 0; m < 3; m++)
-            //{
-            //    for (int n = 0; n < 3; n++)
-            //    {
-            //        var temp = a1r.GetColumn(m).CrossProduct(a2s.GetColumn(n)) +
-            //                   a1s.GetColumn(n).CrossProduct(a2r.GetColumn(m));
-            //        temp.ScaleIntoThis(J1);
-            //        term1_532[m, n] = temp;
-            //    }
-            //}
-
-            //var term2_532 = new Vector[3, 3];
-            //for (int m = 0; m < 3; m++)
-            //{
-            //    // 5.24 Kiendl Thesis
-            //    var a3r_dashed = a1r.GetColumn(m).CrossProduct(surfaceBasisVector2) +
-            //                     surfaceBasisVector1.CrossProduct(a2r.GetColumn(m));
-            //    for (int n = 0; n < 3; n++)
-            //    {
-            //        //TODO: a3s_dashed, a3r_dashed calculated out of the loop for all cp
-            //        var a3s_dashed = a1s.GetColumn(n).CrossProduct(surfaceBasisVector2) +
-            //                         surfaceBasisVector1.CrossProduct(a2s.GetColumn(n));
-            //        // 5.25 Kiendl Thesis
-            //        var term_525 = surfaceBasisVector3 * a3s_dashed;
-            //        term2_532[m, n] = a3r_dashed.Scale(-term_525 / J1 / J1);
-            //    }
-            //}
-
-            //var term3_532 = new Vector[3, 3];
-            //for (int m = 0; m < 3; m++)
-            //{
-            //    var a3r_dashed = a1r.GetColumn(m).CrossProduct(surfaceBasisVector2) +
-            //                     surfaceBasisVector1.CrossProduct(a2r.GetColumn(m));
-            //    for (int n = 0; n < 3; n++)
-            //    {
-            //        var a3s_dashed = a1s.GetColumn(n).CrossProduct(surfaceBasisVector2) +
-            //                         surfaceBasisVector1.CrossProduct(a2s.GetColumn(n));
-            //        var term_525 = surfaceBasisVector3 * a3r_dashed;
-            //        term3_532[m, n] = a3s_dashed.Scale(-term_525 / J1 / J1);
-            //    }
-            //}
-
-            //var term4_532 = new Vector[3, 3];
-            //for (int m = 0; m < 3; m++)
-            //{
-            //    var a3r_dashed = a1r.GetColumn(m).CrossProduct(surfaceBasisVector2) +
-            //                     surfaceBasisVector1.CrossProduct(a2r.GetColumn(m));
-            //    for (int n = 0; n < 3; n++)
-            //    {
-            //        var a3s_dashed = a1s.GetColumn(n).CrossProduct(surfaceBasisVector2) +
-            //                         surfaceBasisVector1.CrossProduct(a2s.GetColumn(n));
-            //        // term 5_31
-            //        var a3_rs = ((term1_532[m, n] * J1) *
-            //                     (surfaceBasisVector3 * J1)
-            //                     + a3r_dashed * a3s_dashed) / J1 -
-            //                    ((a3r_dashed * surfaceBasisVector3 * J1) *
-            //                     (a3s_dashed * surfaceBasisVector3 * J1)) / J1 / J1 / J1;
-
-            //        term4_532[m, n] = surfaceBasisVector3.Scale(-a3_rs / J1);
-            //    }
-            //}
-
-            //var term5_532 = new Vector[3, 3];
-            //for (int m = 0; m < 3; m++)
-            //{
-            //    var a3r_dashed = a1r.GetColumn(m).CrossProduct(surfaceBasisVector2) +
-            //                     surfaceBasisVector1.CrossProduct(a2r.GetColumn(m));
-            //    var term_525_r = surfaceBasisVector3 * a3r_dashed;
-            //    for (int n = 0; n < 3; n++)
-            //    {
-            //        var a3s_dashed = a1s.GetColumn(n).CrossProduct(surfaceBasisVector2) +
-            //                         surfaceBasisVector1.CrossProduct(a2s.GetColumn(n));
-            //        var term_525_s = surfaceBasisVector3 * a3s_dashed;
-
-            //        term5_532[m, n] = surfaceBasisVector3.Scale(2 / J1 / J1 * term_525_r * term_525_s);
-            //    }
-            //}
-
-            
-            //for (int m = 0; m < 3; m++)
-            //{
-            //    for (int n = 0; n < 3; n++)
-            //    {
-            //        a3rs[m, n] = term1_532[m, n] + term2_532[m, n] + term3_532[m, n] + term4_532[m, n] +
-            //                     term5_532[m, n];
-            //    }
-            //}
-            #endregion
-            
         }
 
         internal static (a3rs ,Vector[,], Vector[], Vector[], double[], double[], double[,], Vector, Vector[,] ) Calculate_a3rs_OLD(Vector surfaceBasisVector1, Vector surfaceBasisVector2,

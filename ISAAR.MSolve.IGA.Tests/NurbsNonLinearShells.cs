@@ -16,6 +16,7 @@ using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
+using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
@@ -762,63 +763,63 @@ namespace ISAAR.MSolve.IGA.Tests
             a3s.a3r21=1.1827148338265939E-14	;
             a3s.a3r22=	-1.7648185299346879E-06	;
             
-            var da3_drds = new Vector[3,3];
-            da3_drds[0, 0] = Vector.CreateFromArray(new double[]
+            var da3_drds = new double[3,3][];
+            da3_drds[0, 0] = new double[]
             {
                 1.5266467195814444E-05,
                 1.3016307114560258E-05,
                 -1.1837641977763269E-11,
-            });
-            da3_drds[0,1] = Vector.CreateFromArray(new double[]
+            };
+            da3_drds[0,1] = new double[]
             {
                 6.390871065454354E-06,
                 5.448905725897356E-06,
                 -2.55440113505756E-12
-            });
-            da3_drds[0, 2] = Vector.CreateFromArray(new double[]
+            };
+            da3_drds[0, 2] = new double[]
             {
                 18.220623150741094,
                 15.535043157448497,
                 -2.0715372921711805E-05
-            });
+            };
 
-            da3_drds[1, 0] = Vector.CreateFromArray(new double[]
+            da3_drds[1, 0] = new double[]
             {
                 6.390871065454354E-06,
                 5.448905725897356E-06,
                 -2.55440113505756E-12
-            });
-            da3_drds[1, 1] = Vector.CreateFromArray(new double[]
+            };
+            da3_drds[1, 1] = new double[]
             {
                 -1.9999190555149591E-07,
                 -1.7051463378493538E-07,
                 8.8817841970012523E-14
-            });
-            da3_drds[1, 2] = Vector.CreateFromArray(new double[]
+            };
+            da3_drds[1, 2] = new double[]
             {
                 15.53504315745124,
                 13.245297041003683,
                 -6.22035643166942E-06
-            });
+            };
 
-            da3_drds[2, 0] = Vector.CreateFromArray(new double[]
+            da3_drds[2, 0] = new double[]
             {
                 18.220623150741094,
                 15.535043157448497,
                 -2.0715372921711805E-05
-            });
-            da3_drds[2, 1] = Vector.CreateFromArray(new double[]
+            };
+            da3_drds[2, 1] = new double[]
             {
                 15.53504315745124,
                 13.245297041003683,
                 -6.22035643166942E-06
-            });
-            da3_drds[2, 2] = Vector.CreateFromArray(new double[]
+            };
+            da3_drds[2, 2] = new double[]
             {
                 -2.8248610566845741E-05,
                 -1.2643252672057042E-05,
                 -31.465920191744779
-            });
+            };
 
             Bab_rs Bab_rsExpected= new Bab_rs();
             Bab_rsExpected.Bab_rs00_0=	1.5564548295526568E-05	;
@@ -883,6 +884,157 @@ namespace ISAAR.MSolve.IGA.Tests
             Assert.Equal(Bab_rsExpected.Bab_rs22_0,Bab_rsAlternative.Bab_rs22_0  ,9);
             Assert.Equal(Bab_rsExpected.Bab_rs22_1,Bab_rsAlternative.Bab_rs22_1  ,9);
             Assert.Equal(Bab_rsExpected.Bab_rs22_2,Bab_rsAlternative.Bab_rs22_2  ,9);
+        }
+
+        [Fact]
+        public void Test_a3rs()
+        {
+            var surfaceBasisVector1 = Vector.CreateFromArray(new double[]{0.49281343102090647,
+                                                                          -0.0027907619686642761,
+                                                                          -2.0647413184286493E-07});
+            var surfaceBasisVector2 =Vector.CreateFromArray(new double[]{0.0032374497982368571,
+                0.57141938776238976,
+                2.3218349204021492E-09});
+            var surfaceBasisVector3 = Vector.CreateFromArray(new double[]{4.1893372881671206E-07,
+                                                                          -6.4367991618857595E-09,
+                0.99999999999991229});
+            double J1 = 0.28161218398684618;
+            var dksi_r = -2.0934480533670992;
+            var dheta_r = -2.0934480533670996;
+
+            var dksi_s = -2.0934480533670992;
+            var dheta_s= -2.0934480533670996;
+
+            #region Expected Values
+            var a3rsExpected= new a3rs();
+            a3rsExpected.a3rs00_0=	1.5266467195814444E-05	;
+            a3rsExpected.a3rs00_1=	1.3016307114560258E-05	;
+            a3rsExpected.a3rs00_2=	-1.1837641977763269E-11	;
+            a3rsExpected.a3rs01_0=	6.390871065454354E-06	;
+            a3rsExpected.a3rs01_1=	5.448905725897356E-06	;
+            a3rsExpected.a3rs01_2=	-2.55440113505756E-12	;
+            a3rsExpected.a3rs02_0=	18.220623150741094	;
+            a3rsExpected.a3rs02_1=	15.535043157448497	;
+            a3rsExpected.a3rs02_2=	-2.0715372921711805E-05	;
+            a3rsExpected.a3rs10_0=	6.390871065454354E-06	;
+            a3rsExpected.a3rs10_1=	5.448905725897356E-06	;
+            a3rsExpected.a3rs10_2=	-2.55440113505756E-12	;
+            a3rsExpected.a3rs11_0=	-1.9999190555149591E-07	;
+            a3rsExpected.a3rs11_1=	-1.7051463378493538E-07	;
+            a3rsExpected.a3rs11_2=	8.8817841970012523E-14	;
+            a3rsExpected.a3rs12_0=	15.53504315745124	;
+            a3rsExpected.a3rs12_1=	13.245297041003683	;
+            a3rsExpected.a3rs12_2=	-6.22035643166942E-06	;
+            a3rsExpected.a3rs20_0=	18.220623150741094	; 
+            a3rsExpected.a3rs20_1=	15.535043157448497	;
+            a3rsExpected.a3rs20_2=	-2.0715372921711805E-05	;
+            a3rsExpected.a3rs21_0=	15.53504315745124	;
+            a3rsExpected.a3rs21_1=	13.245297041003683	;
+            a3rsExpected.a3rs21_2=	-6.22035643166942E-06	;
+            a3rsExpected.a3rs22_0=	-2.8248610566845741E-05	;
+            a3rsExpected.a3rs22_1=	-1.2643252672057042E-05	;
+            a3rsExpected.a3rs22_2=	-31.465920191744779	;
+
+            var da3_drdsExpected = new Vector[3, 3];
+            da3_drdsExpected[0, 0] = Vector.CreateFromArray(new double[] { 1.5266467195814444E-05,
+                1.3016307114560258E-05,
+                -1.1837641977763269E-11 });
+            da3_drdsExpected[0, 1] = Vector.CreateFromArray(new double[] { 6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12 });
+            da3_drdsExpected[0, 2] = Vector.CreateFromArray(new double[] {18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05 });
+
+            da3_drdsExpected[1, 0] = Vector.CreateFromArray(new double[]
+            {
+                6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12
+            });
+            da3_drdsExpected[1, 1] = Vector.CreateFromArray(new double[] { -1.9999190555149591E-07,
+                                                                           -1.7051463378493538E-07,
+                8.8817841970012523E-14 });
+            da3_drdsExpected[1, 2] = Vector.CreateFromArray(new double[] { 15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06 });
+
+            da3_drdsExpected[2, 0] = Vector.CreateFromArray(new double[] { 18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05 });
+            da3_drdsExpected[2, 1] = Vector.CreateFromArray(new double[] { 15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06 });
+            da3_drdsExpected[2, 2] = Vector.CreateFromArray(new double[] { -2.8248610566845741E-05,
+                                                                           -1.2643252672057042E-05,
+                                                                           -31.465920191744779 });
+            #endregion
+
+            (a3rs a3rsAlternative, var da3tilde_drds, var da3tilde_dr, var da3tilde_ds,
+                    double[] dnorma3_dr, double[] dnorma3_ds, double[,] dnorma3_drds, var a3_tilde, var da3_drds) =
+                NurbsKirchhoffLoveShellElementNL.Calculate_a3rs(surfaceBasisVector1, surfaceBasisVector2,
+                    surfaceBasisVector3, J1, dksi_r, dksi_s, dheta_r,dheta_s);
+            
+            #region Assertions
+            Assert.Equal(a3rsExpected.a3rs00_0 ,a3rsAlternative.a3rs00_0,9);
+            Assert.Equal(a3rsExpected.a3rs00_1 ,a3rsAlternative.a3rs00_1,9);
+            Assert.Equal(a3rsExpected.a3rs00_2 ,a3rsAlternative.a3rs00_2,9);
+            Assert.Equal(a3rsExpected.a3rs01_0 ,a3rsAlternative.a3rs01_0,9);
+            Assert.Equal(a3rsExpected.a3rs01_1 ,a3rsAlternative.a3rs01_1,9);
+            Assert.Equal(a3rsExpected.a3rs01_2 ,a3rsAlternative.a3rs01_2,9);
+            Assert.Equal(a3rsExpected.a3rs02_0 ,a3rsAlternative.a3rs02_0,9);
+            Assert.Equal(a3rsExpected.a3rs02_1 ,a3rsAlternative.a3rs02_1,9);
+            Assert.Equal(a3rsExpected.a3rs02_2 ,a3rsAlternative.a3rs02_2,9);
+            Assert.Equal(a3rsExpected.a3rs10_0 ,a3rsAlternative.a3rs10_0,9);
+            Assert.Equal(a3rsExpected.a3rs10_1 ,a3rsAlternative.a3rs10_1,9);
+            Assert.Equal(a3rsExpected.a3rs10_2 ,a3rsAlternative.a3rs10_2,9);
+            Assert.Equal(a3rsExpected.a3rs11_0 ,a3rsAlternative.a3rs11_0,9);
+            Assert.Equal(a3rsExpected.a3rs11_1 ,a3rsAlternative.a3rs11_1,9);
+            Assert.Equal(a3rsExpected.a3rs11_2 ,a3rsAlternative.a3rs11_2,9);
+            Assert.Equal(a3rsExpected.a3rs12_0 ,a3rsAlternative.a3rs12_0,9);
+            Assert.Equal(a3rsExpected.a3rs12_1 ,a3rsAlternative.a3rs12_1,9);
+            Assert.Equal(a3rsExpected.a3rs12_2 ,a3rsAlternative.a3rs12_2,9);
+            Assert.Equal(a3rsExpected.a3rs20_0 ,a3rsAlternative.a3rs20_0,9);
+            Assert.Equal(a3rsExpected.a3rs20_1 ,a3rsAlternative.a3rs20_1,9);
+            Assert.Equal(a3rsExpected.a3rs20_2 ,a3rsAlternative.a3rs20_2,9);
+            Assert.Equal(a3rsExpected.a3rs21_0 ,a3rsAlternative.a3rs21_0,9);
+            Assert.Equal(a3rsExpected.a3rs21_1 ,a3rsAlternative.a3rs21_1,9);
+            Assert.Equal(a3rsExpected.a3rs21_2 ,a3rsAlternative.a3rs21_2,9);
+            Assert.Equal(a3rsExpected.a3rs22_0 ,a3rsAlternative.a3rs22_0,9);
+            Assert.Equal(a3rsExpected.a3rs22_1 ,a3rsAlternative.a3rs22_1,9);
+            Assert.Equal(a3rsExpected.a3rs22_2 ,a3rsAlternative.a3rs22_2,9);
+
+
+            Assert.Equal(da3_drdsExpected[0, 0][0], da3_drds[0, 0][0],9);
+            Assert.Equal(da3_drdsExpected[0, 0][1], da3_drds[0, 0][1],9);
+            Assert.Equal(da3_drdsExpected[0, 0][2], da3_drds[0, 0][2],9);
+            Assert.Equal(da3_drdsExpected[0, 1][0], da3_drds[0, 1][0],9);
+            Assert.Equal(da3_drdsExpected[0, 1][1], da3_drds[0, 1][1],9);
+            Assert.Equal(da3_drdsExpected[0, 1][2], da3_drds[0, 1][2],9);
+            Assert.Equal(da3_drdsExpected[0, 2][0], da3_drds[0, 2][0],9);
+            Assert.Equal(da3_drdsExpected[0, 2][1], da3_drds[0, 2][1],9);
+            Assert.Equal(da3_drdsExpected[0, 2][2], da3_drds[0, 2][2],9);
+                                                                     
+            Assert.Equal(da3_drdsExpected[1, 0][0], da3_drds[1, 0][0],9);
+            Assert.Equal(da3_drdsExpected[1, 0][1], da3_drds[1, 0][1],9);
+            Assert.Equal(da3_drdsExpected[1, 0][2], da3_drds[1, 0][2],9);
+            Assert.Equal(da3_drdsExpected[1, 1][0], da3_drds[1, 1][0],9);
+            Assert.Equal(da3_drdsExpected[1, 1][1], da3_drds[1, 1][1],9);
+            Assert.Equal(da3_drdsExpected[1, 1][2], da3_drds[1, 1][2],9);
+            Assert.Equal(da3_drdsExpected[1, 2][0], da3_drds[1, 2][0],9);
+            Assert.Equal(da3_drdsExpected[1, 2][1], da3_drds[1, 2][1],9);
+            Assert.Equal(da3_drdsExpected[1, 2][2], da3_drds[1, 2][2],9);
+                                                                     
+            Assert.Equal(da3_drdsExpected[2, 0][0], da3_drds[2, 0][0],9);
+            Assert.Equal(da3_drdsExpected[2, 0][1], da3_drds[2, 0][1],9);
+            Assert.Equal(da3_drdsExpected[2, 0][2], da3_drds[2, 0][2],9);
+            Assert.Equal(da3_drdsExpected[2, 1][0], da3_drds[2, 1][0],9);
+            Assert.Equal(da3_drdsExpected[2, 1][1], da3_drds[2, 1][1],9);
+            Assert.Equal(da3_drdsExpected[2, 1][2], da3_drds[2, 1][2],9);
+            Assert.Equal(da3_drdsExpected[2, 2][0], da3_drds[2, 2][0],9);
+            Assert.Equal(da3_drdsExpected[2, 2][1], da3_drds[2, 2][1],9);
+            Assert.Equal(da3_drdsExpected[2, 2][2], da3_drds[2, 2][2],9);
+            #endregion
         }
     }
 }

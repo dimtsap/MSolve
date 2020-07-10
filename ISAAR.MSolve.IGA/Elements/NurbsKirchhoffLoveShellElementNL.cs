@@ -1465,88 +1465,13 @@ namespace ISAAR.MSolve.IGA.Elements
             
 
             //5.25
-            a3_tilde = new double[]
-            {
-                surfaceBasisVector3[0]*J1,
-                surfaceBasisVector3[1]*J1,
-                surfaceBasisVector3[2]*J1,
-            };
-            for (int r1 = 0; r1 < 3; r1++)
-            {
-                //dnorma3_dr[r1] = (a3_tilde.DotProduct(da3tilde_dr[r1])) / J1;
-                dnorma3_dr[r1] = (a3_tilde[0]*da3tilde_dr[r1][0]+a3_tilde[1]*da3tilde_dr[r1][1]+a3_tilde[2]*da3tilde_dr[r1][2]) / J1;
-            }
-            for (int s1 = 0; s1 < 3; s1++)
-            {
-                //dnorma3_ds[s1] = (a3_tilde.DotProduct(da3tilde_ds[s1])) / J1;
-                dnorma3_ds[s1] = (a3_tilde[0]*da3tilde_ds[s1][0]+a3_tilde[1]*da3tilde_ds[s1][1]+a3_tilde[2]*da3tilde_ds[s1][2]) / J1;
-            }
+            a3_tilde = CalculateTerm525(surfaceBasisVector3, J1, dnorma3_dr, da3tilde_dr, dnorma3_ds, da3tilde_ds);
 
             //5.31
-            for (int r1 = 0; r1 < 3; r1++)
-            {
-                for (int s1 = 0; s1 < 3; s1++)
-                {
-                    //double firstNumerator = da3tilde_drds[r1, s1].DotProduct(a3_tilde) + da3tilde_dr[r1].DotProduct(da3tilde_ds[s1]);
-                    double firstNumerator = da3tilde_drds[r1, s1][0] * a3_tilde[0] + da3tilde_drds[r1, s1][1] * a3_tilde[1] + da3tilde_drds[r1, s1][2] * a3_tilde[2] +
-                                            da3tilde_dr[r1][0] * da3tilde_ds[s1][0] + da3tilde_dr[r1][1] * da3tilde_ds[s1][1] + da3tilde_dr[r1][2] * da3tilde_ds[s1][2];
-                    double firstDenominator = J1;
-                    //double secondNumerator = (da3tilde_dr[r1].DotProduct(a3_tilde)) * (da3tilde_ds[s1].DotProduct(a3_tilde));
-                    double secondNumerator = (da3tilde_dr[r1][0]*a3_tilde[0]+da3tilde_dr[r1][1]*a3_tilde[1]+da3tilde_dr[r1][2]*a3_tilde[2]) *
-                                             (da3tilde_ds[s1][0]*a3_tilde[0]+da3tilde_ds[s1][1]*a3_tilde[1]+da3tilde_ds[s1][2]*a3_tilde[2]);
-                    double secondDenominator = Math.Pow(J1, 3);
-
-                    dnorma3_drds[r1, s1] = (firstNumerator / firstDenominator) - (secondNumerator / secondDenominator);
-                }
-            }
+            CalculateTerm531(J1, da3tilde_drds, a3_tilde, da3tilde_dr, da3tilde_ds, dnorma3_drds);
 
             //5.32
-            var firstVec = new double[3];
-            var secondVec = new double[3];
-            var thirdVec = new double[3];
-            var fourthVec = new double[3];
-            var fifthvector = new double[3];
-            for (int r1 = 0; r1 < 3; r1++)
-            {
-                for (int s1 = 0; s1 < 3; s1++)
-                {
-                    firstVec[0] = da3tilde_drds[r1, s1][0] / J1;
-                    firstVec[1] = da3tilde_drds[r1, s1][1] / J1;
-                    firstVec[2] = da3tilde_drds[r1, s1][2] / J1;
-                    
-                    double scale2 =-( (double)1 / (Math.Pow(J1, 2))); //denominator of vectors 2 3 and 4 and a minus.
-
-                    var scale3 = dnorma3_ds[s1]*scale2;
-                    secondVec[0] = da3tilde_dr[r1][0] * scale3;
-                    secondVec[1] = da3tilde_dr[r1][1] * scale3;
-                    secondVec[2] = da3tilde_dr[r1][2] * scale3;
-
-                    var scale4 = dnorma3_dr[r1] * scale2;
-                    thirdVec[0] = da3tilde_ds[s1][0] * scale4;
-                    thirdVec[1] = da3tilde_ds[s1][1] * scale4;
-                    thirdVec[2] = da3tilde_ds[s1][2] * scale4;
-
-                    var scale6 = dnorma3_drds[r1, s1]*scale2;
-                    fourthVec[0] = a3_tilde[0] * scale6;
-                    fourthVec[1] = a3_tilde[1] * scale6;
-                    fourthVec[2] = a3_tilde[2] * scale6;
-
-                    double scale5 = ((double)1) / Math.Pow(J1, 3);
-
-                    var scale7 = 2 * dnorma3_dr[r1] * dnorma3_ds[s1] * scale5;
-                    fifthvector[0] = a3_tilde[0] * scale7;
-                    fifthvector[1] = a3_tilde[1] * scale7;
-                    fifthvector[2] = a3_tilde[2] * scale7;
-                    
-                    da3_drds[r1, s1] = new double[]
-                    {
-                        firstVec[0] + secondVec[0] + thirdVec[0] + fourthVec[0] + fifthvector[0],
-                        firstVec[1] + secondVec[1] + thirdVec[1] + fourthVec[1] + fifthvector[1],
-                        firstVec[2] + secondVec[2] + thirdVec[2] + fourthVec[2] + fifthvector[2],
-                    };
-
-                }
-            }
+            CalculateTerm532(J1, da3tilde_drds, dnorma3_ds, da3tilde_dr, dnorma3_dr, da3tilde_ds, dnorma3_drds, a3_tilde, da3_drds);
 
             a3rs a3rsAlternative = new a3rs();
             a3rsAlternative.a3rs00_0 = da3_drds[0, 0][0]; a3rsAlternative.a3rs00_1 = da3_drds[0, 0][1]; a3rsAlternative.a3rs00_2 = da3_drds[0, 0][2];
@@ -1563,6 +1488,108 @@ namespace ISAAR.MSolve.IGA.Elements
 
             return (a3rsAlternative, da3tilde_drds, da3tilde_dr, da3tilde_ds, dnorma3_dr, dnorma3_ds, dnorma3_drds, a3_tilde, da3_drds);
 
+        }
+
+        private static void CalculateTerm532(double J1, double[,][] da3tilde_drds, double[] dnorma3_ds, double[][] da3tilde_dr,
+            double[] dnorma3_dr, double[][] da3tilde_ds, double[,] dnorma3_drds, double[] a3_tilde, double[,][] da3_drds)
+        {
+            var firstVec = new double[3];
+            var secondVec = new double[3];
+            var thirdVec = new double[3];
+            var fourthVec = new double[3];
+            var fifthvector = new double[3];
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                for (int s1 = 0; s1 < 3; s1++)
+                {
+                    firstVec[0] = da3tilde_drds[r1, s1][0] / J1;
+                    firstVec[1] = da3tilde_drds[r1, s1][1] / J1;
+                    firstVec[2] = da3tilde_drds[r1, s1][2] / J1;
+
+                    double scale2 = -((double) 1 / (Math.Pow(J1, 2))); //denominator of vectors 2 3 and 4 and a minus.
+
+                    var scale3 = dnorma3_ds[s1] * scale2;
+                    secondVec[0] = da3tilde_dr[r1][0] * scale3;
+                    secondVec[1] = da3tilde_dr[r1][1] * scale3;
+                    secondVec[2] = da3tilde_dr[r1][2] * scale3;
+
+                    var scale4 = dnorma3_dr[r1] * scale2;
+                    thirdVec[0] = da3tilde_ds[s1][0] * scale4;
+                    thirdVec[1] = da3tilde_ds[s1][1] * scale4;
+                    thirdVec[2] = da3tilde_ds[s1][2] * scale4;
+
+                    var scale6 = dnorma3_drds[r1, s1] * scale2;
+                    fourthVec[0] = a3_tilde[0] * scale6;
+                    fourthVec[1] = a3_tilde[1] * scale6;
+                    fourthVec[2] = a3_tilde[2] * scale6;
+
+                    double scale5 = ((double) 1) / Math.Pow(J1, 3);
+
+                    var scale7 = 2 * dnorma3_dr[r1] * dnorma3_ds[s1] * scale5;
+                    fifthvector[0] = a3_tilde[0] * scale7;
+                    fifthvector[1] = a3_tilde[1] * scale7;
+                    fifthvector[2] = a3_tilde[2] * scale7;
+
+                    da3_drds[r1, s1] = new double[]
+                    {
+                        firstVec[0] + secondVec[0] + thirdVec[0] + fourthVec[0] + fifthvector[0],
+                        firstVec[1] + secondVec[1] + thirdVec[1] + fourthVec[1] + fifthvector[1],
+                        firstVec[2] + secondVec[2] + thirdVec[2] + fourthVec[2] + fifthvector[2],
+                    };
+                }
+            }
+        }
+
+        private static void CalculateTerm531(double J1, double[,][] da3tilde_drds, double[] a3_tilde, double[][] da3tilde_dr,
+            double[][] da3tilde_ds, double[,] dnorma3_drds)
+        {
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                for (int s1 = 0; s1 < 3; s1++)
+                {
+                    //double firstNumerator = da3tilde_drds[r1, s1].DotProduct(a3_tilde) + da3tilde_dr[r1].DotProduct(da3tilde_ds[s1]);
+                    double firstNumerator = da3tilde_drds[r1, s1][0] * a3_tilde[0] + da3tilde_drds[r1, s1][1] * a3_tilde[1] +
+                                            da3tilde_drds[r1, s1][2] * a3_tilde[2] +
+                                            da3tilde_dr[r1][0] * da3tilde_ds[s1][0] + da3tilde_dr[r1][1] * da3tilde_ds[s1][1] +
+                                            da3tilde_dr[r1][2] * da3tilde_ds[s1][2];
+                    double firstDenominator = J1;
+                    //double secondNumerator = (da3tilde_dr[r1].DotProduct(a3_tilde)) * (da3tilde_ds[s1].DotProduct(a3_tilde));
+                    double secondNumerator = (da3tilde_dr[r1][0] * a3_tilde[0] + da3tilde_dr[r1][1] * a3_tilde[1] +
+                                              da3tilde_dr[r1][2] * a3_tilde[2]) *
+                                             (da3tilde_ds[s1][0] * a3_tilde[0] + da3tilde_ds[s1][1] * a3_tilde[1] +
+                                              da3tilde_ds[s1][2] * a3_tilde[2]);
+                    double secondDenominator = Math.Pow(J1, 3);
+
+                    dnorma3_drds[r1, s1] = (firstNumerator / firstDenominator) - (secondNumerator / secondDenominator);
+                }
+            }
+        }
+
+        private static double[] CalculateTerm525(Vector surfaceBasisVector3, double J1, double[] dnorma3_dr,
+            double[][] da3tilde_dr, double[] dnorma3_ds, double[][] da3tilde_ds)
+        {
+            double[] a3_tilde;
+            a3_tilde = new double[]
+            {
+                surfaceBasisVector3[0] * J1,
+                surfaceBasisVector3[1] * J1,
+                surfaceBasisVector3[2] * J1,
+            };
+            for (int r1 = 0; r1 < 3; r1++)
+            {
+                //dnorma3_dr[r1] = (a3_tilde.DotProduct(da3tilde_dr[r1])) / J1;
+                dnorma3_dr[r1] = (a3_tilde[0] * da3tilde_dr[r1][0] + a3_tilde[1] * da3tilde_dr[r1][1] +
+                                  a3_tilde[2] * da3tilde_dr[r1][2]) / J1;
+            }
+
+            for (int s1 = 0; s1 < 3; s1++)
+            {
+                //dnorma3_ds[s1] = (a3_tilde.DotProduct(da3tilde_ds[s1])) / J1;
+                dnorma3_ds[s1] = (a3_tilde[0] * da3tilde_ds[s1][0] + a3_tilde[1] * da3tilde_ds[s1][1] +
+                                  a3_tilde[2] * da3tilde_ds[s1][2]) / J1;
+            }
+
+            return a3_tilde;
         }
 
         private static void Calculate_da3tilde_drds(double dKsi_r, double dKsi_s, double dHeta_r, double dHeta_s,

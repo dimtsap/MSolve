@@ -280,6 +280,6 @@ cpcoord = 256
 
 
 
-material = steel 682500000 0.3
+material = steel 68250000 0.3
 
 end

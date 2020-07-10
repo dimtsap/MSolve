@@ -1,0 +1,27 @@
+patchId=0
+
+numberOfDimensions = 2
+
+numberofpatches = 1
+
+numberofcpksi = 8
+
+numberofcpheta = 8
+
+thickness = 12.7
+
+degreeksi = 3
+
+degreeheta = 3
+
+knotvaluevectorksi = 
+
+knotvaluevectorheta =
+
+patchcpid = 
+
+cpcoord = 64
+
+material = steel 20685000 0.3
+
+end

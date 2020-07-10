@@ -745,9 +745,9 @@ namespace ISAAR.MSolve.IGA.Elements
             Array.Clear(BbmTransposeMultStiffness, 0, bRows * bCols);
             for (int i = 0; i < bCols; i++)
             {
-                for (int k = 0; k < bRows; k++)
+                for (int k = 0; k < bRows; k++) // to k sumvolizei to athroisma 
                 {
-                    tempm = BmTranspose[i, k];
+                    tempm = BmTranspose[i, k]; // kai tp , m sumvolizei th thesi pou gemizetai
                     tempb = BbTranspose[i, k];
                     for (int m = 0; m < bRows; m++)
                     {

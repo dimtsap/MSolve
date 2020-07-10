@@ -202,7 +202,7 @@ namespace ISAAR.MSolve.IGA.Entities
             }
             #endregion
 
-            int elementID = 40;
+            int elementID = 0;
             #region print matrices
             (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneNLStiffnesses[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneNLStiffnesses.txt");
             (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingNLStiffnesses[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingNLStiffnesses.txt");

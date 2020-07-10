@@ -275,12 +275,12 @@ namespace ISAAR.MSolve.IGA.Tests
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            //var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
-            //    model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
-            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
-            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
-            //childAnalyzer.IncrementalLogs.Add(0, loggerA);
-            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+                model.ControlPoints.ToList()[0], StructuralDof.TranslationZ, "PinchedHemisphereNegativeLoadNode.txt");
+            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+                model.ControlPoints.ToList()[240], StructuralDof.TranslationZ, "PinchedHemispherePositiveLoadNode.txt");
+            childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            childAnalyzer.IncrementalLogs.Add(1, loggerB);
 
             // Run the analysis
             parentAnalyzer.Initialize();

@@ -24,6 +24,8 @@ namespace ISAAR.MSolve.IGA.Entities
 
         public static bool saveVariationStates { get; set; } = false;
 
+        public static bool performCalculations { get; set; } = false;
+
 
         public static Dictionary<int, double[,]> OriginalLinearStiffnesses = new Dictionary<int, double[,]>(); // element, StiffnesMatrix
         public static Dictionary<int, double[,]> OriginalMembraneNLStiffnesses = new Dictionary<int, double[,]>(); // element, StiffnesMatrix
@@ -91,43 +93,44 @@ namespace ISAAR.MSolve.IGA.Entities
 
         public static void ProcessElement(double[] localSolution, double[] localdSolution, Element element)
         {
-            elementId = element.ID;
+            ElementStiffnesses.elementId = element.ID;
 
             #region initialize variables
-            derivativesCalculated[elementId] = new Dictionary<int, double[,]>();
-            derivativesExpected[elementId] = new Dictionary<int, double[,]>();
-            variableOriginalValues[elementId] = new Dictionary<int, double[]>();
-            variableVariatedValues[elementId] = new Dictionary<int, double[,]>();
+            derivativesCalculated[ElementStiffnesses.elementId] = new Dictionary<int, double[,]>();
+            derivativesExpected[ElementStiffnesses.elementId] = new Dictionary<int, double[,]>();
+            variableOriginalValues[ElementStiffnesses.elementId] = new Dictionary<int, double[]>();
+            variableVariatedValues[ElementStiffnesses.elementId] = new Dictionary<int, double[,]>();
             for (int i1 = 0; i1 < variableIds.Length; i1++)
             {
-                derivativesCalculated[elementId][variableIds[i1]] = new double[variableSizes[i1], localSolution.Length];
-                derivativesExpected[elementId][variableIds[i1]] = new double[variableSizes[i1], localSolution.Length];
-                variableOriginalValues[elementId][variableIds[i1]] = new double[variableSizes[i1]];
-                variableVariatedValues[elementId][variableIds[i1]] = new double[variableSizes[i1], localSolution.Length];
+                derivativesCalculated[ElementStiffnesses.elementId][variableIds[i1]] = new double[variableSizes[i1], localSolution.Length];
+                derivativesExpected[ElementStiffnesses.elementId][variableIds[i1]] = new double[variableSizes[i1], localSolution.Length];
+                variableOriginalValues[ElementStiffnesses.elementId][variableIds[i1]] = new double[variableSizes[i1]];
+                variableVariatedValues[ElementStiffnesses.elementId][variableIds[i1]] = new double[variableSizes[i1], localSolution.Length];
             }
-            variatedForcesStep1[elementId] = new double[localSolution.Length, localSolution.Length];
-            variatedForcesStep2[elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedForcesStep1[ElementStiffnesses.elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedForcesStep2[ElementStiffnesses.elementId] = new double[localSolution.Length, localSolution.Length];
 
-            originalMemebraneForces[elementId] = new double[localSolution.Length];
-            originalBendingForces[elementId] = new double[localSolution.Length];
+            originalMemebraneForces[ElementStiffnesses.elementId] = new double[localSolution.Length];
+            originalBendingForces[ElementStiffnesses.elementId] = new double[localSolution.Length];
 
-            variatedMembraneForcesStep1[elementId] = new double[localSolution.Length, localSolution.Length];
-            variatedBendingForcesStep1[elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedMembraneForcesStep1[ElementStiffnesses.elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedBendingForcesStep1[ElementStiffnesses.elementId] = new double[localSolution.Length, localSolution.Length];
 
-            variatedMembraneForcesStep2[elementId] = new double[localSolution.Length, localSolution.Length];
-            variatedBendingForcesStep2[elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedMembraneForcesStep2[ElementStiffnesses.elementId] = new double[localSolution.Length, localSolution.Length];
+            variatedBendingForcesStep2[ElementStiffnesses.elementId] = new double[localSolution.Length, localSolution.Length];
             #endregion
 
 
             #region original state
+            performCalculations=true;
             saveOriginalState = true;
             element.ElementType.CalculateStresses(element, localSolution, localdSolution);
             saveForcesState0 = true;
-            originalForces[elementId] = element.ElementType.CalculateForces(element, localSolution, localdSolution);
+            originalForces[ElementStiffnesses.elementId] = element.ElementType.CalculateForces(element, localSolution, localdSolution);
             saveForcesState0 = false;
             saveOriginalState = false;
             saveStiffnessMatrixState = true;
-            OriginalStiffnesses[elementId] = element.ElementType.StiffnessMatrix(element).CopytoArray2D();
+            OriginalStiffnesses[ElementStiffnesses.elementId] = element.ElementType.StiffnessMatrix(element).CopytoArray2D();
             saveStiffnessMatrixState = false;
 
             #endregion
@@ -149,7 +152,7 @@ namespace ISAAR.MSolve.IGA.Entities
                 saveForcesState1 = true; ForceVariationDofOrdef = i1;
                 var forces1 = element.ElementType.CalculateForces(element, localSolution, localdSolution);
                 saveForcesState1 = false;
-                for (int i2 = 0; i2 < localSolution.Length; i2++) variatedForcesStep1[elementId][i2, i1] = forces1[i2];
+                for (int i2 = 0; i2 < localSolution.Length; i2++) variatedForcesStep1[ElementStiffnesses.elementId][i2, i1] = forces1[i2];
 
                 localSolution[i1] += -variationSize;
 
@@ -165,7 +168,7 @@ namespace ISAAR.MSolve.IGA.Entities
                 saveForcesState2s = true; ForceVariationDofOrdef = i1;
                 var forces2 = element.ElementType.CalculateForces(element, localSolution, localdSolution);
                 saveForcesState2s = false;
-                for (int i2 = 0; i2 < localSolution.Length; i2++) variatedForcesStep2[elementId][i2, i1] = forces2[i2];
+                for (int i2 = 0; i2 < localSolution.Length; i2++) variatedForcesStep2[ElementStiffnesses.elementId][i2, i1] = forces2[i2];
                 localSolution[i1] += -variationSize;
 
                 element.ElementType.CalculateStresses(element, localSolution, localdSolution);
@@ -194,46 +197,47 @@ namespace ISAAR.MSolve.IGA.Entities
                 {
                     for (int i3 = 0; i3 < variableSizes[i1]; i3++)
                     {
-                        derivativesCalculated[elementId][variableIds[i1]][i3, i2] = (variableVariatedValues[elementId][variableIds[i1]][i3, i2] - variableOriginalValues[elementId][variableIds[i1]][i3]) / variationSize;
+                        derivativesCalculated[ElementStiffnesses.elementId][variableIds[i1]][i3, i2] = (variableVariatedValues[ElementStiffnesses.elementId][variableIds[i1]][i3, i2] - variableOriginalValues[ElementStiffnesses.elementId][variableIds[i1]][i3]) / variationSize;
                     }
 
                 }
 
             }
             #endregion
+            performCalculations = false;
 
-            int elementID = 0;
+            ///int elementId = 0;
             #region print matrices
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneNLStiffnesses[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneNLStiffnesses.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingNLStiffnesses[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingNLStiffnesses.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneLStiffnesses[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneLStiffnesses.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingLStiffnesses[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneNLStiffnesses[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneNLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingNLStiffnesses[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingNLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalMembraneLStiffnesses[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalMembraneLStiffnesses.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(OriginalBendingLStiffnesses[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\OriginalBendingLStiffnesses.txt");
 
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(MembraneStiffnesses1FromVariations[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\MembraneStiffnesses1FromVariations.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(MembraneStiffnesses2FromVariations[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\MembraneStiffnesses2FromVariations.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(BendingStiffnesses1FromVariations[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\BendingStiffnesses1FromVariations.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(BendingStiffnesses2FromVariations[elementID], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\BendingStiffnesses2FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(MembraneStiffnesses1FromVariations[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\MembraneStiffnesses1FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(MembraneStiffnesses2FromVariations[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\MembraneStiffnesses2FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(BendingStiffnesses1FromVariations[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\BendingStiffnesses1FromVariations.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(BendingStiffnesses2FromVariations[elementId], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\BendingStiffnesses2FromVariations.txt");
 
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][8], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated8.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][8], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected8.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][8], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated8.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][8], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected8.txt");
             
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][9], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated9.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][9], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected9.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][9], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated9.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][9], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected9.txt");
             
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][1], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated1.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][1], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected1.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][1], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated1.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][1], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected1.txt");
             
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][4], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected4.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][4], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated4.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][4], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected4.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][4], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated4.txt");
             
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][5], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected5.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][5], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated5.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][5], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected5.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][5], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated5.txt");
             
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][7], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated7.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][7], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected7.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][7], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated7.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][7], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected7.txt");
 
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementID][6], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated6.txt");
-            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementID][6], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected6.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesCalculated[elementId][6], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesCalculated6.txt");
+            (new ISAAR.MSolve.LinearAlgebra.Output.Array2DWriter()).WriteToFile(derivativesExpected[elementId][6], @"C:\Users\acivi\Documents\notes_elegxoi_2\develop_nl_iga_shell\MSolve_output\derivativesExpected6.txt");
             
             
             

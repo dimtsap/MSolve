@@ -230,6 +230,179 @@ namespace ISAAR.MSolve.IGA.Tests
         }
 
         [Fact]
+        public void HemisphericalShell()
+        {
+            Model model = new Model();
+            var filename = "PinchedHemisphere";
+            var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt");
+            IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
+            modelReader.CreateShellModelFromFile(GeometricalFormulation.NonLinear);
+
+            model.Loads.Add(new Load()
+            {
+                Amount = -400,
+                Node = model.ControlPoints.ToList()[0],
+                DOF = StructuralDof.TranslationX
+            });
+
+            model.Loads.Add(new Load()
+            {
+                Amount = 400,
+                Node = model.ControlPoints.ToList()[240],
+                DOF = StructuralDof.TranslationY
+            });
+
+            //TODO: Possibly the tangent should also be fixes due to symmetry
+            for (int i = 0; i < 16; i++)
+            {
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+            }
+
+            for (int i = 256-16; i < 256; i++)
+            {
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+            }
+
+            // Solvers
+            var solverBuilder = new SuiteSparseSolver.Builder();
+            ISolver solver = solverBuilder.BuildSolver(model);
+
+            // Structural problem provider
+            var provider = new ProblemStructural(model, solver);
+
+            // Linear static analysis
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 500);
+            var childAnalyzer = newtonRaphsonBuilder.Build();
+            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+            //var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+            //    model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
+            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
+            //childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
+
+            // Run the analysis
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+        }
+
+        [Fact]
+        public void PulloutCylinderShell()
+        {
+            Model model = new Model();
+            var filename = "PulloutCylinderShell";
+            var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt");
+            IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
+            modelReader.CreateShellModelFromFile(GeometricalFormulation.NonLinear);
+
+            model.Loads.Add(new Load()
+            {
+                Amount = -40000,
+                Node = model.ControlPoints.ToList().Last(),
+                DOF = StructuralDof.TranslationZ
+            });
+
+            //TODO: Possibly the tangent should also be fixes due to symmetry
+            //TODO:Check boundary conditions
+            foreach (var controlPoint in model.Patches[0].EdgesDictionary[1].ControlPointsDictionary)
+            {
+                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationY});
+            }
+
+            foreach (var controlPoint in model.Patches[0].EdgesDictionary[2].ControlPointsDictionary)
+            {
+                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationZ});
+            }
+
+            foreach (var controlPoint in model.Patches[0].EdgesDictionary[3].ControlPointsDictionary)
+            {
+                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationX});
+            }
+
+            // Solvers
+            var solverBuilder = new SuiteSparseSolver.Builder();
+            ISolver solver = solverBuilder.BuildSolver(model);
+
+            // Structural problem provider
+            var provider = new ProblemStructural(model, solver);
+
+            // Linear static analysis
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 500);
+            var childAnalyzer = newtonRaphsonBuilder.Build();
+            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+            //var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+            //    model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
+            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
+            //childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
+
+            // Run the analysis
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+        }
+
+        [Fact]
+        public void PinchedCylinderShell()
+        {
+            Model model = new Model();
+            var filename = "PinchedCylinderShell";
+            var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt");
+            IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
+            modelReader.CreateShellModelFromFile(GeometricalFormulation.NonLinear);
+
+            model.Loads.Add(new Load()
+            {
+                Amount = -12000,
+                Node = model.ControlPoints.ToList().Last(),
+                DOF = StructuralDof.TranslationZ
+            });
+
+            //TODO: Possibly the tangent should also be fixes due to symmetry
+            //TODO:Check boundary conditions
+            foreach (var controlPoint in model.Patches[0].EdgesDictionary[1].ControlPointsDictionary)
+            {
+                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationY});
+            }
+
+            foreach (var controlPoint in model.Patches[0].EdgesDictionary[2].ControlPointsDictionary)
+            {
+                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationZ});
+            }
+
+            foreach (var controlPoint in model.Patches[0].EdgesDictionary[3].ControlPointsDictionary)
+            {
+                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationX});
+            }
+
+            // Solvers
+            var solverBuilder = new SuiteSparseSolver.Builder();
+            ISolver solver = solverBuilder.BuildSolver(model);
+
+            // Structural problem provider
+            var provider = new ProblemStructural(model, solver);
+
+            // Linear static analysis
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 500);
+            var childAnalyzer = newtonRaphsonBuilder.Build();
+            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+            //var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+            //    model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
+            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
+            //childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
+
+            // Run the analysis
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+        }
+
+
+        [Fact]
         public void IsogeometricSquareShell10x10Straight()
         {
             Model model = new Model();

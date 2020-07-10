@@ -230,6 +230,65 @@ namespace ISAAR.MSolve.IGA.Tests
         }
 
         [Fact]
+        public void HemisphericalShell()
+        {
+            Model model = new Model();
+            var filename = "PinchedHemisphere";
+            var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt");
+            IsogeometricShellReader modelReader = new IsogeometricShellReader(model, filepath);
+            modelReader.CreateShellModelFromFile(GeometricalFormulation.NonLinear);
+
+            model.Loads.Add(new Load()
+            {
+                Amount = -400,
+                Node = model.ControlPoints.ToList()[0],
+                DOF = StructuralDof.TranslationX
+            });
+
+            model.Loads.Add(new Load()
+            {
+                Amount = 400,
+                Node = model.ControlPoints.ToList()[240],
+                DOF = StructuralDof.TranslationY
+            });
+
+            for (int i = 0; i < 16; i++)
+            {
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+            }
+
+            for (int i = 256-16; i < 256; i++)
+            {
+                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+            }
+
+            // Solvers
+            var solverBuilder = new SuiteSparseSolver.Builder();
+            ISolver solver = solverBuilder.BuildSolver(model);
+
+            // Structural problem provider
+            var provider = new ProblemStructural(model, solver);
+
+            // Linear static analysis
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 500);
+            var childAnalyzer = newtonRaphsonBuilder.Build();
+            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+                model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
+            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
+            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
+            childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
+
+            // Run the analysis
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
+        }
+
+
+
+        [Fact]
         public void IsogeometricSquareShell10x10Straight()
         {
             Model model = new Model();

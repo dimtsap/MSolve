@@ -428,7 +428,7 @@ namespace ISAAR.MSolve.IGA.Tests
             //TODO:Find load from previous papers
             model.Loads.Add(new Load()
             {
-                Amount = 1,
+                Amount = 2000,
                 Node = model.ControlPoints.ToList()[31],
                 DOF = StructuralDof.TranslationZ
             });

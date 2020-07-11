@@ -256,11 +256,25 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = 0; i < 16; i++)
             {
                 model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+
+                model.AddPenaltyConstrainedDofPair(new PenaltyDofPair(
+                    new NodalDof(model.ControlPointsDictionary[i], StructuralDof.TranslationX),
+                    new NodalDof(model.ControlPointsDictionary[i + 16], StructuralDof.TranslationX)));
+                model.AddPenaltyConstrainedDofPair(new PenaltyDofPair(
+                    new NodalDof(model.ControlPointsDictionary[i], StructuralDof.TranslationZ),
+                    new NodalDof(model.ControlPointsDictionary[i + 16], StructuralDof.TranslationZ)));
             }
 
             for (int i = 256-16; i < 256; i++)
             {
                 model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+
+                model.AddPenaltyConstrainedDofPair(new PenaltyDofPair(
+                    new NodalDof(model.ControlPointsDictionary[i], StructuralDof.TranslationY),
+                    new NodalDof(model.ControlPointsDictionary[i - 16], StructuralDof.TranslationY)));
+                model.AddPenaltyConstrainedDofPair(new PenaltyDofPair(
+                    new NodalDof(model.ControlPointsDictionary[i], StructuralDof.TranslationZ),
+                    new NodalDof(model.ControlPointsDictionary[i - 16], StructuralDof.TranslationZ)));
             }
 
             // Solvers

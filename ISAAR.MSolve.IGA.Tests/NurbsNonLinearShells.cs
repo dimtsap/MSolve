@@ -290,9 +290,9 @@ namespace ISAAR.MSolve.IGA.Tests
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
             var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
-                model.ControlPoints.ToList()[0], StructuralDof.TranslationZ, "PinchedHemisphereNegativeLoadNode.txt");
+                model.ControlPoints.ToList()[0], StructuralDof.TranslationX, "PinchedHemisphereNegativeLoadNode.txt");
             var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
-                model.ControlPoints.ToList()[240], StructuralDof.TranslationZ, "PinchedHemispherePositiveLoadNode.txt");
+                model.ControlPoints.ToList()[240], StructuralDof.TranslationY, "PinchedHemispherePositiveLoadNode.txt");
             childAnalyzer.IncrementalLogs.Add(0, loggerA);
             childAnalyzer.IncrementalLogs.Add(1, loggerB);
 

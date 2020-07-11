@@ -8,7 +8,7 @@ numberofcpksi = 32
 
 numberofcpheta = 32
 
-thickness = 
+thickness = 0.03
 
 degreeksi = 3
 

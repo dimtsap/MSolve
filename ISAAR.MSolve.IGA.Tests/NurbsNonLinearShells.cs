@@ -14,6 +14,7 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
+using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
@@ -240,14 +241,14 @@ namespace ISAAR.MSolve.IGA.Tests
 
             model.Loads.Add(new Load()
             {
-                Amount = -400,
+                Amount = -200,
                 Node = model.ControlPoints.ToList()[0],
                 DOF = StructuralDof.TranslationX
             });
 
             model.Loads.Add(new Load()
             {
-                Amount = 400,
+                Amount = 200,
                 Node = model.ControlPoints.ToList()[240],
                 DOF = StructuralDof.TranslationY
             });
@@ -299,6 +300,9 @@ namespace ISAAR.MSolve.IGA.Tests
             // Run the analysis
             parentAnalyzer.Initialize();
             parentAnalyzer.Solve();
+
+            var paraview = new ParaviewNurbsShells(model, solver.LinearSystems[0].Solution, filename);
+            paraview.CreateParaview2DFile();
         }
 
         [Fact]

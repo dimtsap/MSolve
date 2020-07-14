@@ -1,5 +1,7 @@
 using System.IO;
+using System.Linq;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
+using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
@@ -68,7 +70,7 @@ namespace ISAAR.MSolve.IGA.Postprocessing
 				uniqueKnotsHeta[0].Length - 1, incrementKsi, incrementHeta);
 			var knotDisplacements = new double[knots.GetLength(0), 3];
 
-			foreach (var element in _model.Elements)
+			foreach (var element in _model.Elements.Where(x=>!(x.ElementType is PenaltyDofPair)))
 			{
 				var localDisplacements = Matrix.CreateZero(element.ControlPointsDictionary.Count, 3);
 				var counterCP = 0;

@@ -290,12 +290,12 @@ namespace ISAAR.MSolve.IGA.Tests
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            //var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
-            //    model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
-            //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
-            //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
-            //childAnalyzer.IncrementalLogs.Add(0, loggerA);
-            //childAnalyzer.IncrementalLogs.Add(1, loggerB);
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+                model.ControlPoints.ToList()[0], StructuralDof.TranslationX, "PinchedHemisphereNegativeLoadNode.txt");
+            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+                model.ControlPoints.ToList()[240], StructuralDof.TranslationY, "PinchedHemispherePositiveLoadNode.txt");
+            childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            childAnalyzer.IncrementalLogs.Add(1, loggerB);
 
             // Run the analysis
             parentAnalyzer.Initialize();
@@ -432,7 +432,7 @@ namespace ISAAR.MSolve.IGA.Tests
             //TODO:Find load from previous papers
             model.Loads.Add(new Load()
             {
-                Amount = 1,
+                Amount = 2000,
                 Node = model.ControlPoints.ToList()[31],
                 DOF = StructuralDof.TranslationZ
             });
@@ -469,11 +469,11 @@ namespace ISAAR.MSolve.IGA.Tests
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            //var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
-            //    model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+                model.ControlPoints.ToList()[31], StructuralDof.TranslationZ, "PinchedSemiCylinderShell.txt");
             //var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
             //    model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
-            //childAnalyzer.IncrementalLogs.Add(0, loggerA);
+            childAnalyzer.IncrementalLogs.Add(0, loggerA);
             //childAnalyzer.IncrementalLogs.Add(1, loggerB);
 
             // Run the analysis

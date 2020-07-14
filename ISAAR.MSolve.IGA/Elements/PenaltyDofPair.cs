@@ -52,7 +52,9 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public double[] CalculateForces(IElement element, double[] localDisplacements, double[] localdDisplacements)
 		{
-			return new double[2];
+			return new double[2] { PenaltyCoefficient*elementlocalDisplacements[0]-PenaltyCoefficient*elementlocalDisplacements[1],
+				-PenaltyCoefficient*elementlocalDisplacements[0]+PenaltyCoefficient*elementlocalDisplacements[1] };
+
 		}
 
 		public double[] CalculateForcesForLogging(IElement element, double[] localDisplacements)
@@ -82,8 +84,11 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public Tuple<double[], double[]> CalculateStresses(IElement element, double[] localDisplacements, double[] localdDisplacements)
 		{
+			localDisplacements.CopyTo(elementlocalDisplacements, 0);
 			return new Tuple<double[], double[]>(new double[0], new double[0]);
 		}
+
+		public double[] elementlocalDisplacements { get; set; } = new double[2];
 
 		public void ClearMaterialState()
 		{

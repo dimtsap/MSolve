@@ -745,9 +745,9 @@ namespace ISAAR.MSolve.IGA.Elements
             Array.Clear(BbmTransposeMultStiffness, 0, bRows * bCols);
             for (int i = 0; i < bCols; i++)
             {
-                for (int k = 0; k < bRows; k++)
+                for (int k = 0; k < bRows; k++) // to k sumvolizei to athroisma 
                 {
-                    tempm = BmTranspose[i, k];
+                    tempm = BmTranspose[i, k]; // kai tp , m sumvolizei th thesi pou gemizetai
                     tempb = BbTranspose[i, k];
                     for (int m = 0; m < bRows; m++)
                     {
@@ -1027,24 +1027,26 @@ namespace ISAAR.MSolve.IGA.Elements
                 var d2Heta_dr2 = nurbs.NurbsSecondDerivativeValueHeta[i, j];
                 var d2KsiHeta_dr2 = nurbs.NurbsSecondDerivativeValueKsiHeta[i, j];
 
-                //var a1r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesKsi[i, j]);
-                //var a2r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[i, j]);
-
-                //var a11r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsi[i, j]);
-                //var a22r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueHeta[i, j]);
-                //var a12r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsiHeta[i, j]);
                 var a3r = a3rArray[i];
 
-                //if (ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)
-                //{
-                //    for (int i1 = 0; i1 < 3; i1++)
-                //    {
-                //        ElementStiffnesses.ProccessVariable(1, a11r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
-                //        ElementStiffnesses.ProccessVariable(2, a22r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
-                //        ElementStiffnesses.ProccessVariable(3, a12r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
+                if (ElementStiffnesses.performCalculations)
+                {
+                    var a1r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesKsi[i, j]);
+                    var a2r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsDerivativeValuesHeta[i, j]);
+                    var a11r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsi[i, j]);
+                    var a22r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueHeta[i, j]);
+                    var a12r = Matrix3by3.CreateIdentity().Scale(nurbs.NurbsSecondDerivativeValueKsiHeta[i, j]);
+                    if (ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)
+                    {
+                        for (int i1 = 0; i1 < 3; i1++)
+                        {
+                            ElementStiffnesses.ProccessVariable(1, a11r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
+                            ElementStiffnesses.ProccessVariable(2, a22r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
+                            ElementStiffnesses.ProccessVariable(3, a12r.GetColumn(i1).CopyToArray(), true, 3 * i + i1);
 
-                //    }
-                //}
+                        }
+                    }
+                }
 
                 for (int k = 0; k < controlPoints.Length; k++)
                 {
@@ -1069,51 +1071,53 @@ namespace ISAAR.MSolve.IGA.Elements
                         a3rsAlternative, a3r, a3s, da3_drds);
                     Bab_rs = Bab_rsAlternative;
 
-                    //if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck)&&ElementStiffnesses.saveStiffnessMatrixState)
-                    //{
-                    //    ElementStiffnesses.saveOriginalState = true;
-                    //    ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, true, 3 * i+ 0);
-                    //    ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r01, a3r.a3r11, a3r.a3r21 }, true, 3 * i + 1);
-                    //    ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r02, a3r.a3r12, a3r.a3r22 }, true, 3 * i + 2); ;
+                    if (ElementStiffnesses.performCalculations)
+                    {
+                        if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck) && ElementStiffnesses.saveStiffnessMatrixState)
+                        {
+                            ElementStiffnesses.saveOriginalState = true;
+                            ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, true, 3 * i+ 0);
+                            ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r01, a3r.a3r11, a3r.a3r21 }, true, 3 * i + 1);
+                            ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r02, a3r.a3r12, a3r.a3r22 }, true, 3 * i + 2); ;
 
-                    //    if (i == 0) // ennoume thn paragwgo ws pros r gia k=0 kai gai to x dof
-                    //    {
-                    //        //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs00_0, a3rs.a3rs00_1, a3rs.a3rs00_2 }, true, 3 * k + 0);
-                    //        //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs01_0, a3rs.a3rs01_1, a3rs.a3rs01_2 }, true, 3 * k + 1);
-                    //        //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs02_0, a3rs.a3rs02_1, a3rs.a3rs02_2 }, true, 3 * k + 2);
-                    //        ElementStiffnesses.ProccessVariable(9, new double[] { a3rsAlternative.a3rs00_0, a3rsAlternative.a3rs00_1, a3rsAlternative.a3rs00_2 }, true, 3 * k + 0);
-                    //        ElementStiffnesses.ProccessVariable(9, new double[] { a3rsAlternative.a3rs01_0, a3rsAlternative.a3rs01_1, a3rsAlternative.a3rs01_2 }, true, 3 * k + 1);
-                    //        ElementStiffnesses.ProccessVariable(9, new double[] { a3rsAlternative.a3rs02_0, a3rsAlternative.a3rs02_1, a3rsAlternative.a3rs02_2 }, true, 3 * k + 2);
-                    //        ElementStiffnesses.ProccessVariable(9, new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, false);
+                            if (i == 0) // ennoume thn paragwgo ws pros r gia k=0 kai gai to x dof
+                            {
+                                //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs00_0, a3rs.a3rs00_1, a3rs.a3rs00_2 }, true, 3 * k + 0);
+                                //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs01_0, a3rs.a3rs01_1, a3rs.a3rs01_2 }, true, 3 * k + 1);
+                                //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs02_0, a3rs.a3rs02_1, a3rs.a3rs02_2 }, true, 3 * k + 2);
+                                ElementStiffnesses.ProccessVariable(9, new double[] { a3rsAlternative.a3rs00_0, a3rsAlternative.a3rs00_1, a3rsAlternative.a3rs00_2 }, true, 3 * k + 0);
+                                ElementStiffnesses.ProccessVariable(9, new double[] { a3rsAlternative.a3rs01_0, a3rsAlternative.a3rs01_1, a3rsAlternative.a3rs01_2 }, true, 3 * k + 1);
+                                ElementStiffnesses.ProccessVariable(9, new double[] { a3rsAlternative.a3rs02_0, a3rsAlternative.a3rs02_1, a3rsAlternative.a3rs02_2 }, true, 3 * k + 2);
+                                ElementStiffnesses.ProccessVariable(9, new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, false);
 
-                    //    }
+                            }
 
 
-                    //    ElementStiffnesses.saveOriginalState = false;
+                            ElementStiffnesses.saveOriginalState = false;
 
-                    //}
+                        }
 
-                    //if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck) && ElementStiffnesses.saveVariationStates)
-                    //{
-                    //    //ElementStiffnesses.saveOriginalState = true;
-                    //    //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r00, a3r.a3r01, a3r.a3r02 }, true, 3 * i + 0);
-                    //    //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r10, a3r.a3r11, a3r.a3r12 }, true, 3 * i + 1);
-                    //    //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r20, a3r.a3r21, a3r.a3r22 }, true, 3 * i + 2);
+                        if ((ElementStiffnesses.gpNumber == ElementStiffnesses.gpNumberToCheck) && ElementStiffnesses.saveVariationStates)
+                        {
+                            //ElementStiffnesses.saveOriginalState = true;
+                            //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r00, a3r.a3r01, a3r.a3r02 }, true, 3 * i + 0);
+                            //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r10, a3r.a3r11, a3r.a3r12 }, true, 3 * i + 1);
+                            //ElementStiffnesses.ProccessVariable(8, new double[] { a3r.a3r20, a3r.a3r21, a3r.a3r22 }, true, 3 * i + 2);
 
-                    //    //ElementStiffnesses.ProccessVariable(8, surfaceBasisVector3, false);
+                            //ElementStiffnesses.ProccessVariable(8, surfaceBasisVector3, false);
 
-                    //    if (i == 0) // ennoume thn paragwgo ws pros r gia k=0 kai gai to x dof
-                    //    {
-                    //        ElementStiffnesses.ProccessVariable(9,new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, false);
-                    //        //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs00_0, a3rs.a3rs00_1, a3rs.a3rs00_2 }, true, 3 * k + 0);
-                    //        //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs01_0, a3rs.a3rs01_1, a3rs.a3rs01_2 }, true, 3 * k + 1);
-                    //        //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs02_0, a3rs.a3rs02_1, a3rs.a3rs02_2 }, true, 3 * k + 2);
-                    //    }
+                            if (i == 0) // ennoume thn paragwgo ws pros r gia k=0 kai gai to x dof
+                            {
+                                ElementStiffnesses.ProccessVariable(9,new double[] { a3r.a3r00, a3r.a3r10, a3r.a3r20 }, false);
+                                //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs00_0, a3rs.a3rs00_1, a3rs.a3rs00_2 }, true, 3 * k + 0);
+                                //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs01_0, a3rs.a3rs01_1, a3rs.a3rs01_2 }, true, 3 * k + 1);
+                                //ElementStiffnesses.ProccessVariable(9, new double[] { a3rs.a3rs02_0, a3rs.a3rs02_1, a3rs.a3rs02_2 }, true, 3 * k + 2);
+                            }
 
-                    //    ElementStiffnesses.saveOriginalState = false;
+                            ElementStiffnesses.saveOriginalState = false;
 
-                    //}
-
+                        }
+                    }
 
 
                     KbendingNLOut[i * 3 + 0, k * 3 + 0] -= (Bab_rs.Bab_rs00_0 * bendingMoments.v0 + Bab_rs.Bab_rs00_1 * bendingMoments.v1 + Bab_rs.Bab_rs00_2 * bendingMoments.v2);

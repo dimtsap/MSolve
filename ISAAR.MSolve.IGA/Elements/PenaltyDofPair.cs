@@ -15,7 +15,7 @@ namespace ISAAR.MSolve.IGA.Elements
 {
     public class PenaltyDofPair : Element, IStructuralIsogeometricElement
 	{
-		private const double PenaltyCoefficient = 10e8;
+		private const double PenaltyCoefficient = 10e6;//10e08
 
 		public PenaltyDofPair(NodalDof firstPenaltyDof, NodalDof secondPenaltyDof, double dofDifference = 0.0)
 		{
@@ -122,7 +122,7 @@ namespace ISAAR.MSolve.IGA.Elements
 
 		public void SaveMaterialState()
 		{
-			throw new NotImplementedException();
+			//throw new NotImplementedException();
 		}
 
 		public IMatrix StiffnessMatrix(IElement element) => Matrix2by2.CreateFromArray(new double[2, 2]

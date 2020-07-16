@@ -9,6 +9,7 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Mesh;
 using ISAAR.MSolve.FEM.Entities;
+using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
@@ -73,6 +74,54 @@ namespace ISAAR.MSolve.IGA.Elements
             _controlPoints = elementControlPoints.ToArray();
         }
 
+
+        public double[,] CalculatePointsForPostProcessing(NurbsKirchhoffLoveShellElementNL element)
+        {
+            var knots = element.Knots.ToList();
+            var localCoordinates = new double[4, 2]
+            {
+                {knots[0].Ksi, knots[0].Heta},
+                {knots[1].Ksi, knots[1].Heta},
+                {knots[2].Ksi, knots[2].Heta},
+                {knots[3].Ksi, knots[3].Heta}
+            };
+
+            var elementControlPoints = element.ControlPoints.ToArray();
+            var degreeKsi = element.Patch.DegreeKsi;
+            var degreeHeta = element.Patch.DegreeHeta;
+            var knotValueVectorKsi = element.Patch.KnotValueVectorKsi;
+            var knotValueVectorHeta = element.Patch.KnotValueVectorHeta;
+
+            var nurbsK0 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[0,0], localCoordinates[0,1]), elementControlPoints);
+            var nurbsK1 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[1,0], localCoordinates[1,1]), elementControlPoints);
+            var nurbsK2 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[2,0], localCoordinates[2,1]), elementControlPoints);
+            var nurbsK3 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[3,0], localCoordinates[3,1]), elementControlPoints);
+
+            var knotDisplacements = new double[4, 3];
+            var paraviewKnotRenumbering = new int[] { 0, 3, 1, 2 };
+
+            for (int i = 0; i < elementControlPoints.Length; i++)
+            {
+                knotDisplacements[paraviewKnotRenumbering[0], 0] += nurbsK0.NurbsValues[i, 0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[0], 1] += nurbsK0.NurbsValues[i, 0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[0], 2] += nurbsK0.NurbsValues[i, 0] * elementControlPoints[i].Z;
+
+                knotDisplacements[paraviewKnotRenumbering[1], 0] += nurbsK1.NurbsValues[i, 0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[1], 1] += nurbsK1.NurbsValues[i, 0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[1], 2] += nurbsK1.NurbsValues[i, 0] * elementControlPoints[i].Z;
+
+                knotDisplacements[paraviewKnotRenumbering[2], 0] += nurbsK2.NurbsValues[i, 0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[2], 1] += nurbsK2.NurbsValues[i, 0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[2], 2] += nurbsK2.NurbsValues[i, 0] * elementControlPoints[i].Z;
+
+                knotDisplacements[paraviewKnotRenumbering[3], 0] += nurbsK3.NurbsValues[i, 0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[3], 1] += nurbsK3.NurbsValues[i, 0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[3], 2] += nurbsK3.NurbsValues[i, 0] * elementControlPoints[i].Z;
+            }
+
+            return knotDisplacements;
+        }
+
         public CellType CellType { get; } = CellType.Unknown;
 
         public IElementDofEnumerator DofEnumerator { get; set; } = new GenericDofEnumerator();
@@ -86,26 +135,45 @@ namespace ISAAR.MSolve.IGA.Elements
 
         public double[,] CalculateDisplacementsForPostProcessing(Element element, Matrix localDisplacements)
         {
-            var nurbsElement = (NurbsKirchhoffLoveShellElementNL) element;
-            var knotParametricCoordinatesKsi = Vector.CreateFromArray(Knots.Select(k => k.Ksi).ToArray());
-            var knotParametricCoordinatesHeta = Vector.CreateFromArray(Knots.Select(k => k.Heta).ToArray());
+            var knots = element.Knots.ToList();
+            var localCoordinates = new double[4, 2]
+            {
+                {knots[0].Ksi, knots[0].Heta},
+                {knots[1].Ksi, knots[1].Heta},
+                {knots[2].Ksi, knots[2].Heta},
+                {knots[3].Ksi, knots[3].Heta}
+            };
+            var elementControlPoints = element.ControlPoints.ToArray();
+            var degreeKsi = element.Patch.DegreeKsi;
+            var degreeHeta = element.Patch.DegreeHeta;
+            var knotValueVectorKsi = element.Patch.KnotValueVectorKsi;
+            var knotValueVectorHeta = element.Patch.KnotValueVectorHeta;
 
-            var nurbs = new Nurbs2D(nurbsElement, nurbsElement.ControlPoints.ToArray(), knotParametricCoordinatesKsi,
-                knotParametricCoordinatesHeta);
+            var nurbsK0 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[0,0], localCoordinates[0,1]), elementControlPoints);
+            var nurbsK1 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[1,0], localCoordinates[1,1]), elementControlPoints);
+            var nurbsK2 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[2,0], localCoordinates[2,1]), elementControlPoints);
+            var nurbsK3 = new Nurbs2D(degreeKsi, degreeHeta, knotValueVectorKsi, knotValueVectorHeta, new NaturalPoint(localCoordinates[3,0], localCoordinates[3,1]), elementControlPoints);
 
             var knotDisplacements = new double[4, 3];
             var paraviewKnotRenumbering = new int[] {0, 3, 1, 2};
-            for (var j = 0; j < knotDisplacements.GetLength(0); j++)
+
+            for (int i = 0; i < element.ControlPoints.Count(); i++)
             {
-                for (int i = 0; i < element.ControlPoints.Count(); i++)
-                {
-                    knotDisplacements[paraviewKnotRenumbering[j], 0] +=
-                        nurbs.NurbsValues[i, j] * localDisplacements[i, 0];
-                    knotDisplacements[paraviewKnotRenumbering[j], 1] +=
-                        nurbs.NurbsValues[i, j] * localDisplacements[i, 1];
-                    knotDisplacements[paraviewKnotRenumbering[j], 2] +=
-                        nurbs.NurbsValues[i, j] * localDisplacements[i, 2];
-                }
+                knotDisplacements[paraviewKnotRenumbering[0], 0] += nurbsK0.NurbsValues[i, 0] * localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[0], 1] += nurbsK0.NurbsValues[i, 0] * localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[0], 2] += nurbsK0.NurbsValues[i, 0] * localDisplacements[i, 2];
+
+                knotDisplacements[paraviewKnotRenumbering[1], 0] += nurbsK1.NurbsValues[i, 0] *  localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[1], 1] += nurbsK1.NurbsValues[i, 0] *  localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[1], 2] += nurbsK1.NurbsValues[i, 0] *  localDisplacements[i, 2];
+
+                knotDisplacements[paraviewKnotRenumbering[2], 0] += nurbsK2.NurbsValues[i, 0] *  localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[2], 1] += nurbsK2.NurbsValues[i, 0] *  localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[2], 2] += nurbsK2.NurbsValues[i, 0] *  localDisplacements[i, 2];
+
+                knotDisplacements[paraviewKnotRenumbering[3], 0] += nurbsK3.NurbsValues[i, 0] *  localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[3], 1] += nurbsK3.NurbsValues[i, 0] *  localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[3], 2] += nurbsK3.NurbsValues[i, 0] *  localDisplacements[i, 2];
             }
 
             return knotDisplacements;

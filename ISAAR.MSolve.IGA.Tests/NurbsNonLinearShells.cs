@@ -228,6 +228,9 @@ namespace ISAAR.MSolve.IGA.Tests
             // Run the analysis
             parentAnalyzer.Initialize();
             parentAnalyzer.Solve();
+
+            var paraview = new ParaviewNurbsShells(model, childAnalyzer.uPlusdu[0], filename);
+            paraview.CreateParaviewFile();
         }
 
         [Fact]
@@ -257,7 +260,7 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = 0; i < 16; i++)
             {
                 model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-
+                //model.ControlPointsDictionary[i+16].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
                 model.AddPenaltyConstrainedDofPair(new PenaltyDofPair(
                     new NodalDof(model.ControlPointsDictionary[i], StructuralDof.TranslationX),
                     new NodalDof(model.ControlPointsDictionary[i + 16], StructuralDof.TranslationX)));
@@ -269,7 +272,7 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = 256-16; i < 256; i++)
             {
                 model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
-
+                //model.ControlPointsDictionary[i-16].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
                 model.AddPenaltyConstrainedDofPair(new PenaltyDofPair(
                     new NodalDof(model.ControlPointsDictionary[i], StructuralDof.TranslationY),
                     new NodalDof(model.ControlPointsDictionary[i - 16], StructuralDof.TranslationY)));
@@ -286,13 +289,13 @@ namespace ISAAR.MSolve.IGA.Tests
             var provider = new ProblemStructural(model, solver);
 
             // Linear static analysis
-            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 500);
+            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 5);
             var childAnalyzer = newtonRaphsonBuilder.Build();
             var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 5,
                 model.ControlPoints.ToList()[0], StructuralDof.TranslationX, "PinchedHemisphereNegativeLoadNode.txt");
-            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 500,
+            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 5,
                 model.ControlPoints.ToList()[240], StructuralDof.TranslationY, "PinchedHemispherePositiveLoadNode.txt");
             childAnalyzer.IncrementalLogs.Add(0, loggerA);
             childAnalyzer.IncrementalLogs.Add(1, loggerB);
@@ -301,8 +304,8 @@ namespace ISAAR.MSolve.IGA.Tests
             parentAnalyzer.Initialize();
             parentAnalyzer.Solve();
 
-            var paraview = new ParaviewNurbsShells(model, solver.LinearSystems[0].Solution, filename);
-            paraview.CreateParaview2DFile();
+            var paraview = new ParaviewNurbsShells(model, childAnalyzer.uPlusdu[0], filename);
+            paraview.CreateParaviewFile();
         }
 
         [Fact]

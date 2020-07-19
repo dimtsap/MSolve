@@ -34,7 +34,7 @@ namespace ISAAR.MSolve.IGA.Tests
 {
     public class PaperExamples
     {
-        [Fact]
+        //[Fact]
         public static void ScordelisLoShell()
         {
             var filename = "ScordelisLoShell";
@@ -197,7 +197,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
 
 
-        [Fact]
+        //[Fact]
         public void SimpleHoodBenchmark()
         {
             var filename = "attempt2";
@@ -273,7 +273,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
         }
 
-        [Fact]
+        //[Fact]
         public void TestElasticAndMultiscaleMatricesCnt()
         {
             var numberOfRealizations = 20000;
@@ -316,7 +316,7 @@ namespace ISAAR.MSolve.IGA.Tests
         }
 
 
-        [Fact]
+        //[Fact]
         public void TestElasticAndMultiscaleMatricesTet()
         {
             var material3 = new ShellElasticMaterial2Dtransformationb()
@@ -353,7 +353,7 @@ namespace ISAAR.MSolve.IGA.Tests
         }
 
 
-        [Fact]
+        //[Fact]
         public void BenchmarkEmbedding()
         {
             for (int i = 0; i < 10; i++)

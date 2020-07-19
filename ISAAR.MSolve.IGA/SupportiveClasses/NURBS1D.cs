@@ -22,7 +22,7 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		public Nurbs1D(int degree, double[] KnotValueVector, ControlPoint[] controlPoints, GaussLegendrePoint3D[] gaussPoints)
         {
             var parametricGaussPointKsi = gaussPoints.Select(gp => gp.Ksi).ToArray();
-			var bsplinesKsi = new BSPLines1D(degree, KnotValueVector, parametricGaussPointKsi);
+			var bsplinesKsi = new Bsplines1D(degree, KnotValueVector, parametricGaussPointKsi);
 			bsplinesKsi.calculateBSPLinesAndDerivatives();
 
 			int supportKsi = degree + 1;

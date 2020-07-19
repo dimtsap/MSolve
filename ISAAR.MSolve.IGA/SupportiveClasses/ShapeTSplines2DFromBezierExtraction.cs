@@ -55,8 +55,8 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 				knotValueVectorHeta[degreeHeta + 1 + i] = 1;
 			}
 
-			BSPLines1D bernsteinKsi = new BSPLines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
-			BSPLines1D bernsteinHeta = new BSPLines1D(degreeHeta, knotValueVectorHeta, parametricGaussPointHeta);
+			Bsplines1D bernsteinKsi = new Bsplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
+			Bsplines1D bernsteinHeta = new Bsplines1D(degreeHeta, knotValueVectorHeta, parametricGaussPointHeta);
 			bernsteinKsi.calculateBSPLinesAndDerivatives();
 			bernsteinHeta.calculateBSPLinesAndDerivatives();
 

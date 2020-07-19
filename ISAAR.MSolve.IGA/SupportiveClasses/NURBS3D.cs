@@ -44,11 +44,11 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 			for (int i = 0; i < degreeZeta + 1; i++)
 				parametricGaussPointZeta[i] = gaussPoints[i].Zeta;
 
-			BSPLines1D bsplinesKsi =
-				new BSPLines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
-			BSPLines1D bsplinesHeta = new BSPLines1D(degreeHeta, knotValueVectorHeta,
+			Bsplines1D bsplinesKsi =
+				new Bsplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
+			Bsplines1D bsplinesHeta = new Bsplines1D(degreeHeta, knotValueVectorHeta,
 				parametricGaussPointHeta);
-			BSPLines1D bsplinesZeta = new BSPLines1D(degreeZeta, knotValueVectorZeta,
+			Bsplines1D bsplinesZeta = new Bsplines1D(degreeZeta, knotValueVectorZeta,
 				parametricGaussPointZeta);
 			bsplinesKsi.calculateBSPLinesAndDerivatives();
 			bsplinesHeta.calculateBSPLinesAndDerivatives();

@@ -4,7 +4,7 @@ using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 namespace ISAAR.MSolve.IGA.SupportiveClasses
 {
-    public class BSPLines1D: IShapeFunction1D
+    public class Bsplines1D: IShapeFunction1D
     {
         public int Degree { get; private set; }
 
@@ -18,7 +18,7 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 
 		public double [,] SecondDerivativeValues { get; private set; }
 
-        public BSPLines1D(int degree, double[] knotValueVector, double[] parametricCoordinates)
+        public Bsplines1D(int degree, double[] knotValueVector, double[] parametricCoordinates)
         {
             if (degree <= 0)
             {

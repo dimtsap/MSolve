@@ -28,8 +28,8 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		{
 			var parametricPointsCount = parametricGaussPointKsi.Length * parametricGaussPointHeta.Length;
             var numberOfControlPointsHeta = knotValueVectorHeta.Length - degreeHeta - 1;
-			BSPLines1D bsplinesKsi = new BSPLines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
-			BSPLines1D bsplinesHeta = new BSPLines1D(degreeHeta, knotValueVectorHeta,
+			Bsplines1D bsplinesKsi = new Bsplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
+			Bsplines1D bsplinesHeta = new Bsplines1D(degreeHeta, knotValueVectorHeta,
 				parametricGaussPointHeta);
 			bsplinesKsi.calculateBSPLinesAndDerivatives();
 			bsplinesHeta.calculateBSPLinesAndDerivatives();

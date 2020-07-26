@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interfaces;
@@ -13,14 +14,21 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 	/// </summary>
 	public class ShapeTSplines2DFromBezierExtraction:IShapeFunction2D
 	{
-		/// <summary>
-		/// Two-dimensional T-spline shape functions from Bezier extraction for <see cref="TSplineKirchhoffLoveShellElement"/>.
+        private readonly int degreeKsi;
+        private readonly int degreeHeta;
+        private readonly Matrix extractionOperator;
+        private readonly ControlPoint[] controlPoints;
+
+        /// <summary>
+		/// Two-dimensional T-spline shape functions from Bezier extraction.
 		/// </summary>
-		/// <param name="element">An <see cref="Element"/> of type <see cref="TSplineKirchhoffLoveShellElement"/>.</param>
-		/// <param name="controlPoints">A <see cref="List{T}"/> containing the control points of the element.</param>
 		public ShapeTSplines2DFromBezierExtraction(int degreeKsi, int degreeHeta, Matrix extractionOperator, ControlPoint[] controlPoints)
 		{
-			GaussQuadrature gauss = new GaussQuadrature();
+            this.degreeKsi = degreeKsi;
+            this.degreeHeta = degreeHeta;
+            this.extractionOperator = extractionOperator;
+            this.controlPoints = controlPoints;
+            GaussQuadrature gauss = new GaussQuadrature();
 			IList<GaussLegendrePoint3D> gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta,
 				new List<Knot>
 				{
@@ -236,5 +244,15 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 
 			return A;
 		}
-	}
+
+        public double[,] CalculateShapeFunctionsAt(NaturalPoint point)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] CalculateShapeFunctionsAt(NaturalPoint[] points)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

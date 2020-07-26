@@ -198,20 +198,9 @@ namespace ISAAR.MSolve.IGA.Entities
 
                     var gauss= new GaussQuadrature();
 					var gaussPoints = gauss.CalculateElementGaussPoints(Degrees[0], Degrees[1], knotsOfElement).ToArray();
-                    var parametricGaussPointKsi = new double[Degrees[0] + 1];
-                    for (int m = 0; m < Degrees[0] + 1; m++)
-                    {
-                        parametricGaussPointKsi[m] = gaussPoints[m * (Degrees[1] + 1)].Ksi;
-                    }
-
-                    var parametricGaussPointHeta = new double[Degrees[1] + 1];
-                    for (int m = 0; i < Degrees[1] + 1; m++)
-                    {
-                        parametricGaussPointHeta[m] = gaussPoints[m].Heta;
-                    }
 					var nurbs = new Nurbs2D(Degrees[0], KnotValueVectors[0].CopyToArray(),
                         Degrees[1], KnotValueVectors[1].CopyToArray(), elementControlPoints.ToArray(),
-                        parametricGaussPointKsi, parametricGaussPointHeta);
+                        gaussPoints);
 
 					Element element = new Element
 					{

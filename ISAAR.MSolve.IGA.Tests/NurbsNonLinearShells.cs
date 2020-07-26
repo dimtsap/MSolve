@@ -9,6 +9,7 @@ using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.FEM.Materials;
 using ISAAR.MSolve.IGA.Elements;
+using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Readers;
@@ -17,6 +18,7 @@ using ISAAR.MSolve.LinearAlgebra.Output;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Logging;
 using ISAAR.MSolve.Materials;
+using ISAAR.MSolve.Materials.Interfaces;
 using ISAAR.MSolve.MultiscaleAnalysis;
 using ISAAR.MSolve.MultiscaleAnalysis.Interfaces;
 using ISAAR.MSolve.Problems;
@@ -89,7 +91,7 @@ namespace ISAAR.MSolve.IGA.Tests
             NormalVectorV3 = new double[] { 0, 0, 1 }
         };
         
-        private NurbsKirchhoffLoveShellElementNL Element
+        private KirchhoffLoveShellNL Element
         {
             get
             {
@@ -102,22 +104,11 @@ namespace ISAAR.MSolve.IGA.Tests
 
                 var gauss = new GaussQuadrature();
                 var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots());
-                var parametricGaussPointKsi = new double[degreeKsi + 1];
-                for (int i = 0; i < degreeKsi + 1; i++)
-                {
-                    parametricGaussPointKsi[i] = gaussPoints[i * (degreeHeta + 1)].Ksi;
-                }
-
-                var parametricGaussPointHeta = new double[degreeHeta + 1];
-                for (int i = 0; i < degreeHeta + 1; i++)
-                {
-                    parametricGaussPointHeta[i] = gaussPoints[i].Heta;
-                }
                 var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta,
-                    ElementControlPoints().ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
-
+                    ElementControlPoints().ToArray(), gaussPoints.ToArray());
+                IShellMaterial material = new ShellElasticMaterial2D();
                 var element =
-                    new NurbsKirchhoffLoveShellElementNL(null, ElementKnots().ToArray(),nurbs,
+                    new KirchhoffLoveShellNL(material, ElementKnots().ToArray(),nurbs,
                         ElementControlPoints(), patch, 0.1, degreeKsi, degreeHeta);
                 element._solution= localSolution;
                 return element;
@@ -262,7 +253,7 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var jacobianMatrix = new double[2, 3];
             shellElement.CalculateJacobian(elementControlPoints, nurbs, 0, jacobianMatrix);
@@ -284,7 +275,7 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var hessian = shellElement.CalculateHessian(elementControlPoints, nurbs, 0);
 
@@ -305,7 +296,7 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
 
             var jacobianMatrix = new double[3, 3];
@@ -313,8 +304,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
             var hessian = shellElement.CalculateHessian(elementControlPoints, nurbs, 0);
 
-            var surfaceBasisVector1 = shellElement.CalculateSurfaceBasisVector1(jacobianMatrix, 0);
-            var surfaceBasisVector2 = shellElement.CalculateSurfaceBasisVector1(jacobianMatrix, 1);
+            var surfaceBasisVector1 = shellElement.CalculateSurfaceBasisVector(jacobianMatrix, 0);
+            var surfaceBasisVector2 = shellElement.CalculateSurfaceBasisVector(jacobianMatrix, 1);
             var surfaceBasisVector3 = new[]
             {
                 surfaceBasisVector1[1] * surfaceBasisVector2[2] - surfaceBasisVector1[2] * surfaceBasisVector2[1],
@@ -346,15 +337,15 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var jacobianMatrix = new double[3, 3];
             shellElement.CalculateJacobian(elementControlPoints, nurbs, 0, jacobianMatrix);
 
             var hessian = shellElement.CalculateHessian(elementControlPoints, nurbs, 0);
 
-            var surfaceBasisVector1 = shellElement.CalculateSurfaceBasisVector1(jacobianMatrix, 0);
-            var surfaceBasisVector2 = shellElement.CalculateSurfaceBasisVector1(jacobianMatrix, 1);
+            var surfaceBasisVector1 = shellElement.CalculateSurfaceBasisVector(jacobianMatrix, 0);
+            var surfaceBasisVector2 = shellElement.CalculateSurfaceBasisVector(jacobianMatrix, 1);
             var surfaceBasisVector3 = new[]
             {
                 surfaceBasisVector1[1] * surfaceBasisVector2[2] - surfaceBasisVector1[2] * surfaceBasisVector2[1],
@@ -367,9 +358,9 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = 0; i < surfaceBasisVector3.Length; i++)
                 surfaceBasisVector3[i] = surfaceBasisVector3[i] / J1;
 
-            var surfaceBasisVectorDerivative1 = shellElement.CalculateSurfaceBasisVector1(hessian, 0);
-            var surfaceBasisVectorDerivative2 = shellElement.CalculateSurfaceBasisVector1(hessian, 1);
-            var surfaceBasisVectorDerivative12 = shellElement.CalculateSurfaceBasisVector1(hessian, 2);
+            var surfaceBasisVectorDerivative1 = shellElement.CalculateSurfaceBasisVector(hessian, 0);
+            var surfaceBasisVectorDerivative2 = shellElement.CalculateSurfaceBasisVector(hessian, 1);
+            var surfaceBasisVectorDerivative12 = shellElement.CalculateSurfaceBasisVector(hessian, 2);
             var Bbending = new double[3, controlPoints.Length * 3];
             shellElement.CalculateBendingDeformationMatrix(elementControlPoints.Length, surfaceBasisVector3, nurbs, 0, surfaceBasisVector2,
                 surfaceBasisVectorDerivative1, surfaceBasisVector1, J1, surfaceBasisVectorDerivative2,
@@ -393,7 +384,7 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var KmembraneNL = new double[elementControlPoints.Length * 3, elementControlPoints.Length * 3];
 
@@ -422,15 +413,15 @@ namespace ISAAR.MSolve.IGA.Tests
         {
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             shellElement._solution = localSolution;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var jacobianMatrix = new double[3, 3];
             shellElement.CalculateJacobian(elementControlPoints, nurbs, 0, jacobianMatrix);
             var hessian = shellElement.CalculateHessian(elementControlPoints, nurbs, 0);
 
-            var surfaceBasisVector1 = shellElement.CalculateSurfaceBasisVector1(jacobianMatrix, 0);
-            var surfaceBasisVector2 = shellElement.CalculateSurfaceBasisVector1(jacobianMatrix, 1);
+            var surfaceBasisVector1 = shellElement.CalculateSurfaceBasisVector(jacobianMatrix, 0);
+            var surfaceBasisVector2 = shellElement.CalculateSurfaceBasisVector(jacobianMatrix, 1);
             var surfaceBasisVector3 = new[]
             {
                 surfaceBasisVector1[1] * surfaceBasisVector2[2] - surfaceBasisVector1[2] * surfaceBasisVector2[1],
@@ -443,9 +434,9 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = 0; i < surfaceBasisVector3.Length; i++)
                 surfaceBasisVector3[i] = surfaceBasisVector3[i] / J1;
 
-            var surfaceBasisVectorDerivative1 = shellElement.CalculateSurfaceBasisVector1(hessian, 0);
-            var surfaceBasisVectorDerivative2 = shellElement.CalculateSurfaceBasisVector1(hessian, 1);
-            var surfaceBasisVectorDerivative12 = shellElement.CalculateSurfaceBasisVector1(hessian, 2);
+            var surfaceBasisVectorDerivative1 = shellElement.CalculateSurfaceBasisVector(hessian, 0);
+            var surfaceBasisVectorDerivative2 = shellElement.CalculateSurfaceBasisVector(hessian, 1);
+            var surfaceBasisVectorDerivative12 = shellElement.CalculateSurfaceBasisVector(hessian, 2);
 
             var KbendingNL = new double[elementControlPoints.Length * 3, elementControlPoints.Length * 3];
 
@@ -480,7 +471,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var shellElement = Element;
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
 
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
             var (MembraneConstitutiveMatrix, BendingConstitutiveMatrix, CouplingConstitutiveMatrix) =
                 shellElement.IntegratedConstitutiveOverThickness(gaussPoints[0]);
@@ -504,7 +495,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
 
             shellElement.CalculateStresses(shellElement, localSolution, new double[27]);
@@ -543,7 +534,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
 
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
             shellElement.CalculateStresses(shellElement, localSolution, new double[27]);
@@ -567,7 +558,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var controlPoints = ElementControlPoints().ToArray();
             var shellElement = Element;
 
-            var nurbs = shellElement._nurbs;
+            var nurbs = shellElement._shapeFunctions;
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
             shellElement.CalculateStresses(shellElement, localSolution, new double[27]);

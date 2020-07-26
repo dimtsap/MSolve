@@ -16,10 +16,6 @@ using Element = ISAAR.MSolve.IGA.Entities.Element;
 
 namespace ISAAR.MSolve.IGA.Elements.Continuum
 {
-    /// <summary>
-	/// An one-dimensional continuum element that utilizes Non-Uniform Rational B-Splines for shape functions.
-	/// Authors: Dimitris Tsapetis.
-	/// </summary>
 	public class ContinuumElement1D : Element, IStructuralIsogeometricElement
 	{
 
@@ -459,7 +455,12 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 				}
 			}
 		}
-		
-		#endregion IStructuralIsogeometricElement
-	}
+
+        public double[,] CalculatePointsForPostProcessing(Element element)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion IStructuralIsogeometricElement
+    }
 }

@@ -67,20 +67,10 @@ namespace ISAAR.MSolve.IGA.Tests
                 var knotValueVectorKsi = KnotValueVector();
                 var knotValueVectorHeta = KnotValueVector();
 				var gauss = new GaussQuadrature();
-                var parametricPointKsi = gauss.CalculateElementGaussPoints(degreeKsi, new List<Knot>()
-                {
-					new Knot(){Ksi = ElementKnot()[0].Ksi},
-					new Knot(){Ksi = ElementKnot()[2].Ksi},
-                }).Select(x => x.Ksi).ToArray();
-                var parametricPointHeta = gauss.CalculateElementGaussPoints(degreeHeta, new List<Knot>()
-                {
-					new Knot(){Ksi = ElementKnot()[0].Heta},
-                    new Knot(){Ksi = ElementKnot()[1].Heta},
-				}).Select(x => x.Ksi).ToArray();
                 var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnot()).ToArray();
 
                 var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta,
-                    ElementControlPoints().ToArray(), parametricPointKsi, parametricPointHeta);
+                    ElementControlPoints().ToArray(), gaussPoints);
 
 
 				var element = new ContinuumElement2D(null,nurbs, gaussPoints, 1);
@@ -215,21 +205,8 @@ namespace ISAAR.MSolve.IGA.Tests
                 var knotValueVectorHeta = ShellKnotValueVectorHeta();
 				var gauss= new GaussQuadrature();
 				var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ShellElementKnot()).ToArray();
-
-                var parametricGaussPointKsi = new double[degreeKsi + 1];
-                for (int i = 0; i < degreeKsi + 1; i++)
-                {
-                    parametricGaussPointKsi[i] = gaussPoints[i * (degreeHeta + 1)].Ksi;
-                }
-
-                var parametricGaussPointHeta = new double[degreeHeta + 1];
-                for (int i = 0; i < degreeHeta + 1; i++)
-                {
-                    parametricGaussPointHeta[i] = gaussPoints[i].Heta;
-                }
-
 				var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta,
-                    ShellElementControlPoints().ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
+                    ShellElementControlPoints().ToArray(), gaussPoints);
 				var material = new ShellElasticSectionMaterial2D()
                 {
                     YoungModulus = 100,

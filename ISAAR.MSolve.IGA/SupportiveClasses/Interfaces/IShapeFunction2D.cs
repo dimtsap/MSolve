@@ -1,4 +1,6 @@
-﻿namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
+﻿using ISAAR.MSolve.Geometry.Coordinates;
+
+namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
 {
     public interface IShapeFunction2D
     {
@@ -8,5 +10,9 @@
         double[,] SecondDerivativeValuesHeta { get; }
         double[,] SecondDerivativeValuesKsi { get; }
         double[,] SecondDerivativeValuesKsiHeta { get; }
+
+        double[,] CalculateShapeFunctionsAt(NaturalPoint point);
+
+        double[,] CalculateShapeFunctionsAt(NaturalPoint[] points);
     }
 }

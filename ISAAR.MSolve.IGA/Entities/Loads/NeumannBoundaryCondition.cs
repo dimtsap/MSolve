@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace ISAAR.MSolve.IGA.Entities.Loads
@@ -23,7 +24,8 @@ namespace ISAAR.MSolve.IGA.Entities.Loads
 		/// <param name="edge">An one dimensional boundary entity. For more info see <see cref="Edge"/>.</param>
 		/// <param name="neumann">The <see cref="NeumannBoundaryCondition"/>.</param>
 		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="NeumannBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> LoadNeumann(Element element, Edge edge, NeumannBoundaryCondition neumann) => element.ElementType.CalculateLoadingCondition(element, edge, neumann);
+		public Dictionary<int, double> LoadNeumann(Element element, Edge edge, NeumannBoundaryCondition neumann) => throw new NotImplementedException();
+            //element.ElementType.CalculateLoadingCondition(element, edge, neumann);
 
 		/// <summary>
 		/// Calculates Neumann load on a face.
@@ -32,7 +34,8 @@ namespace ISAAR.MSolve.IGA.Entities.Loads
 		/// <param name="face">The <see cref="Face"/> that the <see cref="NeumannBoundaryCondition"/> was applied to.</param>
 		/// <param name="neumann">The <see cref="NeumannBoundaryCondition"/>.</param>
 		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="NeumannBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> LoadNeumann(Element element, Face face, NeumannBoundaryCondition neumann) => element.ElementType.CalculateLoadingCondition(element, face, neumann);
+		public Dictionary<int, double> LoadNeumann(Element element, Face face, NeumannBoundaryCondition neumann) => throw new NotImplementedException();
+        //element.ElementType.CalculateLoadingCondition(element, face, neumann);
 
 		/// <summary>
 		/// Calculates Pressure load on an edge.
@@ -41,17 +44,20 @@ namespace ISAAR.MSolve.IGA.Entities.Loads
 		/// <param name="edge">An one dimensional boundary entity. For more info see <see cref="Edge"/>.</param>
 		/// <param name="pressure"><inheritdoc cref="PressureBoundaryCondition"/></param>
 		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="PressureBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> LoadPressure(Element element, Edge edge, PressureBoundaryCondition pressure) => element.ElementType.CalculateLoadingCondition(element, edge, pressure);
+		public Dictionary<int, double> LoadPressure(Element element, Edge edge, PressureBoundaryCondition pressure) => throw new NotImplementedException();
+        // element.ElementType.CalculateLoadingCondition(element, edge, pressure);
 
-		/// <summary>
-		/// Calculates Pressure load on a face.
-		/// </summary>
-		/// <param name="element">An <see cref="Element"/> that can handle a <see cref="PressureBoundaryCondition"/>.</param>
-		/// <param name="face">The <see cref="Face"/> that the <see cref="NeumannBoundaryCondition"/> was applied to.</param>
-		/// <param name="pressure"><inheritdoc cref="PressureBoundaryCondition"/></param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="PressureBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> LoadPressure(Element element, Face face, PressureBoundaryCondition pressure) => element.ElementType.CalculateLoadingCondition(element, face, pressure);
-	}
+        /// <summary>
+        /// Calculates Pressure load on a face.
+        /// </summary>
+        /// <param name="element">An <see cref="Element"/> that can handle a <see cref="PressureBoundaryCondition"/>.</param>
+        /// <param name="face">The <see cref="Face"/> that the <see cref="NeumannBoundaryCondition"/> was applied to.</param>
+        /// <param name="pressure"><inheritdoc cref="PressureBoundaryCondition"/></param>
+        /// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="PressureBoundaryCondition"/>.</returns>
+        public Dictionary<int, double> LoadPressure(Element element, Face face, PressureBoundaryCondition pressure) => throw new NotImplementedException();
+
+        //element.ElementType.CalculateLoadingCondition(element, face, pressure));
+    }
 
 	/// <summary>
 	/// Neumann loading boundary condition. Works as a distributed load.

@@ -79,7 +79,12 @@ namespace ISAAR.MSolve.IGA.Elements.Boundary
 			throw new NotImplementedException();
 		}
 
-		public Tuple<double[], double[]> CalculateStresses(IElement element, double[] localDisplacements, double[] localdDisplacements)
+        public double[,] CalculatePointsForPostProcessing(Element element)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Tuple<double[], double[]> CalculateStresses(IElement element, double[] localDisplacements, double[] localdDisplacements)
 		{
 			return new Tuple<double[], double[]>(new double[0], new double[0]);
 		}

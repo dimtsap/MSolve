@@ -14,7 +14,12 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 	/// </summary>
 	public class Nurbs2D:IShapeFunction2D
 	{
-		/// <summary>
+        private readonly ControlPoint[] controlPoints;
+        private readonly int degreeHeta;
+        private readonly int degreeKsi;
+        private readonly double[] knotValueVectorHeta;
+        private readonly double[] knotValueVectorKsi;
+        /// <summary>
 		/// Defines a 2D NURBS shape function for an element given the per axis gauss point coordinates.
 		/// </summary>
 		/// <param name="element">An <see cref="Element"/> of type <see cref="NURBSElement2D"/>.</param>
@@ -23,11 +28,17 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// <param name="parametricGaussPointHeta">An <see cref="IVector"/> containing Gauss points of axis Heta.</param>
 		public Nurbs2D(int degreeKsi, double[] knotValueVectorKsi,
                        int degreeHeta, double[] knotValueVectorHeta,
-                       ControlPoint[] controlPoints, double[] parametricGaussPointKsi,
-                       double[] parametricGaussPointHeta)
+                       ControlPoint[] controlPoints,GaussLegendrePoint3D[] gaussPoints)
 		{
-			var parametricPointsCount = parametricGaussPointKsi.Length * parametricGaussPointHeta.Length;
+            this.degreeKsi = degreeKsi;
+            this.knotValueVectorKsi = knotValueVectorKsi;
+            this.degreeHeta = degreeHeta;
+            this.knotValueVectorHeta = knotValueVectorHeta;
+            this.controlPoints = controlPoints;
+            var parametricPointsCount = gaussPoints.Length;
             var numberOfControlPointsHeta = knotValueVectorHeta.Length - degreeHeta - 1;
+            var parametricGaussPointKsi = gaussPoints.Select(x => x.Ksi).Distinct().ToArray();
+            var parametricGaussPointHeta = gaussPoints.Select(x => x.Heta).Distinct().ToArray();
 			Bsplines1D bsplinesKsi = new Bsplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
 			Bsplines1D bsplinesHeta = new Bsplines1D(degreeHeta, knotValueVectorHeta,
 				parametricGaussPointHeta);
@@ -167,7 +178,17 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// </summary>
 		public double[,] SecondDerivativeValuesKsiHeta { get; private set; }
 
-		/// <summary>
+        public double[,] CalculateShapeFunctionsAt(NaturalPoint point)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] CalculateShapeFunctionsAt(NaturalPoint[] points)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
 		/// <see cref="Matrix"/> containing NURBS shape functions.
 		/// Row represent Control Points, while columns Gauss Points.
 		/// </summary>

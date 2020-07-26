@@ -301,20 +301,9 @@ namespace ISAAR.MSolve.IGA.Readers
 
                     var gauss= new GaussQuadrature();
                     var gaussPoints = gauss.CalculateElementGaussPoints(DegreeKsi, DegreeHeta, knotsOfElement).ToArray();
-                    var parametricGaussPointKsi = new double[DegreeKsi + 1];
-                    for (int m = 0; m < DegreeKsi + 1; m++)
-                    {
-                        parametricGaussPointKsi[m] = gaussPoints[m * (DegreeHeta + 1)].Ksi;
-                    }
-
-                    var parametricGaussPointHeta = new double[DegreeHeta + 1];
-                    for (int m = 0; m < DegreeHeta + 1; m++)
-                    {
-                        parametricGaussPointHeta[m] = gaussPoints[m].Heta;
-                    }
                     var nurbs = new Nurbs2D(DegreeKsi, KnotValueVectorKsi.CopyToArray(),
                         DegreeHeta, KnotValueVectorHeta.CopyToArray(),
-                        elementControlPoints.ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
+                        elementControlPoints.ToArray(), gaussPoints);
                     switch (formulation)
                     {
                         case GeometricalFormulation.Linear:
@@ -328,11 +317,11 @@ namespace ISAAR.MSolve.IGA.Readers
                             element.AddControlPoints(elementControlPoints);
                             break;
                         case GeometricalFormulation.NonLinear:
-                            element = new NurbsKirchhoffLoveShellElementNL(_material,
+                            element = new KirchhoffLoveShellNL(_material,
                                 knotsOfElement,nurbs, elementControlPoints, model.PatchesDictionary[0],Thickness, DegreeKsi, DegreeHeta)
                             {
                                 ID = elementID,
-                                ElementType = new NurbsKirchhoffLoveShellElementNL(_material,
+                                ElementType = new KirchhoffLoveShellNL(_material,
                                     knotsOfElement, nurbs, elementControlPoints, model.PatchesDictionary[0], Thickness, DegreeKsi, DegreeHeta)
                                 {
                                     ID = elementID,

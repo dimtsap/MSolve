@@ -17,10 +17,6 @@ using Element = ISAAR.MSolve.IGA.Entities.Element;
 
 namespace ISAAR.MSolve.IGA.Elements.Continuum
 {
-    /// <summary>
-	/// A three-dimensional continuum element that utilizes NURBS for shape functions.
-	/// Authors: Dimitris Tsapetis.
-	/// </summary>
 	public class ContinuumElement3D : Element, IStructuralIsogeometricElement
 	{
 
@@ -99,7 +95,12 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 			//return knotDisplacements;
 		}
 
-		/// <summary>
+        public double[,] CalculatePointsForPostProcessing(Element element)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
 		/// This method calculates the internal forces of the element.
 		/// </summary>
 		/// <param name="element">An element of type <see cref="NurbsElement3D"/>.</param>

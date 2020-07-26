@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
@@ -16,12 +17,9 @@ using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Materials.Interfaces;
 using Element = ISAAR.MSolve.IGA.Entities.Element;
 
+
 namespace ISAAR.MSolve.IGA.Elements.Continuum
 {
-    /// <summary>
-	/// A two-dimensional continuum element that utilizes NURBS for shape functions.
-	/// Authors: Dimitris Tsapetis.
-	/// </summary>
 	public class ContinuumElement2D : Element, IStructuralIsogeometricElement
 	{
         public ContinuumElement2D(IContinuumMaterial2D material, 
@@ -354,10 +352,10 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		#endregion IStructuralIsogeometricElement
 
 		/// <summary>
-		/// Calculates the forces applies to an <see cref="NURBSElement2D"/> due to <see cref="FEM.Entities.MassAccelerationLoad"/>.
+		/// Calculates the forces applies to an <see cref="NURBSElement2D"/> due to <see cref="MassAccelerationLoad"/>.
 		/// </summary>
 		/// <param name="element">An element of type <see cref="NURBSElement2D"/>.</param>
-		/// <param name="loads">A list of <see cref="FEM.Entities.MassAccelerationLoad"/>. For more info see <seealso cref="FEM.Entities.MassAccelerationLoad"/>.</param>
+		/// <param name="loads">A list of <see cref="MassAccelerationLoad"/>. For more info see <seealso cref="MassAccelerationLoad"/>.</param>
 		/// <returns>A <see cref="double"/> array containing the forces generates due to acceleration for each degree of freedom.</returns>
 		public double[] CalculateAccelerationForces(IElement element, IList<MassAccelerationLoad> loads) => throw new NotImplementedException();
 
@@ -466,5 +464,10 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 			GaussQuadrature gauss = new GaussQuadrature();
 			return gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, element.Knots.ToArray());
 		}
-	}
+
+        public double[,] CalculatePointsForPostProcessing(Element element)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

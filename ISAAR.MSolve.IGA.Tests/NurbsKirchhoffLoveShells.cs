@@ -87,19 +87,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
 				var gauss = new GaussQuadrature();
                 var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnot()).ToArray();
-                var parametricGaussPointKsi = new double[degreeKsi + 1];
-                for (int i = 0; i < degreeKsi + 1; i++)
-                {
-                    parametricGaussPointKsi[i] = gaussPoints[i * (degreeHeta + 1)].Ksi;
-                }
-
-                var parametricGaussPointHeta = new double[degreeHeta + 1];
-                for (int i = 0; i < degreeHeta + 1; i++)
-                {
-                    parametricGaussPointHeta[i] = gaussPoints[i].Heta;
-                }
 				var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta,
-                    ElementControlPoints().ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
+                    ElementControlPoints().ToArray(), gaussPoints);
                 var material = new ShellElasticSectionMaterial2D()
                 {
                     YoungModulus = 100,

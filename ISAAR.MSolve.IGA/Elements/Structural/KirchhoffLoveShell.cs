@@ -18,33 +18,6 @@ using Element = ISAAR.MSolve.IGA.Entities.Element;
 
 namespace ISAAR.MSolve.IGA.Elements.Structural
 {
-  //  public enum GeometricalFormulation
-  //  {
-		//Linear, 
-		//NonLinear
-  //  }
-
-  //  public class KirchhoffLoveShellFactory
-  //  {
-  //      public KirchhoffLoveShell CreateKirchhoffLoveShellElement(GeometricalFormulation formulation,
-  //          IShellSectionMaterial material, IShapeFunction2D shapeFunctions,
-  //          GaussLegendrePoint3D[] gaussPoints, double thickness)
-  //      {
-
-		//	//var geometricalCalculation= formulation==GeometricalFormulation.Linear? new LinearKLFormulation():new NonLinearKLFormulation;
-		//	return new KirchhoffLoveShell(material,shapeFunctions,gaussPoints,thickness);
-  //      }
-
-
-  //  }
-
-
-    /// <summary>
-	/// An shell element that utilizes Non-Uniform Rational B-Splines for shape functions.
-	/// It is based on Kirchhoff-Love theory. Geometrically linear formulation.
-	/// For more information please refer to <see href="https://www.sciencedirect.com/science/article/pii/S0045782509002680"/>
-	/// Authors: Dimitris Tsapetis.
-	/// </summary>
 	public class KirchhoffLoveShell : Element, IStructuralIsogeometricElement, ISurfaceLoadedElement
 	{
         public KirchhoffLoveShell(IShellSectionMaterial material,
@@ -576,5 +549,10 @@ namespace ISAAR.MSolve.IGA.Elements.Structural
 
 			return distributedLoad;
 		}
-	}
+
+        public double[,] CalculatePointsForPostProcessing(Element element)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

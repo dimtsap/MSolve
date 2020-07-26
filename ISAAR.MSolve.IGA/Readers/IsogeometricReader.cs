@@ -725,20 +725,9 @@ namespace ISAAR.MSolve.IGA.Readers
                     var gauss = new GaussQuadrature();
                     var gaussPoints = gauss.CalculateElementGaussPoints(DegreeKsiDictionary[0], 
                         DegreeHetaDictionary[0], knotsOfElement).ToArray();
-                    var parametricGaussPointKsi = new double[DegreeKsiDictionary[0] + 1];
-                    for (int m = 0; m < DegreeKsiDictionary[0] + 1;m++)
-                    {
-                        parametricGaussPointKsi[m] = gaussPoints[m * (DegreeHetaDictionary[0] + 1)].Ksi;
-                    }
-
-                    var parametricGaussPointHeta = new double[DegreeHetaDictionary[0] + 1];
-                    for (int m = 0; m < DegreeHetaDictionary[0] + 1; m++)
-                    {
-                        parametricGaussPointHeta[m] = gaussPoints[m].Heta;
-                    }
                     var nurbs = new Nurbs2D(DegreeKsiDictionary[0], KnotValueVectorsKsiDictionary[0],
                         DegreeHetaDictionary[0], KnotValueVectorsHetaDictionary[0],
-                        elementControlPoints.ToArray(), parametricGaussPointKsi, parametricGaussPointHeta);
+                        elementControlPoints.ToArray(), gaussPoints);
                     Element element = new Element
                     {
                         ID = elementID,

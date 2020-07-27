@@ -347,7 +347,7 @@ namespace ISAAR.MSolve.IGA.Entities
 
 		private void CreateEdges2D()
 		{
-			#region EdgeRight
+			#region EdgeLeft
 
 			Edge edgeRight = new Edge();
 			edgeRight.ID = 0;
@@ -363,9 +363,9 @@ namespace ISAAR.MSolve.IGA.Entities
 
 			EdgesDictionary.Add(0, edgeRight);
 
-			#endregion EdgeRight
+			#endregion 
 
-			#region EdgeLeft
+			#region EdgeRight
 
 			Edge edgeLeft = new Edge();
 			edgeLeft.ID = 1;
@@ -382,7 +382,7 @@ namespace ISAAR.MSolve.IGA.Entities
 
 			EdgesDictionary.Add(1, edgeLeft);
 
-			#endregion EdgeLeft
+			#endregion 
 
 			#region EdgeBottom
 

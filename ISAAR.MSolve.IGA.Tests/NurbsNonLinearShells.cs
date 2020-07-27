@@ -435,7 +435,7 @@ namespace ISAAR.MSolve.IGA.Tests
             //TODO:Find load from previous papers
             model.Loads.Add(new Load()
             {
-                Amount = 2000,
+                Amount = -2000,
                 Node = model.ControlPoints.ToList()[31],
                 DOF = StructuralDof.TranslationZ
             });
@@ -444,20 +444,30 @@ namespace ISAAR.MSolve.IGA.Tests
             //TODO:Check boundary conditions
             foreach (var controlPoint in model.Patches[0].EdgesDictionary[1].ControlPointsDictionary)
             {
-                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationZ});
-                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationY});
-                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationZ});
+                var id = controlPoint.Value.ID;
+                controlPoint.Value.Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+                controlPoint.Value.Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+                controlPoint.Value.Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
+
+                model.ControlPointsDictionary[id - 32].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+                model.ControlPointsDictionary[id - 32].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+                model.ControlPointsDictionary[id - 32].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
             }
 
             //TODO: constrain rotation
             foreach (var controlPoint in model.Patches[0].EdgesDictionary[2].ControlPointsDictionary)
             {
-                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationZ});
+                controlPoint.Value.Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
+                var id = controlPoint.Value.ID;
+                model.ControlPointsDictionary[id+1].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
             }
 
             foreach (var controlPoint in model.Patches[0].EdgesDictionary[3].ControlPointsDictionary)
             {
-                controlPoint.Value.Constraints.Add(new Constraint(){DOF = StructuralDof.TranslationX});
+                controlPoint.Value.Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+
+                var id = controlPoint.Value.ID;
+                model.ControlPointsDictionary[id-1].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
             }
 
             // Solvers

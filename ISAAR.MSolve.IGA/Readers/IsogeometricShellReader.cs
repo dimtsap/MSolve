@@ -27,7 +27,7 @@ namespace ISAAR.MSolve.IGA.Readers
 	{
 		private readonly string _filename;
         private readonly GeometricalFormulation _formulation;
-        private readonly List<IShellMaterial> _material;
+        private readonly IShellMaterial _material;
         private readonly IShellSectionMaterial _sectionMaterial;
 
         private enum Attributes
@@ -48,11 +48,11 @@ namespace ISAAR.MSolve.IGA.Readers
 		/// <param name="modelCreator">An <see cref="ModelCreator"/> object responsible for generating the model.</param>
 		/// <param name="filename">The name of the file to be read.</param>
 		public IsogeometricShellReader(GeometricalFormulation formulation,
-            string filename, List<IShellMaterial> materials=null,IShellSectionMaterial sectionMaterial=null )
+            string filename, IShellMaterial material=null,IShellSectionMaterial sectionMaterial=null )
 		{
 			_filename = filename;
             _formulation = formulation;
-            _material = materials;
+            _material = material;
             _sectionMaterial = sectionMaterial;
         }
 
@@ -317,16 +317,19 @@ namespace ISAAR.MSolve.IGA.Readers
                             element.AddControlPoints(elementControlPoints);
                             break;
                         case GeometricalFormulation.NonLinear:
-                            element = new KirchhoffLoveShellNL(_material,
-                                knotsOfElement,nurbs, elementControlPoints, model.PatchesDictionary[0],Thickness, DegreeKsi, DegreeHeta)
+                            element = new Element()
                             {
                                 ID = elementID,
+                                Patch = model.PatchesDictionary[0],
                                 ElementType = new KirchhoffLoveShellNL(_material,
-                                    knotsOfElement, nurbs, elementControlPoints, model.PatchesDictionary[0], Thickness, DegreeKsi, DegreeHeta)
+                                    knotsOfElement, nurbs, elementControlPoints, model.PatchesDictionary[0], Thickness,
+                                    DegreeKsi, DegreeHeta)
                                 {
                                     ID = elementID,
                                 }
                             };
+                            element.AddKnots(knotsOfElement);
+                            element.AddControlPoints(elementControlPoints);
                             break;
                         case GeometricalFormulation.SectionNonLinear:
                             throw new NotImplementedException();

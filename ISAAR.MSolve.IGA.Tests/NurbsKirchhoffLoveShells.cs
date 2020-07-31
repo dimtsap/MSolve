@@ -469,7 +469,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 YoungModulus = 4.3210e8,
                 PoissonRatio = 0.0
             };
-            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, null);
+            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, material);
             var model = modelReader.GenerateModelFromFile();
 
 			model.SurfaceLoads.Add(new SurfaceDistributedLoad(-90, StructuralDof.TranslationY));
@@ -538,7 +538,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 YoungModulus = 10000000,
                 PoissonRatio = 0.0
             };
-            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, null);
+            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, material);
             var model = modelReader.GenerateModelFromFile();
 
 

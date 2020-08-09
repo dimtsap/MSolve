@@ -36,6 +36,9 @@ namespace ISAAR.MSolve.IGA.Tests
         private const double Tolerance = 1e-9;
 
         #region Fields
+
+        private int degreeKsi = 2;
+        private int degreeHeta = 2;
         private List<ControlPoint> ElementControlPoints()
         {
             return new List<ControlPoint>
@@ -63,25 +66,20 @@ namespace ISAAR.MSolve.IGA.Tests
             };
         }
 
-        private double[] KnotValueVectorKsi()
+        private double[] knotValueVectorKsi=>new double[]
         {
-            return new double[]
-            {
-                0.0000000000000, 0.0000000000000, 0.0000000000000, 0.6250000000000, 1.2500000000000, 1.8750000000000,
-                2.5000000000000, 3.1250000000000, 3.7500000000000, 4.3750000000000, 5.0000000000000, 5.6250000000000,
-                6.2500000000000, 6.8750000000000, 7.5000000000000, 8.1250000000000, 8.7500000000000, 9.3750000000000,
-                10.0000000000000, 10.0000000000000, 10.0000000000000,
-            };
-        }
+            0.0000000000000, 0.0000000000000, 0.0000000000000, 0.6250000000000, 1.2500000000000, 1.8750000000000,
+            2.5000000000000, 3.1250000000000, 3.7500000000000, 4.3750000000000, 5.0000000000000, 5.6250000000000,
+            6.2500000000000, 6.8750000000000, 7.5000000000000, 8.1250000000000, 8.7500000000000, 9.3750000000000,
+            10.0000000000000, 10.0000000000000, 10.0000000000000,
+        };
+        
 
-        private double[] KnotValueVectorHeta()
+        private double[] knotValueVectorHeta=>new double[]
         {
-            return new double[]
-            {
-                0.0, 0.0, 0.0, 1.0, 1.0, 1.0
-            };
-        }
-
+            0.0, 0.0, 0.0, 1.0, 1.0, 1.0
+        };
+    
         private ShellElasticMaterial2D Material => new ShellElasticMaterial2D()
         {
             YoungModulus = 1200000,
@@ -91,30 +89,6 @@ namespace ISAAR.MSolve.IGA.Tests
             NormalVectorV3 = new double[] { 0, 0, 1 }
         };
         
-        private KirchhoffLoveShellNL Element
-        {
-            get
-            {
-                var patch = new Patch();
-                var degreeKsi = 2;
-                var degreeHeta = 2;
-                var numberOfControlPointsHeta = 3;
-                var knotValueVectorKsi = KnotValueVectorKsi();
-                var knotValueVectorHeta = KnotValueVectorHeta();
-
-                var gauss = new GaussQuadrature();
-                var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots());
-                var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta,
-                    ElementControlPoints().ToArray(), gaussPoints.ToArray());
-                IShellMaterial material = new ShellElasticMaterial2D();
-                var element =
-                    new KirchhoffLoveShellNL(material, ElementKnots().ToArray(),nurbs,
-                        ElementControlPoints(), patch, 0.1, degreeKsi, degreeHeta);
-                element._solution= localSolution;
-                return element;
-            }
-        }
-
         private double[] localSolution => new double[]
         {
             0.000000000000000000000000000000000000000, 0.000000000000000000000000000000000000000,
@@ -147,113 +121,21 @@ namespace ISAAR.MSolve.IGA.Tests
             v2 = 0.00000000000000683985998006887000000000000000000000,
         };
 
-        #endregion
-
-        [SkippableFact]
-        public void IsogeometricCantileverShell()
-        {
-            Skip.If(true, "Not a valid test");
-            var filename = "CantileverShellBenchmark16x1";
-            var filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles", $"{filename}.txt");
-            var material = new ShellElasticMaterial2Dtransformationb()
-            {
-                YoungModulus = 1.2e06,
-                PoissonRatio = 0.0
-            };
-            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath,null);
-            var model = modelReader.GenerateModelFromFile();
-
-            Value verticalDistributedLoad = delegate (double x, double y, double z)
-            {
-                return new double[] { 0, 0, 4 };
-            };
-            model.Patches[0].EdgesDictionary[1].LoadingConditions.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
-
-            for (int i = 0; i < 6; i++)
-            {
-                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
-                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
-            }
-
-            // Solvers
-            var solverBuilder = new SuiteSparseSolver.Builder();
-            ISolver solver = solverBuilder.BuildSolver(model);
-
-            // Structural problem provider
-            var provider = new ProblemStructural(model, solver);
-
-            // Linear static analysis
-            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 1000);
-            var childAnalyzer = newtonRaphsonBuilder.Build();
-            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
-
-            var logger = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
-                model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "CantileverBenchmarkLog16x1.txt");
-            childAnalyzer.IncrementalLogs.Add(0, logger);
-
-            // Run the analysis
-            parentAnalyzer.Initialize();
-            parentAnalyzer.Solve();
-        }
-        
-
-        //[Fact]
-        public void SlitAnnularPlate()
-        {
-            var filename = "SplitAnnularPlate";
-            var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", $"{filename}.txt");
-            var material= new ShellElasticMaterial2Dtransformationb()
-            {
-                YoungModulus = 21000000,
-                PoissonRatio = 0.0
-            };
-            IsogeometricShellReader modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath,null);
-            var model=modelReader.GenerateModelFromFile();
-
-            Value verticalDistributedLoad = delegate (double x, double y, double z)
-            {
-                return new double[] { 0, 0, 0.8 };
-            };
-            model.Patches[0].EdgesDictionary[1].LoadingConditions.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
-
-            for (int i = 0; i < 20; i++)
-            {
-                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
-                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-                model.ControlPointsDictionary[i].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
-            }
-
-            // Solvers
-            var solverBuilder = new DenseMatrixSolver.Builder();
-            ISolver solver = solverBuilder.BuildSolver(model);
-
-            // Structural problem provider
-            var provider = new ProblemStructural(model, solver);
-
-            // Linear static analysis
-            var newtonRaphsonBuilder = new LoadControlAnalyzer.Builder(model, solver, provider, 10000);
-            var childAnalyzer = newtonRaphsonBuilder.Build();
-            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
-
-            var loggerA = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 10000,
-                model.ControlPointsDictionary.Values.Last(), StructuralDof.TranslationZ, "SplitAnnularPlateWa.txt");
-            var loggerB = new TotalLoadsDisplacementsPerIncrementLog(model.PatchesDictionary[0], 1000,
-                model.ControlPointsDictionary[790], StructuralDof.TranslationZ, "SplitAnnularPlateWb.txt");
-            childAnalyzer.IncrementalLogs.Add(0, loggerA);
-            childAnalyzer.IncrementalLogs.Add(1, loggerB);
-
-            // Run the analysis
-            parentAnalyzer.Initialize();
-            parentAnalyzer.Solve();
-        }
+            #endregion
 
         [Fact]
         public void JacobianTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
-            var nurbs = shellElement._shapeFunctions;
+            
+            var gauss= new GaussQuadrature();
+            var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                gaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var jacobianMatrix = new double[2, 3];
             shellElement.CalculateJacobian(elementControlPoints, nurbs, 0, jacobianMatrix);
@@ -274,8 +156,14 @@ namespace ISAAR.MSolve.IGA.Tests
         public void HessianTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
-            var nurbs = shellElement._shapeFunctions;
+            var gauss= new GaussQuadrature();
+            var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                gaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var hessian = shellElement.CalculateHessian(elementControlPoints, nurbs, 0);
 
@@ -295,8 +183,14 @@ namespace ISAAR.MSolve.IGA.Tests
         public void MembraneDeformationMatrixTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
-            var nurbs = shellElement._shapeFunctions;
+            var gauss= new GaussQuadrature();
+            var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                gaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
 
             var jacobianMatrix = new double[3, 3];
@@ -318,7 +212,7 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = 0; i < surfaceBasisVector3.Length; i++)
                 surfaceBasisVector3[i] = surfaceBasisVector3[i] / J1;
             var Bmembrane = new double[3, controlPoints.Length * 3];
-            shellElement.CalculateMembraneDeformationMatrix(elementControlPoints.Length, nurbs, 0, surfaceBasisVector1, surfaceBasisVector2, Bmembrane);
+            shellElement.CalculateMembraneDeformationMatrix(controlPoints.Length, nurbs, 0, surfaceBasisVector1, surfaceBasisVector2, Bmembrane);
 
             var expectedBmembrane = MatlabReader.Read<double>(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "NurbsNonLinearThicknessShell.mat"), "Bmembrane");
 
@@ -336,9 +230,16 @@ namespace ISAAR.MSolve.IGA.Tests
         public void BendingDeformationMatrixTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
-            var nurbs = shellElement._shapeFunctions;
+            var gauss= new GaussQuadrature();
+            var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                gaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
+
             var jacobianMatrix = new double[3, 3];
             shellElement.CalculateJacobian(elementControlPoints, nurbs, 0, jacobianMatrix);
 
@@ -362,7 +263,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var surfaceBasisVectorDerivative2 = shellElement.CalculateSurfaceBasisVector(hessian, 1);
             var surfaceBasisVectorDerivative12 = shellElement.CalculateSurfaceBasisVector(hessian, 2);
             var Bbending = new double[3, controlPoints.Length * 3];
-            shellElement.CalculateBendingDeformationMatrix(elementControlPoints.Length, surfaceBasisVector3, nurbs, 0, surfaceBasisVector2,
+            shellElement.CalculateBendingDeformationMatrix(controlPoints.Length, surfaceBasisVector3, nurbs, 0, surfaceBasisVector2,
                 surfaceBasisVectorDerivative1, surfaceBasisVector1, J1, surfaceBasisVectorDerivative2,
                 surfaceBasisVectorDerivative12, Bbending);
 
@@ -383,10 +284,15 @@ namespace ISAAR.MSolve.IGA.Tests
         public void StiffnessMatrixMembraneNLTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
-            var nurbs = shellElement._shapeFunctions;
-            var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
-            var KmembraneNL = new double[elementControlPoints.Length * 3, elementControlPoints.Length * 3];
+            var gauss= new GaussQuadrature();
+            var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                gaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+
+            var KmembraneNL = new double[controlPoints.Length * 3, controlPoints.Length * 3];
 
             var membraneForces = new Forces()
             {
@@ -395,7 +301,7 @@ namespace ISAAR.MSolve.IGA.Tests
                 v2 = 0.0000000000001690940892323080000000000000000000000
             };
 
-            shellElement.CalculateKmembraneNL(elementControlPoints, ref membraneForces, nurbs, 0, KmembraneNL);
+            shellElement.CalculateKmembraneNL(controlPoints, ref membraneForces, nurbs, 0, KmembraneNL);
 
             var expectedKmembraneNL = MatlabReader.Read<double>(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "NurbsNonLinearThicknessShell.mat"), "KmembraneNL");
 
@@ -412,8 +318,14 @@ namespace ISAAR.MSolve.IGA.Tests
         public void StiffnessMatrixBendingNLTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
-            var nurbs = shellElement._shapeFunctions;
+            var gauss= new GaussQuadrature();
+            var gaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                gaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+
             shellElement._solution = localSolution;
             var elementControlPoints = shellElement.CurrentControlPoint(controlPoints);
             var jacobianMatrix = new double[3, 3];
@@ -468,10 +380,16 @@ namespace ISAAR.MSolve.IGA.Tests
         public void ConstitutiveMatrixThicknessIntegration()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
+            var gauss= new GaussQuadrature();
+            var midsurfaceGaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                midsurfaceGaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
 
-            var nurbs = shellElement._shapeFunctions;
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
             var (MembraneConstitutiveMatrix, BendingConstitutiveMatrix, CouplingConstitutiveMatrix) =
                 shellElement.IntegratedConstitutiveOverThickness(gaussPoints[0]);
@@ -493,9 +411,20 @@ namespace ISAAR.MSolve.IGA.Tests
         public void StressesThicknessIntegration()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
+            var gauss= new GaussQuadrature();
+            var midsurfaceGaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                midsurfaceGaussPoints);
+
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
+            foreach (var controlPoint in controlPoints)
+            {
+                shellElement.ControlPointsDictionary.Add(controlPoint.ID,controlPoint);
+            }
+
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
-            var nurbs = shellElement._shapeFunctions;
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
 
             shellElement.CalculateStresses(shellElement, localSolution, new double[27]);
@@ -532,9 +461,19 @@ namespace ISAAR.MSolve.IGA.Tests
         public void TotalElementStiffnessMatrixTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
+            var gauss= new GaussQuadrature();
+            var midsurfaceGaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                midsurfaceGaussPoints);
 
-            var nurbs = shellElement._shapeFunctions;
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
+            foreach (var controlPoint in controlPoints)
+            {
+                shellElement.ControlPointsDictionary.Add(controlPoint.ID,controlPoint);
+            }
+            
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
             shellElement.CalculateStresses(shellElement, localSolution, new double[27]);
@@ -556,9 +495,18 @@ namespace ISAAR.MSolve.IGA.Tests
         public void InternalForcesTest()
         {
             var controlPoints = ElementControlPoints().ToArray();
-            var shellElement = Element;
+            var gauss= new GaussQuadrature();
+            var midsurfaceGaussPoints = gauss.CalculateElementGaussPoints(degreeKsi, degreeHeta, ElementKnots().ToArray()).ToArray();
+            var nurbs = new Nurbs2D(degreeKsi, knotValueVectorKsi, degreeHeta, knotValueVectorHeta, controlPoints,
+                midsurfaceGaussPoints);
+            var shellElement = new KirchhoffLoveShellNL(Material, ElementKnots(), nurbs, ElementControlPoints(),
+                new Patch(), 0.1, degreeKsi, degreeHeta);
+            shellElement._solution= localSolution;
+            foreach (var controlPoint in controlPoints)
+            {
+                shellElement.ControlPointsDictionary.Add(controlPoint.ID,controlPoint);
+            }
 
-            var nurbs = shellElement._shapeFunctions;
             var gaussPoints = shellElement.materialsAtThicknessGP.Keys.ToArray();
             shellElement.CalculateInitialConfigurationData(controlPoints, nurbs, gaussPoints);
             shellElement.CalculateStresses(shellElement, localSolution, new double[27]);
@@ -600,6 +548,407 @@ namespace ISAAR.MSolve.IGA.Tests
                 Assert.True(Utilities.AreValuesEqual(expectedForces[j], f[j],
                     Tolerance));
             }
+        }
+
+        [Fact]
+        public void TestA3r()
+        {
+            var surfaceBasisVector1 = new double[] { 0.49281343102090647, -0.0027907619686642761, -2.0647413184286493E-07 };
+            var surfaceBasisVector2 = new double[] {0.0032374497982368571, 0.57141938776238976, 2.3218349204021492E-09};
+            var surfaceBasisVector3 = new double[] { 4.1893372881671206E-07, -6.4367991618857595E-09, 0.99999999999991229};
+
+            double dksi_r=-2.0934480533670992;
+            double dheta_r=-2.0934480533670996;
+            double J1=0.28161218398684618;
+            var a3r= new a3r();
+
+            KirchhoffLoveShellNL.CalculateA3r(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3, dksi_r, dheta_r, J1, ref a3r);
+             
+            Assert.Equal(1.7882446740031873E-06,a3r.a3r00);
+            Assert.Equal(-2.7475877512613432E-08,a3r.a3r01);
+            Assert.Equal(4.2685621877569231,a3r.a3r02);
+                         
+            Assert.Equal(1.5246711353875095E-06,a3r.a3r10);
+            Assert.Equal(-2.3426144068498867E-08,a3r.a3r11);
+            Assert.Equal(3.639408886207,a3r.a3r12);
+
+            Assert.Equal(-7.38802532863679E-13,a3r.a3r20);
+            Assert.Equal(1.1827148338265939E-14,a3r.a3r21);
+            Assert.Equal(-1.7648185299346879E-06,a3r.a3r22);
+        }
+
+        [Fact]
+        public void TestCalculateCrossProduct()
+        {
+            var v1 = new double[] {1, 20, 50};
+            var v2 = new double[] {4, 30, 45};
+            var c = new double[3];
+            KirchhoffLoveShellNL.CalculateCrossProduct(v1, v2, c);
+
+            var vector1 = Vector.CreateFromArray(v1);
+            var vector2 = Vector.CreateFromArray(v2);
+
+            var cross = vector1.CrossProduct(vector2);
+
+            Assert.Equal(cross[0],c[0]);
+            Assert.Equal(cross[1],c[1]);
+            Assert.Equal(cross[2],c[2]);
+        }
+
+        [Fact]
+        public void TestBab_rs()
+        {
+            #region Initialization
+            var surfaceBasisVectorDerivative1 = new double[3]
+            {
+                -0.0002215697315227748,
+                -0.040236627065225024,
+                -3.1283539134440684E-06
+            };
+            var surfaceBasisVectorDerivative2 = new double[3]
+            {
+                4.3550534925664095E-11,
+                1.0323258744575857E-08,
+                -1.0202863489210098E-09
+            };
+            var surfaceBasisVectorDerivative12 = new double[3]
+            {
+                0.046627259953136886,
+                -0.00026442650364636821,
+                6.5202798291920747E-08
+            };
+
+            var d2ksi_dr2 = 4.4992901171737891;
+            var d2ksi_ds2 = 4.4992901171737891;
+
+            var d2heta_dr2 = 4.49929011717379;
+            var d2heta_ds2 = 4.49929011717379;
+
+            var d2ksiheta_dr2 = 6.7489351757606837;
+            var d2ksiheta_ds2 = 6.7489351757606837;
+            var a3rs= new a3rs();
+            a3rs.a3rs00_0=	1.5266467195814444E-05	;
+            a3rs.a3rs00_1=	1.3016307114560258E-05	;
+            a3rs.a3rs00_2=	-1.1837641977763269E-11	;
+            a3rs.a3rs01_0=	6.390871065454354E-06	;
+            a3rs.a3rs01_1=	5.448905725897356E-06	;
+            a3rs.a3rs01_2=	-2.55440113505756E-12	;
+            a3rs.a3rs02_0=	18.220623150741094	;
+            a3rs.a3rs02_1=	15.535043157448497	;
+            a3rs.a3rs02_2=	-2.0715372921711805E-05	;
+            a3rs.a3rs10_0=	6.390871065454354E-06	;
+            a3rs.a3rs10_1=	5.448905725897356E-06	;
+            a3rs.a3rs10_2=	-2.55440113505756E-12	;
+            a3rs.a3rs11_0=	-1.9999190555149591E-07	;
+            a3rs.a3rs11_1=	-1.7051463378493538E-07	;
+            a3rs.a3rs11_2=	8.8817841970012523E-14	;
+            a3rs.a3rs12_0=	15.53504315745124	;
+            a3rs.a3rs12_1=	13.245297041003683	;
+            a3rs.a3rs12_2=	-6.22035643166942E-06	;
+            a3rs.a3rs20_0=	18.220623150741094	;
+            a3rs.a3rs20_1=	15.535043157448497	;
+            a3rs.a3rs20_2=	-2.0715372921711805E-05	;
+            a3rs.a3rs21_0=	15.53504315745124	;
+            a3rs.a3rs21_1=	13.245297041003683	;
+            a3rs.a3rs21_2=	-6.22035643166942E-06	;
+            a3rs.a3rs22_0=	-2.8248610566845741E-05	;
+            a3rs.a3rs22_1=	-1.2643252672057042E-05	;
+            a3rs.a3rs22_2=	-31.465920191744779	;
+
+            var a3r= new a3r();
+            a3r.a3r00=	1.7882446740031873E-06  ;
+            a3r.a3r01=	-2.7475877512613432E-08	;
+            a3r.a3r02=	4.2685621877569231	;
+            a3r.a3r10=	1.5246711353875095E-06	;
+            a3r.a3r11=	-2.3426144068498867E-08	;
+            a3r.a3r12=	3.639408886207	;
+            a3r.a3r20=	-7.38802532863679E-13	;
+            a3r.a3r21=	1.1827148338265939E-14	;
+            a3r.a3r22=	-1.7648185299346879E-06	;
+
+            var a3s= new a3r();
+            a3s.a3r00=1.7882446740031873E-06	;
+            a3s.a3r01=-2.7475877512613432E-08	;
+            a3s.a3r02=4.2685621877569231	;
+            a3s.a3r10=1.5246711353875095E-06	;
+            a3s.a3r11=-2.3426144068498867E-08	;
+            a3s.a3r12=3.639408886207	;
+            a3s.a3r20=-7.38802532863679E-13	;
+            a3s.a3r21=1.1827148338265939E-14	;
+            a3s.a3r22=	-1.7648185299346879E-06	;
+            
+            var da3_drds = new double[3,3][];
+            da3_drds[0, 0] = new double[]
+            {
+                1.5266467195814444E-05,
+                1.3016307114560258E-05,
+                -1.1837641977763269E-11,
+            };
+            da3_drds[0,1] = new double[]
+            {
+                6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12
+            };
+            da3_drds[0, 2] = new double[]
+            {
+                18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05
+            };
+
+            da3_drds[1, 0] = new double[]
+            {
+                6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12
+            };
+            da3_drds[1, 1] = new double[]
+            {
+                -1.9999190555149591E-07,
+                -1.7051463378493538E-07,
+                8.8817841970012523E-14
+            };
+            da3_drds[1, 2] = new double[]
+            {
+                15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06
+            };
+
+            da3_drds[2, 0] = new double[]
+            {
+                18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05
+            };
+            da3_drds[2, 1] = new double[]
+            {
+                15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06
+            };
+            da3_drds[2, 2] = new double[]
+            {
+                -2.8248610566845741E-05,
+                -1.2643252672057042E-05,
+                -31.465920191744779
+            };
+
+            Bab_rs Bab_rsExpected= new Bab_rs();
+            Bab_rsExpected.Bab_rs00_0=	1.5564548295526568E-05	;
+            Bab_rsExpected.Bab_rs00_1=	1.6091663312697994E-05	;
+            Bab_rsExpected.Bab_rs00_2=	4.9691772888834864E-05	;
+            Bab_rsExpected.Bab_rs01_0=	6.5156542160513032E-06	;
+            Bab_rsExpected.Bab_rs01_1=	6.7363158837647762E-06	;
+            Bab_rsExpected.Bab_rs01_2=	2.0802043424519865E-05	;
+            Bab_rsExpected.Bab_rs02_0=	18.576384789429813	;
+            Bab_rsExpected.Bab_rs02_1=	19.205499827078938	;
+            Bab_rsExpected.Bab_rs02_2=	59.307438707759943	;
+            Bab_rsExpected.Bab_rs10_0=	6.5156542160513032E-06	;
+            Bab_rsExpected.Bab_rs10_1=	6.7363158837647762E-06	;
+            Bab_rsExpected.Bab_rs10_2=	2.0802043424519861E-05	;
+            Bab_rsExpected.Bab_rs11_0=	-2.0389679110046287E-07	;
+            Bab_rsExpected.Bab_rs11_1=	-2.1080203875074925E-07	;
+            Bab_rsExpected.Bab_rs11_2=	-6.5096608290578748E-07	;
+            Bab_rsExpected.Bab_rs12_0=	15.838368261336552	;
+            Bab_rsExpected.Bab_rs12_1=	16.374756571476876	;
+            Bab_rsExpected.Bab_rs12_2=	50.565977478394949	;
+            Bab_rsExpected.Bab_rs20_0=	18.576384789429813	;
+            Bab_rsExpected.Bab_rs20_1=	19.205499827078938	;
+            Bab_rsExpected.Bab_rs20_2=	59.307438707759943	;
+            Bab_rsExpected.Bab_rs21_0=	15.838368261336552	;
+            Bab_rsExpected.Bab_rs21_1=	16.374756571476876	;
+            Bab_rsExpected.Bab_rs21_2=	50.565977478394956	;
+            Bab_rsExpected.Bab_rs22_0=	8.3070654310999034E-05	;
+            Bab_rsExpected.Bab_rs22_1=	-1.5848757023602572E-05	;
+            Bab_rsExpected.Bab_rs22_2=	-5.4373539710938839E-05	;
+
+            #endregion
+            
+            Bab_rs Bab_rsAlternative = KirchhoffLoveShellNL.CalculateBab_rs(surfaceBasisVectorDerivative1, surfaceBasisVectorDerivative2,
+                surfaceBasisVectorDerivative12,d2ksi_dr2,d2ksi_ds2, d2heta_dr2,d2heta_ds2, d2ksiheta_dr2,d2ksiheta_ds2,
+                a3rs, a3r, a3s, da3_drds);
+
+
+            Assert.Equal(Bab_rsExpected.Bab_rs00_0,Bab_rsAlternative.Bab_rs00_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs00_1,Bab_rsAlternative.Bab_rs00_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs00_2,Bab_rsAlternative.Bab_rs00_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs01_0,Bab_rsAlternative.Bab_rs01_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs01_1,Bab_rsAlternative.Bab_rs01_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs01_2,Bab_rsAlternative.Bab_rs01_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs02_0,Bab_rsAlternative.Bab_rs02_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs02_1,Bab_rsAlternative.Bab_rs02_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs02_2,Bab_rsAlternative.Bab_rs02_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs10_0,Bab_rsAlternative.Bab_rs10_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs10_1,Bab_rsAlternative.Bab_rs10_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs10_2,Bab_rsAlternative.Bab_rs10_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs11_0,Bab_rsAlternative.Bab_rs11_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs11_1,Bab_rsAlternative.Bab_rs11_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs11_2,Bab_rsAlternative.Bab_rs11_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs12_0,Bab_rsAlternative.Bab_rs12_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs12_1,Bab_rsAlternative.Bab_rs12_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs12_2,Bab_rsAlternative.Bab_rs12_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs20_0,Bab_rsAlternative.Bab_rs20_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs20_1,Bab_rsAlternative.Bab_rs20_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs20_2,Bab_rsAlternative.Bab_rs20_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs21_0,Bab_rsAlternative.Bab_rs21_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs21_1,Bab_rsAlternative.Bab_rs21_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs21_2,Bab_rsAlternative.Bab_rs21_2  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs22_0,Bab_rsAlternative.Bab_rs22_0  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs22_1,Bab_rsAlternative.Bab_rs22_1  ,9);
+            Assert.Equal(Bab_rsExpected.Bab_rs22_2,Bab_rsAlternative.Bab_rs22_2  ,9);
+        }
+
+        [Fact]
+        public void Test_a3rs()
+        {
+            var surfaceBasisVector1 = Vector.CreateFromArray(new double[]{0.49281343102090647,
+                                                                          -0.0027907619686642761,
+                                                                          -2.0647413184286493E-07});
+            var surfaceBasisVector2 =Vector.CreateFromArray(new double[]{0.0032374497982368571,
+                0.57141938776238976,
+                2.3218349204021492E-09});
+            var surfaceBasisVector3 = Vector.CreateFromArray(new double[]{4.1893372881671206E-07,
+                                                                          -6.4367991618857595E-09,
+                0.99999999999991229});
+            double J1 = 0.28161218398684618;
+            var dksi_r = -2.0934480533670992;
+            var dheta_r = -2.0934480533670996;
+
+            var dksi_s = -2.0934480533670992;
+            var dheta_s= -2.0934480533670996;
+
+            #region Expected Values
+            var a3rsExpected= new a3rs();
+            a3rsExpected.a3rs00_0=	1.5266467195814444E-05	;
+            a3rsExpected.a3rs00_1=	1.3016307114560258E-05	;
+            a3rsExpected.a3rs00_2=	-1.1837641977763269E-11	;
+            a3rsExpected.a3rs01_0=	6.390871065454354E-06	;
+            a3rsExpected.a3rs01_1=	5.448905725897356E-06	;
+            a3rsExpected.a3rs01_2=	-2.55440113505756E-12	;
+            a3rsExpected.a3rs02_0=	18.220623150741094	;
+            a3rsExpected.a3rs02_1=	15.535043157448497	;
+            a3rsExpected.a3rs02_2=	-2.0715372921711805E-05	;
+            a3rsExpected.a3rs10_0=	6.390871065454354E-06	;
+            a3rsExpected.a3rs10_1=	5.448905725897356E-06	;
+            a3rsExpected.a3rs10_2=	-2.55440113505756E-12	;
+            a3rsExpected.a3rs11_0=	-1.9999190555149591E-07	;
+            a3rsExpected.a3rs11_1=	-1.7051463378493538E-07	;
+            a3rsExpected.a3rs11_2=	8.8817841970012523E-14	;
+            a3rsExpected.a3rs12_0=	15.53504315745124	;
+            a3rsExpected.a3rs12_1=	13.245297041003683	;
+            a3rsExpected.a3rs12_2=	-6.22035643166942E-06	;
+            a3rsExpected.a3rs20_0=	18.220623150741094	; 
+            a3rsExpected.a3rs20_1=	15.535043157448497	;
+            a3rsExpected.a3rs20_2=	-2.0715372921711805E-05	;
+            a3rsExpected.a3rs21_0=	15.53504315745124	;
+            a3rsExpected.a3rs21_1=	13.245297041003683	;
+            a3rsExpected.a3rs21_2=	-6.22035643166942E-06	;
+            a3rsExpected.a3rs22_0=	-2.8248610566845741E-05	;
+            a3rsExpected.a3rs22_1=	-1.2643252672057042E-05	;
+            a3rsExpected.a3rs22_2=	-31.465920191744779	;
+
+            var da3_drdsExpected = new Vector[3, 3];
+            da3_drdsExpected[0, 0] = Vector.CreateFromArray(new double[] { 1.5266467195814444E-05,
+                1.3016307114560258E-05,
+                -1.1837641977763269E-11 });
+            da3_drdsExpected[0, 1] = Vector.CreateFromArray(new double[] { 6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12 });
+            da3_drdsExpected[0, 2] = Vector.CreateFromArray(new double[] {18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05 });
+
+            da3_drdsExpected[1, 0] = Vector.CreateFromArray(new double[]
+            {
+                6.390871065454354E-06,
+                5.448905725897356E-06,
+                -2.55440113505756E-12
+            });
+            da3_drdsExpected[1, 1] = Vector.CreateFromArray(new double[] { -1.9999190555149591E-07,
+                                                                           -1.7051463378493538E-07,
+                8.8817841970012523E-14 });
+            da3_drdsExpected[1, 2] = Vector.CreateFromArray(new double[] { 15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06 });
+
+            da3_drdsExpected[2, 0] = Vector.CreateFromArray(new double[] { 18.220623150741094,
+                15.535043157448497,
+                -2.0715372921711805E-05 });
+            da3_drdsExpected[2, 1] = Vector.CreateFromArray(new double[] { 15.53504315745124,
+                13.245297041003683,
+                -6.22035643166942E-06 });
+            da3_drdsExpected[2, 2] = Vector.CreateFromArray(new double[] { -2.8248610566845741E-05,
+                                                                           -1.2643252672057042E-05,
+                                                                           -31.465920191744779 });
+            #endregion
+
+            (a3rs a3rsAlternative, var da3tilde_drds, var da3tilde_dr, var da3tilde_ds,
+                    double[] dnorma3_dr, double[] dnorma3_ds, double[,] dnorma3_drds, var a3_tilde, var da3_drds) =
+                KirchhoffLoveShellNL.Calculate_a3rs(surfaceBasisVector1, surfaceBasisVector2,
+                    surfaceBasisVector3, J1, dksi_r, dksi_s, dheta_r,dheta_s);
+            
+            #region Assertions
+            Assert.Equal(a3rsExpected.a3rs00_0 ,a3rsAlternative.a3rs00_0,9);
+            Assert.Equal(a3rsExpected.a3rs00_1 ,a3rsAlternative.a3rs00_1,9);
+            Assert.Equal(a3rsExpected.a3rs00_2 ,a3rsAlternative.a3rs00_2,9);
+            Assert.Equal(a3rsExpected.a3rs01_0 ,a3rsAlternative.a3rs01_0,9);
+            Assert.Equal(a3rsExpected.a3rs01_1 ,a3rsAlternative.a3rs01_1,9);
+            Assert.Equal(a3rsExpected.a3rs01_2 ,a3rsAlternative.a3rs01_2,9);
+            Assert.Equal(a3rsExpected.a3rs02_0 ,a3rsAlternative.a3rs02_0,9);
+            Assert.Equal(a3rsExpected.a3rs02_1 ,a3rsAlternative.a3rs02_1,9);
+            Assert.Equal(a3rsExpected.a3rs02_2 ,a3rsAlternative.a3rs02_2,9);
+            Assert.Equal(a3rsExpected.a3rs10_0 ,a3rsAlternative.a3rs10_0,9);
+            Assert.Equal(a3rsExpected.a3rs10_1 ,a3rsAlternative.a3rs10_1,9);
+            Assert.Equal(a3rsExpected.a3rs10_2 ,a3rsAlternative.a3rs10_2,9);
+            Assert.Equal(a3rsExpected.a3rs11_0 ,a3rsAlternative.a3rs11_0,9);
+            Assert.Equal(a3rsExpected.a3rs11_1 ,a3rsAlternative.a3rs11_1,9);
+            Assert.Equal(a3rsExpected.a3rs11_2 ,a3rsAlternative.a3rs11_2,9);
+            Assert.Equal(a3rsExpected.a3rs12_0 ,a3rsAlternative.a3rs12_0,9);
+            Assert.Equal(a3rsExpected.a3rs12_1 ,a3rsAlternative.a3rs12_1,9);
+            Assert.Equal(a3rsExpected.a3rs12_2 ,a3rsAlternative.a3rs12_2,9);
+            Assert.Equal(a3rsExpected.a3rs20_0 ,a3rsAlternative.a3rs20_0,9);
+            Assert.Equal(a3rsExpected.a3rs20_1 ,a3rsAlternative.a3rs20_1,9);
+            Assert.Equal(a3rsExpected.a3rs20_2 ,a3rsAlternative.a3rs20_2,9);
+            Assert.Equal(a3rsExpected.a3rs21_0 ,a3rsAlternative.a3rs21_0,9);
+            Assert.Equal(a3rsExpected.a3rs21_1 ,a3rsAlternative.a3rs21_1,9);
+            Assert.Equal(a3rsExpected.a3rs21_2 ,a3rsAlternative.a3rs21_2,9);
+            Assert.Equal(a3rsExpected.a3rs22_0 ,a3rsAlternative.a3rs22_0,9);
+            Assert.Equal(a3rsExpected.a3rs22_1 ,a3rsAlternative.a3rs22_1,9);
+            Assert.Equal(a3rsExpected.a3rs22_2 ,a3rsAlternative.a3rs22_2,9);
+
+
+            Assert.Equal(da3_drdsExpected[0, 0][0], da3_drds[0, 0][0],9);
+            Assert.Equal(da3_drdsExpected[0, 0][1], da3_drds[0, 0][1],9);
+            Assert.Equal(da3_drdsExpected[0, 0][2], da3_drds[0, 0][2],9);
+            Assert.Equal(da3_drdsExpected[0, 1][0], da3_drds[0, 1][0],9);
+            Assert.Equal(da3_drdsExpected[0, 1][1], da3_drds[0, 1][1],9);
+            Assert.Equal(da3_drdsExpected[0, 1][2], da3_drds[0, 1][2],9);
+            Assert.Equal(da3_drdsExpected[0, 2][0], da3_drds[0, 2][0],9);
+            Assert.Equal(da3_drdsExpected[0, 2][1], da3_drds[0, 2][1],9);
+            Assert.Equal(da3_drdsExpected[0, 2][2], da3_drds[0, 2][2],9);
+                                                                     
+            Assert.Equal(da3_drdsExpected[1, 0][0], da3_drds[1, 0][0],9);
+            Assert.Equal(da3_drdsExpected[1, 0][1], da3_drds[1, 0][1],9);
+            Assert.Equal(da3_drdsExpected[1, 0][2], da3_drds[1, 0][2],9);
+            Assert.Equal(da3_drdsExpected[1, 1][0], da3_drds[1, 1][0],9);
+            Assert.Equal(da3_drdsExpected[1, 1][1], da3_drds[1, 1][1],9);
+            Assert.Equal(da3_drdsExpected[1, 1][2], da3_drds[1, 1][2],9);
+            Assert.Equal(da3_drdsExpected[1, 2][0], da3_drds[1, 2][0],9);
+            Assert.Equal(da3_drdsExpected[1, 2][1], da3_drds[1, 2][1],9);
+            Assert.Equal(da3_drdsExpected[1, 2][2], da3_drds[1, 2][2],9);
+                                                                     
+            Assert.Equal(da3_drdsExpected[2, 0][0], da3_drds[2, 0][0],9);
+            Assert.Equal(da3_drdsExpected[2, 0][1], da3_drds[2, 0][1],9);
+            Assert.Equal(da3_drdsExpected[2, 0][2], da3_drds[2, 0][2],9);
+            Assert.Equal(da3_drdsExpected[2, 1][0], da3_drds[2, 1][0],9);
+            Assert.Equal(da3_drdsExpected[2, 1][1], da3_drds[2, 1][1],9);
+            Assert.Equal(da3_drdsExpected[2, 1][2], da3_drds[2, 1][2],9);
+            Assert.Equal(da3_drdsExpected[2, 2][0], da3_drds[2, 2][0],9);
+            Assert.Equal(da3_drdsExpected[2, 2][1], da3_drds[2, 2][1],9);
+            Assert.Equal(da3_drdsExpected[2, 2][2], da3_drds[2, 2][2],9);
+            #endregion
         }
     }
 }

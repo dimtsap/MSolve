@@ -44,15 +44,15 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 			for (int i = 0; i < degreeZeta + 1; i++)
 				parametricGaussPointZeta[i] = gaussPoints[i].Zeta;
 
-			Bsplines1D bsplinesKsi =
-				new Bsplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
-			Bsplines1D bsplinesHeta = new Bsplines1D(degreeHeta, knotValueVectorHeta,
+			BSplines1D bSplinesKsi =
+				new BSplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
+			BSplines1D bSplinesHeta = new BSplines1D(degreeHeta, knotValueVectorHeta,
 				parametricGaussPointHeta);
-			Bsplines1D bsplinesZeta = new Bsplines1D(degreeZeta, knotValueVectorZeta,
+			BSplines1D bSplinesZeta = new BSplines1D(degreeZeta, knotValueVectorZeta,
 				parametricGaussPointZeta);
-			bsplinesKsi.calculateBSPLinesAndDerivatives();
-			bsplinesHeta.calculateBSPLinesAndDerivatives();
-			bsplinesZeta.calculateBSPLinesAndDerivatives();
+			bSplinesKsi.calculateBSPLinesAndDerivatives();
+			bSplinesHeta.calculateBSPLinesAndDerivatives();
+			bSplinesZeta.calculateBSPLinesAndDerivatives();
 
 			int supportKsi = degreeKsi + 1;
 			int supportHeta = degreeHeta + 1;
@@ -89,24 +89,24 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 											 numberOfControlPointsZeta) %
 											numberOfControlPointsZeta;
 
-							sumKsiHetaZeta += bsplinesKsi.Values[indexKsi, i] *
-											  bsplinesHeta.Values[indexHeta, j] *
-											  bsplinesZeta.Values[indexZeta, k] *
+							sumKsiHetaZeta += bSplinesKsi.Values[indexKsi, i] *
+											  bSplinesHeta.Values[indexHeta, j] *
+											  bSplinesZeta.Values[indexZeta, k] *
 											  controlPoints[m].WeightFactor;
 
-							sumdKsiHetaZeta += bsplinesKsi.DerivativeValues[indexKsi, i] *
-											   bsplinesHeta.Values[indexHeta, j] *
-											   bsplinesZeta.Values[indexZeta, k] *
+							sumdKsiHetaZeta += bSplinesKsi.DerivativeValues[indexKsi, i] *
+											   bSplinesHeta.Values[indexHeta, j] *
+											   bSplinesZeta.Values[indexZeta, k] *
 											   controlPoints[m].WeightFactor;
 
-							sumKsidHetaZeta += bsplinesKsi.Values[indexKsi, i] *
-											   bsplinesHeta.DerivativeValues[indexHeta, j] *
-											   bsplinesZeta.Values[indexZeta, k] *
+							sumKsidHetaZeta += bSplinesKsi.Values[indexKsi, i] *
+											   bSplinesHeta.DerivativeValues[indexHeta, j] *
+											   bSplinesZeta.Values[indexZeta, k] *
 											   controlPoints[m].WeightFactor;
 
-							sumKsiHetadZeta += bsplinesKsi.Values[indexKsi, i] *
-											   bsplinesHeta.Values[indexHeta, j] *
-											   bsplinesZeta.DerivativeValues[indexZeta, k] *
+							sumKsiHetadZeta += bSplinesKsi.Values[indexKsi, i] *
+											   bSplinesHeta.Values[indexHeta, j] *
+											   bSplinesZeta.DerivativeValues[indexZeta, k] *
 											   controlPoints[m].WeightFactor;
 						}
 
@@ -125,30 +125,30 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 											numberOfControlPointsZeta;
 
 							Values[m, i * supportHeta * supportZeta + j * supportZeta + k] =
-								bsplinesKsi.Values[indexKsi, i] *
-								bsplinesHeta.Values[indexHeta, j] *
-								bsplinesZeta.Values[indexZeta, k] *
+								bSplinesKsi.Values[indexKsi, i] *
+								bSplinesHeta.Values[indexHeta, j] *
+								bSplinesZeta.Values[indexZeta, k] *
 								controlPoints[m].WeightFactor / sumKsiHetaZeta;
 
 							DerivativeValuesKsi[m, i * supportHeta * supportZeta + j * supportZeta + k] =
-								(bsplinesKsi.DerivativeValues[indexKsi, i] * sumKsiHetaZeta -
-								 bsplinesKsi.Values[indexKsi, i] * sumdKsiHetaZeta) *
-								bsplinesHeta.Values[indexHeta, j] *
-								bsplinesZeta.Values[indexZeta, k] *
+								(bSplinesKsi.DerivativeValues[indexKsi, i] * sumKsiHetaZeta -
+								 bSplinesKsi.Values[indexKsi, i] * sumdKsiHetaZeta) *
+								bSplinesHeta.Values[indexHeta, j] *
+								bSplinesZeta.Values[indexZeta, k] *
 								controlPoints[m].WeightFactor / Math.Pow(sumKsiHetaZeta, 2);
 
 							DerivativeValuesHeta[m, i * supportHeta * supportZeta + j * supportZeta + k] =
-								bsplinesKsi.Values[indexKsi, i] *
-								(bsplinesHeta.DerivativeValues[indexHeta, j] * sumKsiHetaZeta -
-								 bsplinesHeta.Values[indexHeta, j] * sumKsidHetaZeta) *
-								bsplinesZeta.Values[indexZeta, k] *
+								bSplinesKsi.Values[indexKsi, i] *
+								(bSplinesHeta.DerivativeValues[indexHeta, j] * sumKsiHetaZeta -
+								 bSplinesHeta.Values[indexHeta, j] * sumKsidHetaZeta) *
+								bSplinesZeta.Values[indexZeta, k] *
 								controlPoints[m].WeightFactor / Math.Pow(sumKsiHetaZeta, 2);
 
 							DerivativeValuesZeta[m, i * supportHeta * supportZeta + j * supportZeta + k] =
-								bsplinesKsi.Values[indexKsi, i] *
-								bsplinesHeta.Values[indexHeta, j] *
-								(bsplinesZeta.DerivativeValues[indexZeta, k] * sumKsiHetaZeta -
-								 bsplinesZeta.Values[indexZeta, k] * sumKsiHetadZeta) *
+								bSplinesKsi.Values[indexKsi, i] *
+								bSplinesHeta.Values[indexHeta, j] *
+								(bSplinesZeta.DerivativeValues[indexZeta, k] * sumKsiHetaZeta -
+								 bSplinesZeta.Values[indexZeta, k] * sumKsiHetadZeta) *
 								controlPoints[m].WeightFactor / Math.Pow(sumKsiHetaZeta, 2);
 						}
 					}

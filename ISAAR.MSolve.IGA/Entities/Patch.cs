@@ -40,11 +40,6 @@ namespace ISAAR.MSolve.IGA.Entities
 		public List<ControlPoint> ControlPoints => controlPoints;
 
 		/// <summary>
-		/// Dictionary containing the edges of a patch.
-		/// </summary>
-		public Dictionary<int, Edge> EdgesDictionary { get; } = new Dictionary<int, Edge>();
-
-		/// <summary>
 		/// Return a list with the elements of the patch.
 		/// </summary>
 		IReadOnlyList<IElement> ISubdomain.Elements => Elements;
@@ -53,11 +48,6 @@ namespace ISAAR.MSolve.IGA.Entities
 		/// A list containing the elements of a patch.
 		/// </summary>
 		public List<Element> Elements { get; } = new List<Element>();
-
-		/// <summary>
-		/// Dictionary containing the faces of the patch.
-		/// </summary>
-		public Dictionary<int, Face> FacesDictionary { get; } = new Dictionary<int, Face>();
 
 		/// <summary>
 		/// Vector of the patch forces.

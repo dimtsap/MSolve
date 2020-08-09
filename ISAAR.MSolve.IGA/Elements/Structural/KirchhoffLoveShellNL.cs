@@ -118,7 +118,7 @@ namespace ISAAR.MSolve.IGA.Elements.Structural
         public double v2;
     }
 
-    public class KirchhoffLoveShellNL : Element, IStructuralIsogeometricElement, ISurfaceLoadedElement
+    public class KirchhoffLoveShellNL : Element, IStructuralIsogeometricElement
     {
         internal IShapeFunction2D _shapeFunctions;
 
@@ -505,87 +505,7 @@ namespace ISAAR.MSolve.IGA.Elements.Structural
 
             return new Tuple<double[], double[]>(new double[0], new double[0]);
         }
-
-        public Dictionary<int, double> CalculateSurfaceDistributedLoad(Element element, IDofType loadedDof,
-            double loadMagnitude)
-        {
-            var shellElement = (KirchhoffLoveShellNL)element;
-            var elementControlPoints = shellElement.ControlPoints.ToArray();
-            var gaussPoints = CreateElementGaussPoints(shellElement);
-            var distributedLoad = new Dictionary<int, double>();
-
-
-            for (var j = 0; j < gaussPoints.Count; j++)
-            {
-                CalculateJacobian(elementControlPoints, _shapeFunctions, j, jacobianMatrix);
-                var surfaceBasisVector1 = CalculateSurfaceBasisVector(jacobianMatrix, 0);
-                var surfaceBasisVector2 = CalculateSurfaceBasisVector(jacobianMatrix, 1);
-                var surfaceBasisVector3 = new double[3];
-                CalculateCrossProduct(surfaceBasisVector1, surfaceBasisVector2, surfaceBasisVector3);
-                var J1 = surfaceBasisVector3.Norm2();
-                surfaceBasisVector3.ScaleIntoThis(1 / J1);
-
-                for (int i = 0; i < elementControlPoints.Length; i++)
-                {
-                    var loadedDofIndex = ControlPointDofTypes.FindFirstIndex(loadedDof);
-                    if (!element.Model.GlobalDofOrdering.GlobalFreeDofs.Contains(elementControlPoints[i], loadedDof))
-                        continue;
-                    var dofId = element.Model.GlobalDofOrdering.GlobalFreeDofs[elementControlPoints[i], loadedDof];
-
-                    if (distributedLoad.ContainsKey(dofId))
-                    {
-                        distributedLoad[dofId] += loadMagnitude * J1 * _shapeFunctions.Values[i, j] * gaussPoints[j].WeightFactor;
-                    }
-                    else
-                    {
-                        distributedLoad.Add(dofId, loadMagnitude * _shapeFunctions.Values[i, j] * J1 * gaussPoints[j].WeightFactor);
-                    }
-                }
-            }
-
-            return distributedLoad;
-        }
-
-        public Dictionary<int, double> CalculateSurfacePressure(Element element, double pressureMagnitude)
-        {
-            var shellElement = (KirchhoffLoveShellNL)element;
-            var elementControlPoints = shellElement.ControlPoints.ToArray();
-            var gaussPoints = CreateElementGaussPoints(shellElement);
-            var pressureLoad = new Dictionary<int, double>();
-
-            for (var j = 0; j < gaussPoints.Count; j++)
-            {
-                CalculateJacobian(elementControlPoints, _shapeFunctions, j, jacobianMatrix);
-                var surfaceBasisVector1 = CalculateSurfaceBasisVector(jacobianMatrix, 0);
-                var surfaceBasisVector2 = CalculateSurfaceBasisVector(jacobianMatrix, 1);
-                var surfaceBasisVector3 = surfaceBasisVector1.CrossProduct(surfaceBasisVector2);
-                var J1 = surfaceBasisVector3.Norm2();
-                surfaceBasisVector3.ScaleIntoThis(1 / J1);
-
-                for (int i = 0; i < elementControlPoints.Length; i++)
-                {
-                    for (int k = 0; k < ControlPointDofTypes.Length; k++)
-                    {
-                        int dofId = element.Model.GlobalDofOrdering.GlobalFreeDofs[elementControlPoints[i],
-                            ControlPointDofTypes[k]];
-
-                        if (pressureLoad.ContainsKey(dofId))
-                        {
-                            pressureLoad[dofId] += pressureMagnitude * surfaceBasisVector3[k] * _shapeFunctions.Values[i, j] * gaussPoints[j].WeightFactor;
-                        }
-                        else
-                        {
-                            pressureLoad.Add(dofId,
-                                pressureMagnitude * surfaceBasisVector3[k] * _shapeFunctions.Values[i, j] *
-                                gaussPoints[j].WeightFactor);
-                        }
-                    }
-                }
-            }
-
-            return pressureLoad;
-        }
-
+        
         public void ClearMaterialState()
         {
         }

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 
 namespace ISAAR.MSolve.IGA.Interfaces

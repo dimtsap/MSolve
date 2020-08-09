@@ -213,7 +213,6 @@ namespace ISAAR.MSolve.IGA.Readers
                 model.PatchesDictionary[0].ControlPoints.Add(controlPoint.Value);
             }
 
-            CreateEdges2D(model);
             CreateNURBSShells(model, _formulation);
             var counterElementID = 0;
             foreach (var element in model.PatchesDictionary[0].Elements)
@@ -364,90 +363,7 @@ namespace ISAAR.MSolve.IGA.Readers
         }
 
 
-        private void CreateEdges2D(Model model)
-        {
-            #region EdgeLeft
-
-            Edge edgeLeft = new Edge(NumberOfControlPointsHeta, 1)
-            {
-                ID = 0,
-                Degree = this.DegreeHeta,
-                KnotValueVector = this.KnotValueVectorHeta,
-                NumberOfControlPoints = this.NumberOfControlPointsHeta,
-                Patch = model.PatchesDictionary[0]
-            };
-            int counter = 0;
-            for (int i = 0; i < this.NumberOfControlPointsHeta; i++)
-            {
-                edgeLeft.ControlPointsDictionary.Add(counter++, model.ControlPointsDictionary[i]);
-            }
-
-            model.PatchesDictionary[0].EdgesDictionary.Add(0, edgeLeft);
-
-            #endregion 
-
-            #region EdgeRight
-
-            var edgeRight = new Edge(NumberOfControlPointsHeta, 1)
-            {
-                ID = 1,
-                Degree = this.DegreeHeta,
-                KnotValueVector = this.KnotValueVectorHeta,
-                NumberOfControlPoints = this.NumberOfControlPointsHeta,
-                Patch = model.PatchesDictionary[0]
-            };
-            counter = 0;
-            for (int i = 0; i < this.NumberOfControlPointsHeta; i++)
-            {
-                edgeRight.ControlPointsDictionary.Add(counter++,
-                    model.ControlPointsDictionary[i + this.NumberOfControlPointsHeta * (this.NumberOfControlPointsKsi - 1)]);
-            }
-
-            model.PatchesDictionary[0].EdgesDictionary.Add(1, edgeRight);
-
-            #endregion EdgeLeft
-
-            #region EdgeBottom
-
-            Edge edgeBottom = new Edge(NumberOfControlPointsHeta, 1)
-            {
-                ID = 2,
-                Degree = this.DegreeKsi,
-                KnotValueVector = this.KnotValueVectorKsi,
-                NumberOfControlPoints = this.NumberOfControlPointsKsi,
-                Patch = model.PatchesDictionary[0]
-            };
-            counter = 0;
-            for (int i = 0; i < this.NumberOfControlPointsKsi; i++)
-            {
-                edgeBottom.ControlPointsDictionary.Add(counter++, model.ControlPointsDictionary[i * this.NumberOfControlPointsHeta]);
-            }
-
-            model.PatchesDictionary[0].EdgesDictionary.Add(2, edgeBottom);
-
-            #endregion EdgeBottom
-
-            #region EdgeUp
-
-            var edgeUp = new Edge(NumberOfControlPointsHeta, 1)
-            {
-                ID = 3,
-                Degree = this.DegreeKsi,
-                KnotValueVector = this.KnotValueVectorKsi,
-                NumberOfControlPoints = this.NumberOfControlPointsKsi,
-                Patch = model.PatchesDictionary[0]
-            };
-            counter = 0;
-            for (int i = 0; i < this.NumberOfControlPointsKsi; i++)
-            {
-                edgeUp.ControlPointsDictionary.Add(counter++,
-                    model.ControlPointsDictionary[i * this.NumberOfControlPointsHeta + this.NumberOfControlPointsHeta - 1]);
-            }
-
-            model.PatchesDictionary[0].EdgesDictionary.Add(3, edgeUp);
-
-            #endregion EdgeUp
-        }
+        
 
     }
 }

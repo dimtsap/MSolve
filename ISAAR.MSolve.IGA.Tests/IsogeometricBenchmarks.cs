@@ -7,7 +7,6 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
@@ -38,22 +37,22 @@ namespace ISAAR.MSolve.IGA.Tests
 			var model=modelReader.CreateModelFromFile();
 
 			// Forces and Boundary Conditions
-			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[1].ControlPointsDictionary
-				.Values)
-				model.Loads.Add(new Load()
-				{
-					Amount = -100,
-					Node = model.ControlPoints.ToList()[controlPoint.ID],
-					DOF = StructuralDof.TranslationY
-				});
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[1].ControlPointsDictionary
+			//	.Values)
+			//	model.Loads.Add(new Load()
+			//	{
+			//		Amount = -100,
+			//		Node = model.ControlPoints.ToList()[controlPoint.ID],
+			//		DOF = StructuralDof.TranslationY
+			//	});
 
-			// Boundary Conditions - Dirichlet
-			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
-				.Values)
-			{
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-			}
+			//// Boundary Conditions - Dirichlet
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
+			//	.Values)
+			//{
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+			//}
 
 			var solverBuilder = new DenseMatrixSolver.Builder();
 			solverBuilder.DofOrderer = new DofOrderer(
@@ -129,20 +128,20 @@ namespace ISAAR.MSolve.IGA.Tests
             var model = modelReader.CreateModelFromFile();
 
 			// Forces and Boundary Conditions
-			Value verticalDistributedLoad = delegate(double x, double y, double z)
-			{
-				return new double[] {0, -100, 0};
-			};
-			model.PatchesDictionary[0].EdgesDictionary[1].LoadingConditions
-				.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
+			//Value verticalDistributedLoad = delegate(double x, double y, double z)
+			//{
+			//	return new double[] {0, -100, 0};
+			//};
+			//model.PatchesDictionary[0].EdgesDictionary[1].LoadingConditions
+			//	.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
 
-			// Boundary Conditions - Dirichlet
-			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
-				.Values)
-			{
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-			}
+			//// Boundary Conditions - Dirichlet
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
+			//	.Values)
+			//{
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+			//}
 
 			var solverBuilder = new SkylineSolver.Builder();
 			ISolver solver = solverBuilder.BuildSolver(model);
@@ -224,19 +223,19 @@ namespace ISAAR.MSolve.IGA.Tests
             var model = modelReader.CreateModelFromFile();
 
 			// Forces and Boundary Conditions
-			Value horizontalDistributedLoad = delegate(double x, double y, double z)
-			{
-				return new double[] {100, 0, 0};
-			};
-			model.PatchesDictionary[0].EdgesDictionary[1].LoadingConditions
-				.Add(new NeumannBoundaryCondition(horizontalDistributedLoad));
+			//Value horizontalDistributedLoad = delegate(double x, double y, double z)
+			//{
+			//	return new double[] {100, 0, 0};
+			//};
+			//model.PatchesDictionary[0].EdgesDictionary[1].LoadingConditions
+			//	.Add(new NeumannBoundaryCondition(horizontalDistributedLoad));
 
-			// Boundary Conditions - Dirichlet
-			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
-				.Values)
-			{
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-			}
+			//// Boundary Conditions - Dirichlet
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
+			//	.Values)
+			//{
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+			//}
 
 			model.ControlPointsDictionary[0].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
 
@@ -325,34 +324,34 @@ namespace ISAAR.MSolve.IGA.Tests
             var modelReader = new IsogeometricReader(filename, material2D: material);
             var model = modelReader.CreateModelFromFile();
 
-			Value horizontalDistributedLoad = delegate(double x, double y, double z)
-			{
-				return new double[] {-0.30, 0, 0};
-			};
-			model.PatchesDictionary[0].EdgesDictionary[1].LoadingConditions
-				.Add(new NeumannBoundaryCondition(horizontalDistributedLoad));
+			//Value horizontalDistributedLoad = delegate(double x, double y, double z)
+			//{
+			//	return new double[] {-0.30, 0, 0};
+			//};
+			//model.PatchesDictionary[0].EdgesDictionary[1].LoadingConditions
+			//	.Add(new NeumannBoundaryCondition(horizontalDistributedLoad));
 
-			Value verticalDistributedLoad = delegate(double x, double y, double z)
-			{
-				return new double[] {0, -0.3, 0};
-			};
-			model.PatchesDictionary[0].EdgesDictionary[3].LoadingConditions
-				.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
+			//Value verticalDistributedLoad = delegate(double x, double y, double z)
+			//{
+			//	return new double[] {0, -0.3, 0};
+			//};
+			//model.PatchesDictionary[0].EdgesDictionary[3].LoadingConditions
+			//	.Add(new NeumannBoundaryCondition(verticalDistributedLoad));
 
-			// Boundary Conditions - Dirichlet
-			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
-				.Values)
-			{
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-			}
+			//// Boundary Conditions - Dirichlet
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[0].ControlPointsDictionary
+			//	.Values)
+			//{
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+			//}
 
-			foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[2].ControlPointsDictionary
-				.Values)
-			{
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
-				model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-			}
+			//foreach (ControlPoint controlPoint in model.PatchesDictionary[0].EdgesDictionary[2].ControlPointsDictionary
+			//	.Values)
+			//{
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+			//	model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+			//}
 		
 
 			// Solvers

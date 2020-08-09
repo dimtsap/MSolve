@@ -9,7 +9,6 @@ using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Boundary;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.LinearAlgebra;
@@ -472,7 +471,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, material);
             var model = modelReader.GenerateModelFromFile();
 
-			model.SurfaceLoads.Add(new SurfaceDistributedLoad(-90, StructuralDof.TranslationY));
+			//model.SurfaceLoads.Add(new SurfaceDistributedLoad(-90, StructuralDof.TranslationY));
 
             // Rigid diaphragm for AB
             for (var i = 0; i < 19; i++)
@@ -569,15 +568,15 @@ namespace ISAAR.MSolve.IGA.Tests
 				});
 			}
 
-			foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
-			{
-				foreach (var controlPoint in edge.ControlPointsDictionary.Values)
-				{
-					model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-					model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationY});
-					model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
-				}
-			}
+			//foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
+			//{
+			//	foreach (var controlPoint in edge.ControlPointsDictionary.Values)
+			//	{
+			//		model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
+			//		model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationY});
+			//		model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
+			//	}
+			//}
 
 			// Solvers
 			var solverBuilder = new SkylineSolver.Builder();

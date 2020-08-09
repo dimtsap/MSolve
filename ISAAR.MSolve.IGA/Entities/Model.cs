@@ -9,7 +9,6 @@ using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Boundary;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
@@ -24,9 +23,7 @@ namespace ISAAR.MSolve.IGA.Entities
 
 
 		private IList<PenaltyDofPair> PenaltyDofPairs { get; } = new List<PenaltyDofPair>();
-
-		public IList<ISurfaceLoad> SurfaceLoads { get; } = new List<ISurfaceLoad>();
-
+		
 		/// <summary>
 		/// <see cref="Table{TRow,TColumn,TValue}"/> that contains the constrained degree of freedom and the value of their constrains.
 		/// </summary>
@@ -147,7 +144,6 @@ namespace ISAAR.MSolve.IGA.Entities
 		{
 			foreach (var patch in PatchesDictionary.Values) patch.Forces.Clear();
 			AssignNodalLoads(distributeNodalLoads);
-			AssignBoundaryLoads();
 			//Add possible penalty forces
 		}
 
@@ -218,76 +214,7 @@ namespace ISAAR.MSolve.IGA.Entities
 			AssignConstraints();
 			RemoveInactiveNodalLoads();
 		}
-
-		private static void AssignEdgeLoads(Patch patch)
-		{
-			foreach (var edge in patch.EdgesDictionary.Values)
-			{
-				var edgeLoadDictionary = edge.CalculateLoads();
-				foreach (var dof in edgeLoadDictionary.Keys)
-				{
-					if (dof != -1)
-					{
-						patch.Forces[dof] += edgeLoadDictionary[dof];
-					}
-				}
-			}
-		}
-
-		private static void AssignFaceLoads(Patch patch)
-		{
-			foreach (Face face in patch.FacesDictionary.Values)
-			{
-				Dictionary<int, double> faceLoadDictionary = face.CalculateLoads();
-				foreach (int dof in faceLoadDictionary.Keys)
-					if (dof != -1)
-						patch.Forces[dof] += faceLoadDictionary[dof];
-			}
-		}
-
-		private void AssignBoundaryLoads()
-		{
-			foreach (var patch in PatchesDictionary.Values)
-			{
-				AssignEdgeLoads(patch);
-
-				AssignFaceLoads(patch);
-
-				AssignSurfaceLoads(patch);
-			}
-
-		}
-
-		private void AssignSurfaceLoads(Patch patch)
-		{
-			foreach (var surfaceLoad in SurfaceLoads)
-			{
-				foreach (var element in ElementsDictionary.Values.Where(e => e is ISurfaceLoadedElement))
-				{
-					var dofs = element.ElementType.GetElementDofTypes(element);
-					var loadedDofs = new Dictionary<int, double>();
-					switch (surfaceLoad)
-					{
-						case SurfacePressureLoad pressure:
-							loadedDofs =
-								(element as ISurfaceLoadedElement).CalculateSurfacePressure(element, pressure.Pressure);
-							break;
-						case SurfaceDistributedLoad distributedLoad:
-							loadedDofs =
-								(element as ISurfaceLoadedElement).CalculateSurfaceDistributedLoad(element, distributedLoad.Dof,
-									distributedLoad.Magnitude);
-							break;
-					}
-
-					foreach (var dof in loadedDofs.Keys)
-					{
-						if (dof != -1)
-							patch.Forces[dof] += loadedDofs[dof];
-					}
-				}
-			}
-		}
-
+		
 		private void AssignConstraints()
 		{
 			foreach (ControlPoint controlPoint in ControlPointsDictionary.Values)

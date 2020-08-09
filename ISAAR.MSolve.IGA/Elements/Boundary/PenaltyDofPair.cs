@@ -5,7 +5,6 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Mesh;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using Element = ISAAR.MSolve.IGA.Entities.Element;
@@ -55,26 +54,6 @@ namespace ISAAR.MSolve.IGA.Elements.Boundary
 		}
 
 		public double[] CalculateForcesForLogging(IElement element, double[] localDisplacements)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, NeumannBoundaryCondition neumann)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, NeumannBoundaryCondition neumann)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, PressureBoundaryCondition pressure)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, PressureBoundaryCondition pressure)
 		{
 			throw new NotImplementedException();
 		}

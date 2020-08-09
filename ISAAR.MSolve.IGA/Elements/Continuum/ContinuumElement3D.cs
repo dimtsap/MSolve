@@ -7,7 +7,6 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Mesh;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interfaces;
@@ -116,42 +115,6 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		/// <param name="localDisplacements">A <see cref="double"/> array containing the displacements for the degrees of freedom of the element.</param>
 		/// <returns>A <see cref="double"/> array containing the forces all degrees of freedom.</returns>
 		public double[] CalculateForcesForLogging(IElement element, double[] localDisplacements) => throw new NotImplementedException();
-
-		/// <summary>
-		/// This method cannot be used, combined with <see cref="NurbsElement3D"/> as it refers to one-dimensional loads.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NurbsElement3D"/>.</param>
-		/// <param name="edge">An one dimensional boundary entity. For more info see <see cref="Edge"/>.</param>
-		/// <param name="neumann"><inheritdoc cref="NeumannBoundaryCondition"/></param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> where integer values denote the degree of freedom that has a value double load value due to the enforcement of the <see cref="NeumannBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, NeumannBoundaryCondition neumann) => throw new NotSupportedException();
-
-		/// <summary>
-		/// This method cannot be used, combined with <see cref="NurbsElement3D"/> as it refers to two-dimensional loads.
-		/// </summary>
-		/// <param name="element">An <see cref="Element"/> of type <see cref="NurbsElement3D"/>.</param>
-		/// <param name="face">The <see cref="Face"/> that the <see cref="NeumannBoundaryCondition"/> was applied to.</param>
-		/// <param name="neumann">The <see cref="NeumannBoundaryCondition"/>.</param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="NeumannBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, NeumannBoundaryCondition neumann) => throw new NotSupportedException();
-
-		/// <summary>
-		/// This method cannot be used, combined with <see cref="NurbsElement3D"/> as it refers to one-dimensional loads.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NurbsElement3D"/>.</param>
-		/// <param name="edge">An one dimensional boundary entity. For more info see <see cref="Edge"/>.</param>
-		/// <param name="pressure"><inheritdoc cref="PressureBoundaryCondition"/></param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> where integer values denote the degree of freedom that has a value double load value due to the enforcement of the <see cref="PressureBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, PressureBoundaryCondition pressure) => throw new NotSupportedException();
-
-		/// <summary>
-		/// This method cannot be used, combined with <see cref="NurbsElement3D"/> as it refers to two-dimensional loads.
-		/// </summary>
-		/// <param name="element">An <see cref="Element"/> of type <see cref="NurbsElement3D"/>.</param>
-		/// <param name="face">The <see cref="Face"/> that the <see cref="PressureBoundaryCondition"/> was applied to.</param>
-		/// <param name="pressure">The <see cref="PressureBoundaryCondition"/>.</param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> whose keys are the numbering of the degree of freedom and values are the magnitude of the load due to the <see cref="PressureBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, PressureBoundaryCondition pressure) => throw new NotSupportedException();
 
 		/// <summary>
 		/// This method calculates the stresses of the element.

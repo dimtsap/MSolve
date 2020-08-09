@@ -8,7 +8,6 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.Discretization.Mesh;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Entities.Loads;
 using ISAAR.MSolve.IGA.Interfaces;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interfaces;
@@ -110,57 +109,6 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		/// <param name="localDisplacements">A <see cref="double"/> array containing the displacements for the degrees of freedom of the element.</param>
 		/// <returns>A <see cref="double"/> array containing the forces all degrees of freedom</returns>
 		public double[] CalculateForcesForLogging(IElement element, double[] localDisplacements) => throw new NotImplementedException();
-
-		/// <summary>
-		/// This method cannot be used, combined with <see cref="NURBSElement2D"/> as it refers to one-dimensional loads.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NurbsElement1D"/>.</param>
-		/// <param name="edge">An one dimensional boundary entity. For more info see <see cref="Edge"/>.</param>
-		/// <param name="neumann"><inheritdoc cref="NeumannBoundaryCondition"/></param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> where integer values denote the degree of freedom that has a value double load value due to the enforcement of the <see cref="NeumannBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, NeumannBoundaryCondition neumann) => throw new NotSupportedException();
-
-		/// <summary>
-		/// This method calculates the Neumann boundary condition when applied to a two-dimensional NURBS element.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NURBSElement2D"/></param>
-		/// <param name="face">An two dimensional boundary entity. For more info see <see cref="Face"/>.</param>
-		/// <param name="neumann"><inheritdoc cref="NeumannBoundaryCondition"/>.</param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> where integer values denote the degree of freedom that has a value double load value due to the enforcement of the <see cref="NeumannBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, NeumannBoundaryCondition neumann)
-		{
-			Contract.Requires(element != null, "The element cannot be null");
-			Contract.Requires(face != null, "The face cannot be null");
-			Contract.Requires(neumann != null, "The Neumann Boundary condition cannot be null");
-
-			IList<GaussLegendrePoint3D> gaussPoints =
-				CreateElementGaussPoints(element, face.Degrees[0], face.Degrees[1]);
-			Dictionary<int, double> neumannLoad = new Dictionary<int, double>();
-			var elementControlPoints = element.ControlPoints.ToArray();
-			for (int j = 0; j < gaussPoints.Count; j++)
-			{
-				var jacobianMatrix = JacobianMatrixForLoadCalculation(element, _shapeFunctions, j, out var xGaussPoint, out var yGaussPoint, out var zGaussPoint);
-
-				Vector surfaceBasisVector1 = Vector.CreateZero(3);
-				surfaceBasisVector1[0] = jacobianMatrix[0, 0];
-				surfaceBasisVector1[1] = jacobianMatrix[0, 1];
-				surfaceBasisVector1[2] = jacobianMatrix[0, 2];
-
-				Vector surfaceBasisVector2 = Vector.CreateZero(3);
-				surfaceBasisVector2[0] = jacobianMatrix[1, 0];
-				surfaceBasisVector2[1] = jacobianMatrix[1, 1];
-				surfaceBasisVector2[2] = jacobianMatrix[1, 2];
-
-				Vector surfaceBasisVector3 = surfaceBasisVector1.CrossProduct(surfaceBasisVector2);
-
-				double jacdet = jacobianMatrix[0, 0] * jacobianMatrix[1, 1]
-								- jacobianMatrix[1, 0] * jacobianMatrix[0, 1];
-
-				CalculateNeumannLoad2D(element, neumann, neumannLoad, _shapeFunctions, j, jacdet, gaussPoints, xGaussPoint, yGaussPoint, zGaussPoint, surfaceBasisVector3);
-			}
-
-			return neumannLoad;
-		}
 
 		/// <summary>
 		/// This method calculates the stresses of the element.
@@ -272,59 +220,6 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 			return stiffnessMatrixElement;
 		}
 
-		private static void CalculateNeumannLoad2D(Element element, NeumannBoundaryCondition neumann, Dictionary<int, double> neumannLoad,
-            IShapeFunction2D nurbs, int j, double jacdet, IList<GaussLegendrePoint3D> gaussPoints, double xGaussPoint, double yGaussPoint, double zGaussPoint,
-			Vector surfaceBasisVector3)
-		{
-			var elementControlPoints = element.ControlPoints.ToArray();
-			for (int k = 0; k < elementControlPoints.Length; k++)
-			{
-				int dofIDX =
-					element.Model.GlobalDofOrdering.GlobalFreeDofs[elementControlPoints[k], StructuralDof.TranslationX];
-				int dofIDY =
-					element.Model.GlobalDofOrdering.GlobalFreeDofs[elementControlPoints[k], StructuralDof.TranslationY];
-				int dofIDZ =
-					element.Model.GlobalDofOrdering.GlobalFreeDofs[elementControlPoints[k], StructuralDof.TranslationZ];
-
-				if (neumannLoad.ContainsKey(dofIDX))
-				{
-					neumannLoad[dofIDX] += nurbs.Values[k, j] * jacdet * gaussPoints[j].WeightFactor *
-										   neumann.Value(xGaussPoint, yGaussPoint, zGaussPoint)[0] *
-										   surfaceBasisVector3[0];
-				}
-				else
-				{
-					neumannLoad.Add(
-						dofIDX,
-						nurbs.Values[k, j] * jacdet * gaussPoints[j].WeightFactor *
-						neumann.Value(xGaussPoint, yGaussPoint, zGaussPoint)[0] * surfaceBasisVector3[0]);
-				}
-
-				if (neumannLoad.ContainsKey(dofIDY))
-				{
-					neumannLoad[dofIDY] += nurbs.Values[k, j] * jacdet * gaussPoints[j].WeightFactor *
-										   neumann.Value(xGaussPoint, yGaussPoint, zGaussPoint)[1] *
-										   surfaceBasisVector3[1];
-				}
-				else
-				{
-					neumannLoad.Add(
-						dofIDY,
-						nurbs.Values[k, j] * jacdet * gaussPoints[j].WeightFactor * neumann.Value(xGaussPoint, yGaussPoint, zGaussPoint)[1] * surfaceBasisVector3[1]);
-				}
-
-				if (neumannLoad.ContainsKey(dofIDZ))
-				{
-					neumannLoad[dofIDZ] += nurbs.Values[k, j] * jacdet * gaussPoints[j].WeightFactor * neumann.Value(xGaussPoint, yGaussPoint, zGaussPoint)[2] * surfaceBasisVector3[2];
-				}
-				else
-				{
-					neumannLoad.Add(dofIDZ,
-						nurbs.Values[k, j] * jacdet * gaussPoints[j].WeightFactor * neumann.Value(xGaussPoint, yGaussPoint, zGaussPoint)[2] * surfaceBasisVector3[2]);
-				}
-			}
-		}
-
 		private static Matrix JacobianMatrixForLoadCalculation(Element element, IShapeFunction2D nurbs, int j, out double xGaussPoint,
 			out double yGaussPoint, out double zGaussPoint)
 		{
@@ -358,91 +253,6 @@ namespace ISAAR.MSolve.IGA.Elements.Continuum
 		/// <param name="loads">A list of <see cref="MassAccelerationLoad"/>. For more info see <seealso cref="MassAccelerationLoad"/>.</param>
 		/// <returns>A <see cref="double"/> array containing the forces generates due to acceleration for each degree of freedom.</returns>
 		public double[] CalculateAccelerationForces(IElement element, IList<MassAccelerationLoad> loads) => throw new NotImplementedException();
-
-		/// <summary>
-		/// This method calculates the Pressure boundary condition when applied to a two-dimensional NURBS element.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NURBSElement2D"/>.</param>
-		/// <param name="face">An two dimensional boundary entity. For more info see <see cref="Face"/>.</param>
-		/// <param name="pressure"><inheritdoc cref="NeumannBoundaryCondition"/>.</param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> where integer values denote the degree of freedom that has a value double load value due to the enforcement of the <see cref="PressureBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Face face, PressureBoundaryCondition pressure)
-		{
-			Contract.Requires(element != null, "The element cannot be null");
-			Contract.Requires(face != null, "The face cannot be null");
-			Contract.Requires(pressure != null, "The pressure boundary condition cannot be null");
-
-			var dofs = new IDofType[] { StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ };
-
-			IList<GaussLegendrePoint3D> gaussPoints =
-				CreateElementGaussPoints(element, face.Degrees[0], face.Degrees[1]);
-			Dictionary<int, double> pressureLoad = new Dictionary<int, double>();
-			var elementControlPoints = element.ControlPoints.ToArray();
-
-			for (int j = 0; j < gaussPoints.Count; j++)
-			{
-				Matrix jacobianMatrix = Matrix.CreateZero(2, 3);
-				double xGaussPoint = 0;
-				double yGaussPoint = 0;
-				double zGaussPoint = 0;
-				for (int k = 0; k < elementControlPoints.Length; k++)
-				{
-					xGaussPoint += _shapeFunctions.Values[k, j] * elementControlPoints[k].X;
-					yGaussPoint += _shapeFunctions.Values[k, j] * elementControlPoints[k].Y;
-					zGaussPoint += _shapeFunctions.Values[k, j] * elementControlPoints[k].Z;
-					jacobianMatrix[0, 0] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].X;
-					jacobianMatrix[0, 1] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].Y;
-					jacobianMatrix[0, 2] += _shapeFunctions.DerivativeValuesKsi[k, j] * elementControlPoints[k].Z;
-					jacobianMatrix[1, 0] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].X;
-					jacobianMatrix[1, 1] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].Y;
-					jacobianMatrix[1, 2] += _shapeFunctions.DerivativeValuesHeta[k, j] * elementControlPoints[k].Z;
-				}
-
-				Vector surfaceBasisVector1 = Vector.CreateZero(3);
-				surfaceBasisVector1[0] = jacobianMatrix[0, 0];
-				surfaceBasisVector1[1] = jacobianMatrix[0, 1];
-				surfaceBasisVector1[2] = jacobianMatrix[0, 2];
-
-				Vector surfaceBasisVector2 = Vector.CreateZero(3);
-				surfaceBasisVector2[0] = jacobianMatrix[1, 0];
-				surfaceBasisVector2[1] = jacobianMatrix[1, 1];
-				surfaceBasisVector2[2] = jacobianMatrix[1, 2];
-
-				Vector surfaceBasisVector3 = surfaceBasisVector1.CrossProduct(surfaceBasisVector2);
-
-				double jacdet = (jacobianMatrix[0, 0] * jacobianMatrix[1, 1])
-								- (jacobianMatrix[1, 0] * jacobianMatrix[0, 1]);
-
-				for (int k = 0; k < elementControlPoints.Length; k++)
-				{
-					for (int m = 0; m < 3; m++)
-					{
-						int dofID = element.Model.GlobalDofOrdering.GlobalFreeDofs[elementControlPoints[k], dofs[m]];
-						if (pressureLoad.ContainsKey(dofID))
-						{
-							pressureLoad[dofID] += _shapeFunctions.Values[k, j] * jacdet * gaussPoints[j].WeightFactor *
-												   pressure.Value * surfaceBasisVector3[m];
-						}
-						else
-						{
-							pressureLoad.Add(dofID,
-                                _shapeFunctions.Values[k, j] * jacdet * gaussPoints[j].WeightFactor * pressure.Value * surfaceBasisVector3[m]);
-						}
-					}
-				}
-			}
-
-			return pressureLoad;
-		}
-
-		/// <summary>
-		/// This method cannot be used, combined with <see cref="NURBSElement2D"/> as it refers to one-dimensional loads.
-		/// </summary>
-		/// <param name="element">An element of type <see cref="NURBSElement2D"/>.</param>
-		/// <param name="edge">An one dimensional boundary entity. For more info see <see cref="Edge"/>.</param>
-		/// <param name="pressure"><inheritdoc cref="PressureBoundaryCondition"/></param>
-		/// <returns>A <see cref="Dictionary{TKey,TValue}"/> where integer values denote the degree of freedom that has a value double load value due to the enforcement of the <see cref="PressureBoundaryCondition"/>.</returns>
-		public Dictionary<int, double> CalculateLoadingCondition(Element element, Edge edge, PressureBoundaryCondition pressure) => throw new NotSupportedException();
 
 		/// <summary>
 		/// Clear any saved material states of the element.

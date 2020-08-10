@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
 using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
@@ -190,7 +191,22 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// </summary>
 		public double[,] SecondDerivativeValuesKsiHeta { get; private set; }
 
-		/// <summary>
+        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
 		/// <see cref="Matrix"/> containing T-Spline shape functions.
 		/// Row represent Control Points, while columns Gauss Points.
 		/// </summary>
@@ -245,12 +261,17 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 			return A;
 		}
 
-        public double[,] CalculateShapeFunctionsAt(NaturalPoint point)
+        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
         {
             throw new NotImplementedException();
         }
 
-        public double[,] CalculateShapeFunctionsAt(NaturalPoint[] points)
+        public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
         {
             throw new NotImplementedException();
         }

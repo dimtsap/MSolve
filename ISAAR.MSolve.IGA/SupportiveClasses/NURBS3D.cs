@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
 using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
@@ -215,5 +216,35 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// Row represent Control Points, while columns Gauss Points.
 		/// </summary>
 		public double[,] Values { get; private set; }
-	}
+
+        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature3D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature3D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature3D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

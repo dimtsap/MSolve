@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
 using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Entities;
@@ -177,21 +178,41 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// Row represent Control Points, while columns Gauss Points.
 		/// </summary>
 		public double[,] SecondDerivativeValuesKsiHeta { get; private set; }
-
-        public double[,] CalculateShapeFunctionsAt(NaturalPoint point)
+		
+        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature)
         {
             throw new NotImplementedException();
         }
 
-        public double[,] CalculateShapeFunctionsAt(NaturalPoint[] points)
+        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-		/// <see cref="Matrix"/> containing NURBS shape functions.
-		/// Row represent Control Points, while columns Gauss Points.
-		/// </summary>
-		public double[,] Values { get; private set; }
+        /// <see cref="Matrix"/> containing NURBS shape functions.
+        /// Row represent Control Points, while columns Gauss Points.
+        /// </summary>
+        public double[,] Values { get; private set; }
 	}
 }

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
+using ISAAR.MSolve.Geometry.Coordinates;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
@@ -81,6 +84,36 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
                     }
                 }
             }
+        }
+
+        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature1D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature1D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature1D quadrature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
+        {
+            throw new NotImplementedException();
         }
     }
 }

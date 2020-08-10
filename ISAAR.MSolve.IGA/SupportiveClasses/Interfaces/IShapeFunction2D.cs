@@ -1,4 +1,6 @@
-﻿using ISAAR.MSolve.Geometry.Coordinates;
+﻿using System.Collections.Generic;
+using ISAAR.MSolve.Discretization.Integration.Quadratures;
+using ISAAR.MSolve.Geometry.Coordinates;
 
 namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
 {
@@ -10,9 +12,13 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
         double[,] SecondDerivativeValuesHeta { get; }
         double[,] SecondDerivativeValuesKsi { get; }
         double[,] SecondDerivativeValuesKsiHeta { get; }
+        
+        double[] EvaluateFunctionsAt(NaturalPoint naturalPoint);
+        double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint);
+        double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint);
 
-        double[,] CalculateShapeFunctionsAt(NaturalPoint point);
-
-        double[,] CalculateShapeFunctionsAt(NaturalPoint[] points);
+        IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature);
+        IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature);
+        IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature);
     }
 }

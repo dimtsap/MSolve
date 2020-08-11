@@ -44,7 +44,6 @@ namespace ISAAR.MSolve.IGA.Tests
 			var parametricCoordinates = ParametricCoordinates;
 
 			var bsplines1D= new SupportiveClasses.BSplines1D(degree, knotValueVector, parametricCoordinates);
-			bsplines1D.calculateBSPLinesAndDerivatives();
 
 			var expectedValues = new double[4, 4]
 			{
@@ -73,7 +72,6 @@ namespace ISAAR.MSolve.IGA.Tests
 			var parametricCoordinates = ParametricCoordinates;
 
 			var bsplines1D = new SupportiveClasses.BSplines1D(degree, knotValueVector, parametricCoordinates);
-			bsplines1D.calculateBSPLinesAndDerivatives();
 
 			var expectedDerivativeValues = new double[4, 4]
 			{
@@ -103,7 +101,6 @@ namespace ISAAR.MSolve.IGA.Tests
 			var parametricCoordinates = ParametricCoordinates;
 
 			var bsplines1D = new SupportiveClasses.BSplines1D(degree, knotValueVector, parametricCoordinates);
-			bsplines1D.calculateBSPLinesAndDerivatives();
 			
 			for (var p = 0; p < 4; p++)
 			{

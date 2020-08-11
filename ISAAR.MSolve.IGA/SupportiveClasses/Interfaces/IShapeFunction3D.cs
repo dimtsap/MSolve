@@ -20,13 +20,21 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
         double[,] SecondDerivativeValuesHetaZeta { get; }
         double[,] SecondDerivativeValuesKsiZeta { get; }
 
-        double[] EvaluateFunctionsAt(NaturalPoint naturalPoint);
-        double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint);
-        double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint);
+        double[,] EvaluateFunctionsAt(NaturalPoint naturalPoint);
 
-        IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature3D quadrature);
-        IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature3D quadrature);
-        IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature3D quadrature);
-        
+        (double[,] derivativesKsi, double[,] derivativesHeta, double[,] derivativesZeta) EvaluateNaturalDerivativesAt(
+            NaturalPoint naturalPoint);
+
+        (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesZeta,
+            double[,] secondDerivativesKsiHeta, double[,] secondDerivativesHetaZeta, double[,] secondDerivativesKsiZeta)
+            EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint);
+
+        double[,] EvaluateFunctionsAtGaussPoints(IQuadrature3D quadrature);
+        (double[,] derivativesKsi, double[,] derivativesHeta, double[,] derivativesZeta) EvaluateNaturalDerivativesAtGaussPoints(IQuadrature3D quadrature);
+
+        (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesZeta,
+            double[,] secondDerivativesKsiHeta, double[,] secondDerivativesHetaZeta, double[,] secondDerivativesKsiZeta)
+            EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature3D quadrature);
+
     }
 }

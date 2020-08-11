@@ -8,6 +8,7 @@ using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Readers;
+using ISAAR.MSolve.IGA.Readers.NurbsMesh;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Materials;
@@ -18,6 +19,7 @@ using ISAAR.MSolve.Solvers.Ordering;
 using ISAAR.MSolve.Solvers.Ordering.Reordering;
 using MathNet.Numerics.Data.Matlab;
 using MathNet.Numerics.LinearAlgebra;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace ISAAR.MSolve.IGA.Tests
@@ -209,6 +211,108 @@ namespace ISAAR.MSolve.IGA.Tests
 			for (int i = 0; i < displacementVectorExpected.Length; i++)
 				Assert.Equal(displacementVectorExpected[i], solver.LinearSystems[0].Solution[i], 6);
 		}
+
+		[Fact]
+        public void TestNewReader()
+        {
+
+            var jsonFile=File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "Cantilever2D.json"));
+            var modelGeometry = JsonConvert.DeserializeObject<ModelDto>(jsonFile);
+			//var modelDto= new ModelDto()
+   //         {
+			//	ControlPoints = new List<ControlPointDto>(60)
+   //             {
+			//		new ControlPointDto(){ID = 0,X =0 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 1,X =0 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 2,X =0 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 3,X =0 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 4,X =0 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 5,X =0 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 6,X =2.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 7,X =2.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 8,X =2.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 9,X =2.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 10,X =2.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 11,X =2.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 12,X =7.5 ,Y =0   ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 13,X =7.5 ,Y =1.25,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 14,X =7.5 ,Y =3.75,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 15,X =7.5 ,Y =6.25,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 16,X =7.5 ,Y =8.75,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 17,X =7.5 ,Y =10  ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 18,X =12.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 19,X =12.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 20,X =12.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 21,X =12.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 22,X =12.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 23,X =12.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 24,X =17.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 25,X =17.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 26,X =17.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 27,X =17.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 28,X =17.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 29,X =17.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 30,X =22.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 31,X =22.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 32,X =22.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 33,X =22.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 34,X =22.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 35,X =22.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 36,X =27.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 37,X =27.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 38,X =27.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 39,X =27.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 40,X =27.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 41,X =27.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 42,X =32.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 43,X =32.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 44,X =32.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 45,X =32.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 46,X =32.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 47,X =32.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 48,X =37.5 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 49,X =37.5 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 50,X =37.5 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 51,X =37.5 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 52,X =37.5 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 53,X =37.5 ,Y =10   ,Z = 0,Weight =1 },
+
+   //                 new ControlPointDto(){ID = 54,X =40 ,Y =0    ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 55,X =40 ,Y =1.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 56,X =40 ,Y =3.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 57,X =40 ,Y =6.25 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 58,X =40 ,Y =8.75 ,Z = 0,Weight =1 },
+   //                 new ControlPointDto(){ID = 59,X =40 ,Y =10   ,Z = 0,Weight =1 },
+
+   //             },
+			//	NurbsSurfacePatches = new List<NurbsSurfaceGeometryDto>(1)
+   //             {
+			//		new NurbsSurfaceGeometryDto()
+   //                 {
+			//			ID = 0,
+			//			KnotValueVectorKsi = new double[]{0, 0, 0,	1, 2, 3, 4, 5, 6, 7, 8, 8, 8},
+			//			KnotValueVectorHeta = new double[]{0, 0, 0, 1, 2, 3, 4, 4, 4 },
+			//			NumberOfCpKsi = 10,
+			//			NumberOfCpHeta = 6,
+			//			DegreeKsi = 2,
+			//			DegreeHeta = 2,
+			//			Thickness = 1,
+			//			GeometryType = NurbsGeometryType.Plane,
+			//			ControlPointIDs = new int[60]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59}
+   //                 }
+   //             }
+   //         };
+
+   //         var a = JsonConvert.SerializeObject(modelDto);
+        }
 
 		[Fact]
 		public void IsogeometricPlateTension()

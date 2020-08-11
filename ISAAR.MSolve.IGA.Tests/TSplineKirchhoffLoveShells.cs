@@ -6,6 +6,7 @@ using ISAAR.MSolve.Analyzers;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Loading.NodalLoads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Output;
@@ -51,12 +52,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
             foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X > 49.8))
             {
-                model.Loads.Add(new Load()
-                {
-                    Amount = -0.5,
-                    Node = model.ControlPointsDictionary[controlPoint.ID],
-                    DOF = StructuralDof.TranslationZ
-                });
+                model.Loads.Add(new NodalLoad(model.ControlPointsDictionary[controlPoint.ID],
+                    StructuralDof.TranslationZ, -0.5));
             }
 
             var solverBuilder = new DenseMatrixSolver.Builder();
@@ -125,12 +122,8 @@ namespace ISAAR.MSolve.IGA.Tests
 
             foreach (var controlPoint in model.ControlPointsDictionary.Values.Where(cp => cp.X > 49.8))
             {
-                model.Loads.Add(new Load()
-                {
-                    Amount = -0.5,
-                    Node = model.ControlPointsDictionary[controlPoint.ID],
-                    DOF = StructuralDof.TranslationZ
-                });
+                model.Loads.Add(new NodalLoad(model.ControlPointsDictionary[controlPoint.ID],
+                    StructuralDof.TranslationZ, -0.5));
             }
 
             var solverBuilder = new SkylineSolver.Builder();
@@ -200,12 +193,7 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = model.ControlPoints.Count() - 100; i < model.ControlPoints.Count(); i++)
             {
                 var id = model.ControlPoints.ToList()[i].ID;
-                model.Loads.Add(new Load()
-                {
-                    Amount = 100,
-                    Node = model.ControlPointsDictionary[id],
-                    DOF = StructuralDof.TranslationZ
-                });
+                model.Loads.Add(new NodalLoad(model.ControlPointsDictionary[id],StructuralDof.TranslationZ,100));
             }
 
             var solverBuilder = new SkylineSolver.Builder();
@@ -255,12 +243,7 @@ namespace ISAAR.MSolve.IGA.Tests
             for (int i = model.ControlPoints.Count() - 100; i < model.ControlPoints.Count(); i++)
             {
                 var id = model.ControlPoints.ToList()[i].ID;
-                model.Loads.Add(new Load()
-                {
-                    Amount = 100,
-                    Node = model.ControlPointsDictionary[id],
-                    DOF = StructuralDof.TranslationZ
-                });
+                model.Loads.Add(new NodalLoad(model.ControlPointsDictionary[id], StructuralDof.TranslationZ, 100));
             }
 
             var solverBuilder = new SuiteSparseSolver.Builder();

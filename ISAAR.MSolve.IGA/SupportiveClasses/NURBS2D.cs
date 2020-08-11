@@ -20,6 +20,8 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
         private readonly int degreeKsi;
         private readonly double[] knotValueVectorHeta;
         private readonly double[] knotValueVectorKsi;
+        private int numberOfControlPointsHeta;
+
         /// <summary>
 		/// Defines a 2D NURBS shape function for an element given the per axis gauss point coordinates.
 		/// </summary>
@@ -37,119 +39,130 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
             this.knotValueVectorHeta = knotValueVectorHeta;
             this.controlPoints = controlPoints;
             var parametricPointsCount = gaussPoints.Length;
-            var numberOfControlPointsHeta = knotValueVectorHeta.Length - degreeHeta - 1;
+            numberOfControlPointsHeta = knotValueVectorHeta.Length - degreeHeta - 1;
             var parametricGaussPointKsi = gaussPoints.Select(x => x.Ksi).Distinct().ToArray();
             var parametricGaussPointHeta = gaussPoints.Select(x => x.Heta).Distinct().ToArray();
-			BSplines1D bSplinesKsi = new BSplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
-			BSplines1D bSplinesHeta = new BSplines1D(degreeHeta, knotValueVectorHeta,
-				parametricGaussPointHeta);
-			bSplinesKsi.calculateBSPLinesAndDerivatives();
-			bSplinesHeta.calculateBSPLinesAndDerivatives();
+            (Values, DerivativeValuesKsi, DerivativeValuesHeta, SecondDerivativeValuesKsi, SecondDerivativeValuesHeta,
+                SecondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+        }
 
-			int supportKsi = parametricGaussPointKsi.Length;
-			int supportHeta = parametricGaussPointHeta.Length;
-			int numberOfElementControlPoints = (degreeKsi + 1) * (degreeHeta + 1);
+        private (double[,] values, double[,] derivativeValuesKsi, double[,] derivativeValuesHeta,
+            double[,] secondDerivativeValuesKsi, double[,] secondDerivativeValuesHeta, double[,] secondDerivativeValuesKsiHeta)
+            CalculateNurbs(double[] parametricGaussPointKsi, double[] parametricGaussPointHeta,
+            int parametricPointsCount)
+        {
+            var bSplinesKsi = new BSplines1D(degreeKsi, knotValueVectorKsi, parametricGaussPointKsi);
+            var bSplinesHeta = new BSplines1D(degreeHeta, knotValueVectorHeta,
+                parametricGaussPointHeta);
 
-			Values = new double[numberOfElementControlPoints, parametricPointsCount];
-			DerivativeValuesKsi = new double[numberOfElementControlPoints, parametricPointsCount];
-			DerivativeValuesHeta = new double[numberOfElementControlPoints, parametricPointsCount];
-			SecondDerivativeValuesKsi = new double[numberOfElementControlPoints, parametricPointsCount];
-			SecondDerivativeValuesHeta = new double[numberOfElementControlPoints, parametricPointsCount];
-			SecondDerivativeValuesKsiHeta = new double[numberOfElementControlPoints, parametricPointsCount];
+            int supportKsi = parametricGaussPointKsi.Length;
+            int supportHeta = parametricGaussPointHeta.Length;
+            int numberOfElementControlPoints = (degreeKsi + 1) * (degreeHeta + 1);
 
-			for (int i = 0; i < supportKsi; i++)
-			{
-				for (int j = 0; j < supportHeta; j++)
-				{
-					double sumKsiHeta = 0;
-					double sumdKsiHeta = 0;
-					double sumKsidHeta = 0;
-					double sumdKsidKsi = 0;
-					double sumdHetadHeta = 0;
-					double sumdKsidHeta = 0;
+            var values = new double[numberOfElementControlPoints, parametricPointsCount];
+            var derivativeValuesKsi = new double[numberOfElementControlPoints, parametricPointsCount];
+            var derivativeValuesHeta = new double[numberOfElementControlPoints, parametricPointsCount];
+            var secondDerivativeValuesKsi = new double[numberOfElementControlPoints, parametricPointsCount];
+            var secondDerivativeValuesHeta = new double[numberOfElementControlPoints, parametricPointsCount];
+            var secondDerivativeValuesKsiHeta = new double[numberOfElementControlPoints, parametricPointsCount];
 
-					for (int k = 0; k < numberOfElementControlPoints; k++)
-					{
-						int indexKsi = controlPoints[k].ID / numberOfControlPointsHeta;
-						int indexHeta = controlPoints[k].ID % numberOfControlPointsHeta;
-						sumKsiHeta += bSplinesKsi.Values[indexKsi, i] *
-									  bSplinesHeta.Values[indexHeta, j] *
-									  controlPoints[k].WeightFactor;
-						sumdKsiHeta += bSplinesKsi.DerivativeValues[indexKsi, i] *
-									   bSplinesHeta.Values[indexHeta, j] *
-									   controlPoints[k].WeightFactor;
-						sumKsidHeta += bSplinesKsi.Values[indexKsi, i] *
-									   bSplinesHeta.DerivativeValues[indexHeta, j] *
-									   controlPoints[k].WeightFactor;
-						sumdKsidKsi += bSplinesKsi.SecondDerivativeValues[indexKsi, i] *
-									   bSplinesHeta.Values[indexHeta, j] *
-									   controlPoints[k].WeightFactor;
-						sumdHetadHeta += bSplinesKsi.Values[indexKsi, i] *
-										 bSplinesHeta.SecondDerivativeValues[indexHeta, j] *
-										 controlPoints[k].WeightFactor;
-						sumdKsidHeta += bSplinesKsi.DerivativeValues[indexKsi, i] *
-										bSplinesHeta.DerivativeValues[indexHeta, j] *
-										controlPoints[k].WeightFactor;
-					}
+            for (int i = 0; i < supportKsi; i++)
+            {
+                for (int j = 0; j < supportHeta; j++)
+                {
+                    double sumKsiHeta = 0;
+                    double sumdKsiHeta = 0;
+                    double sumKsidHeta = 0;
+                    double sumdKsidKsi = 0;
+                    double sumdHetadHeta = 0;
+                    double sumdKsidHeta = 0;
 
-					for (int k = 0; k < numberOfElementControlPoints; k++)
-					{
-						int indexKsi = controlPoints[k].ID / numberOfControlPointsHeta;
-						int indexHeta = controlPoints[k].ID % numberOfControlPointsHeta;
+                    for (int k = 0; k < numberOfElementControlPoints; k++)
+                    {
+                        int indexKsi = controlPoints[k].ID / numberOfControlPointsHeta;
+                        int indexHeta = controlPoints[k].ID % numberOfControlPointsHeta;
+                        sumKsiHeta += bSplinesKsi.Values[indexKsi, i] *
+                                      bSplinesHeta.Values[indexHeta, j] *
+                                      controlPoints[k].WeightFactor;
+                        sumdKsiHeta += bSplinesKsi.DerivativeValues[indexKsi, i] *
+                                       bSplinesHeta.Values[indexHeta, j] *
+                                       controlPoints[k].WeightFactor;
+                        sumKsidHeta += bSplinesKsi.Values[indexKsi, i] *
+                                       bSplinesHeta.DerivativeValues[indexHeta, j] *
+                                       controlPoints[k].WeightFactor;
+                        sumdKsidKsi += bSplinesKsi.SecondDerivativeValues[indexKsi, i] *
+                                       bSplinesHeta.Values[indexHeta, j] *
+                                       controlPoints[k].WeightFactor;
+                        sumdHetadHeta += bSplinesKsi.Values[indexKsi, i] *
+                                         bSplinesHeta.SecondDerivativeValues[indexHeta, j] *
+                                         controlPoints[k].WeightFactor;
+                        sumdKsidHeta += bSplinesKsi.DerivativeValues[indexKsi, i] *
+                                        bSplinesHeta.DerivativeValues[indexHeta, j] *
+                                        controlPoints[k].WeightFactor;
+                    }
 
-						Values[k, i * supportHeta + j] =
-							bSplinesKsi.Values[indexKsi, i] *
-							bSplinesHeta.Values[indexHeta, j] *
-							controlPoints[k].WeightFactor / sumKsiHeta;
+                    for (int k = 0; k < numberOfElementControlPoints; k++)
+                    {
+                        int indexKsi = controlPoints[k].ID / numberOfControlPointsHeta;
+                        int indexHeta = controlPoints[k].ID % numberOfControlPointsHeta;
 
-						DerivativeValuesKsi[k, i * supportHeta + j] =
-							bSplinesHeta.Values[indexHeta, j] * controlPoints[k].WeightFactor *
-							(bSplinesKsi.DerivativeValues[indexKsi, i] * sumKsiHeta -
-							 bSplinesKsi.Values[indexKsi, i] * sumdKsiHeta) / Math.Pow(sumKsiHeta, 2);
+                        Values[k, i * supportHeta + j] =
+                            bSplinesKsi.Values[indexKsi, i] *
+                            bSplinesHeta.Values[indexHeta, j] *
+                            controlPoints[k].WeightFactor / sumKsiHeta;
 
-						DerivativeValuesHeta[k, i * supportHeta + j] =
-							bSplinesKsi.Values[indexKsi, i] * controlPoints[k].WeightFactor *
-							(bSplinesHeta.DerivativeValues[indexHeta, j] * sumKsiHeta -
-							 bSplinesHeta.Values[indexHeta, j] * sumKsidHeta) / Math.Pow(sumKsiHeta, 2);
+                        DerivativeValuesKsi[k, i * supportHeta + j] =
+                            bSplinesHeta.Values[indexHeta, j] * controlPoints[k].WeightFactor *
+                            (bSplinesKsi.DerivativeValues[indexKsi, i] * sumKsiHeta -
+                             bSplinesKsi.Values[indexKsi, i] * sumdKsiHeta) / Math.Pow(sumKsiHeta, 2);
 
-						SecondDerivativeValuesKsi[k, i * supportHeta + j] =
-							bSplinesHeta.Values[indexHeta, j] * controlPoints[k].WeightFactor *
-							(bSplinesKsi.SecondDerivativeValues[indexKsi, i] / sumKsiHeta -
-							 2 * bSplinesKsi.DerivativeValues[indexKsi, i] * sumdKsiHeta /
-							 Math.Pow(sumKsiHeta, 2) -
-							 bSplinesKsi.Values[indexKsi, i] * sumdKsidKsi / Math.Pow(sumKsiHeta, 2) +
-							 2 * bSplinesKsi.Values[indexKsi, i] * Math.Pow(sumdKsiHeta, 2) /
-							 Math.Pow(sumKsiHeta, 3));
+                        DerivativeValuesHeta[k, i * supportHeta + j] =
+                            bSplinesKsi.Values[indexKsi, i] * controlPoints[k].WeightFactor *
+                            (bSplinesHeta.DerivativeValues[indexHeta, j] * sumKsiHeta -
+                             bSplinesHeta.Values[indexHeta, j] * sumKsidHeta) / Math.Pow(sumKsiHeta, 2);
 
-						SecondDerivativeValuesHeta[k, i * supportHeta + j] =
-							bSplinesKsi.Values[indexKsi, i] * controlPoints[k].WeightFactor *
-							(bSplinesHeta.SecondDerivativeValues[indexHeta, j] / sumKsiHeta -
-							 2 * bSplinesHeta.DerivativeValues[indexHeta, j] * sumKsidHeta /
-							 Math.Pow(sumKsiHeta, 2) -
-							 bSplinesHeta.Values[indexHeta, j] * sumdHetadHeta / Math.Pow(sumKsiHeta, 2) +
-							 2 * bSplinesHeta.Values[indexHeta, j] * Math.Pow(sumKsidHeta, 2) /
-							 Math.Pow(sumKsiHeta, 3));
+                        SecondDerivativeValuesKsi[k, i * supportHeta + j] =
+                            bSplinesHeta.Values[indexHeta, j] * controlPoints[k].WeightFactor *
+                            (bSplinesKsi.SecondDerivativeValues[indexKsi, i] / sumKsiHeta -
+                             2 * bSplinesKsi.DerivativeValues[indexKsi, i] * sumdKsiHeta /
+                             Math.Pow(sumKsiHeta, 2) -
+                             bSplinesKsi.Values[indexKsi, i] * sumdKsidKsi / Math.Pow(sumKsiHeta, 2) +
+                             2 * bSplinesKsi.Values[indexKsi, i] * Math.Pow(sumdKsiHeta, 2) /
+                             Math.Pow(sumKsiHeta, 3));
 
-						SecondDerivativeValuesKsiHeta[k, i * supportHeta + j] =
-							controlPoints[k].WeightFactor *
-							(bSplinesKsi.DerivativeValues[indexKsi, i] *
-							 bSplinesHeta.DerivativeValues[indexHeta, j] / sumKsiHeta -
-							 bSplinesKsi.DerivativeValues[indexKsi, i] *
-							 bSplinesHeta.Values[indexHeta, j] *
-							 sumKsidHeta / Math.Pow(sumKsiHeta, 2) -
-							 bSplinesKsi.Values[indexKsi, i] *
-							 bSplinesHeta.DerivativeValues[indexHeta, j] *
-							 sumdKsiHeta / Math.Pow(sumKsiHeta, 2) -
-							 bSplinesKsi.Values[indexKsi, i] * bSplinesHeta.Values[indexHeta, j] *
-							 sumdKsidHeta / Math.Pow(sumKsiHeta, 2) +
-							 2 * bSplinesKsi.Values[indexKsi, i] * bSplinesHeta.Values[indexHeta, j] *
-							 sumdKsiHeta * sumKsidHeta / Math.Pow(sumKsiHeta, 3));
-					}
-				}
-			}
-		}
+                        SecondDerivativeValuesHeta[k, i * supportHeta + j] =
+                            bSplinesKsi.Values[indexKsi, i] * controlPoints[k].WeightFactor *
+                            (bSplinesHeta.SecondDerivativeValues[indexHeta, j] / sumKsiHeta -
+                             2 * bSplinesHeta.DerivativeValues[indexHeta, j] * sumKsidHeta /
+                             Math.Pow(sumKsiHeta, 2) -
+                             bSplinesHeta.Values[indexHeta, j] * sumdHetadHeta / Math.Pow(sumKsiHeta, 2) +
+                             2 * bSplinesHeta.Values[indexHeta, j] * Math.Pow(sumKsidHeta, 2) /
+                             Math.Pow(sumKsiHeta, 3));
 
-		/// <summary>
+                        SecondDerivativeValuesKsiHeta[k, i * supportHeta + j] =
+                            controlPoints[k].WeightFactor *
+                            (bSplinesKsi.DerivativeValues[indexKsi, i] *
+                             bSplinesHeta.DerivativeValues[indexHeta, j] / sumKsiHeta -
+                             bSplinesKsi.DerivativeValues[indexKsi, i] *
+                             bSplinesHeta.Values[indexHeta, j] *
+                             sumKsidHeta / Math.Pow(sumKsiHeta, 2) -
+                             bSplinesKsi.Values[indexKsi, i] *
+                             bSplinesHeta.DerivativeValues[indexHeta, j] *
+                             sumdKsiHeta / Math.Pow(sumKsiHeta, 2) -
+                             bSplinesKsi.Values[indexKsi, i] * bSplinesHeta.Values[indexHeta, j] *
+                             sumdKsidHeta / Math.Pow(sumKsiHeta, 2) +
+                             2 * bSplinesKsi.Values[indexKsi, i] * bSplinesHeta.Values[indexHeta, j] *
+                             sumdKsiHeta * sumKsidHeta / Math.Pow(sumKsiHeta, 3));
+                    }
+                }
+            }
+
+            return (values, derivativeValuesKsi, derivativeValuesHeta, SecondDerivativeValuesKsi,
+                secondDerivativeValuesHeta, secondDerivativeValuesKsiHeta);
+        }
+
+        /// <summary>
 		/// <see cref="Matrix"/> containing NURBS shape function derivatives per Heta.
 		/// Row represent Control Points, while columns Gauss Points.
 		/// </summary>
@@ -179,34 +192,72 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// </summary>
 		public double[,] SecondDerivativeValuesKsiHeta { get; private set; }
 		
-        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature)
+        public double[,] EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature)
         {
-            throw new NotImplementedException();
+            var parametricPointsCount = quadrature.IntegrationPoints.Count;
+            var parametricGaussPointKsi = quadrature.IntegrationPoints.Select(x => x.Xi).Distinct().ToArray();
+            var parametricGaussPointHeta = quadrature.IntegrationPoints.Select(x => x.Xi).Distinct().ToArray();
+            var (values, derivativeValuesKsi, derivativeValuesHeta, secondDerivativeValuesKsi, secondDerivativeValuesHeta,
+                secondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+            return values;
         }
 
-        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature)
+        public (double[,] derivativesKsi, double[,] derivativesHeta) EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature)
         {
-            throw new NotImplementedException();
+            var parametricPointsCount = quadrature.IntegrationPoints.Count;
+            var parametricGaussPointKsi = quadrature.IntegrationPoints.Select(x => x.Xi).Distinct().ToArray();
+            var parametricGaussPointHeta = quadrature.IntegrationPoints.Select(x => x.Xi).Distinct().ToArray();
+            var (values, derivativeValuesKsi, derivativeValuesHeta, secondDerivativeValuesKsi, secondDerivativeValuesHeta,
+                secondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+            return (derivativeValuesKsi, derivativeValuesHeta);
         }
 
-        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature)
+        public (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesKsiHeta) 
+            EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature)
         {
-            throw new NotImplementedException();
+            var parametricPointsCount = quadrature.IntegrationPoints.Count;
+            var parametricGaussPointKsi = quadrature.IntegrationPoints.Select(x => x.Xi).Distinct().ToArray();
+            var parametricGaussPointHeta = quadrature.IntegrationPoints.Select(x => x.Xi).Distinct().ToArray();
+            var (values, derivativeValuesKsi, derivativeValuesHeta, secondDerivativeValuesKsi, secondDerivativeValuesHeta,
+                secondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+            return (secondDerivativeValuesKsi, secondDerivativeValuesHeta, secondDerivativeValuesKsiHeta);
         }
 
-        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
+        public double[,] EvaluateFunctionsAt(NaturalPoint naturalPoint)
         {
-            throw new NotImplementedException();
+            var parametricPointsCount = 1;
+            var parametricGaussPointKsi = new double[]{naturalPoint.Xi};
+            var parametricGaussPointHeta = new double[]{naturalPoint.Eta};
+            var (values, derivativeValuesKsi, derivativeValuesHeta, secondDerivativeValuesKsi, secondDerivativeValuesHeta,
+                secondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+            return values;
         }
 
-        public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
+        public (double[,] derivativesKsi, double[,] derivativesHeta) EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
         {
-            throw new NotImplementedException();
+            var parametricPointsCount = 1;
+            var parametricGaussPointKsi = new double[]{naturalPoint.Xi};
+            var parametricGaussPointHeta = new double[]{naturalPoint.Eta};
+            var (values, derivativeValuesKsi, derivativeValuesHeta, secondDerivativeValuesKsi, secondDerivativeValuesHeta,
+                secondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+            return (derivativeValuesKsi, derivativeValuesHeta);
         }
 
-        public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
+        public (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesKsiHeta) 
+            EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
         {
-            throw new NotImplementedException();
+            var parametricPointsCount = 1;
+            var parametricGaussPointKsi = new double[]{naturalPoint.Xi};
+            var parametricGaussPointHeta = new double[]{naturalPoint.Eta};
+            var (values, derivativeValuesKsi, derivativeValuesHeta, secondDerivativeValuesKsi, secondDerivativeValuesHeta,
+                secondDerivativeValuesKsiHeta) = CalculateNurbs(parametricGaussPointKsi, parametricGaussPointHeta,
+                parametricPointsCount);
+            return (secondDerivativeValuesKsi, secondDerivativeValuesHeta, secondDerivativeValuesKsiHeta);
         }
 
         /// <summary>

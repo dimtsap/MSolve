@@ -27,7 +27,6 @@ namespace ISAAR.MSolve.IGA.Postprocessing
         public void CreateParaviewFile()
         {
             throw new NotImplementedException();
-
         }
 
         private int[,] CreateConnectivity()

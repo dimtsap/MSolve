@@ -51,9 +51,6 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 				parametricGaussPointHeta);
 			BSplines1D bSplinesZeta = new BSplines1D(degreeZeta, knotValueVectorZeta,
 				parametricGaussPointZeta);
-			bSplinesKsi.calculateBSPLinesAndDerivatives();
-			bSplinesHeta.calculateBSPLinesAndDerivatives();
-			bSplinesZeta.calculateBSPLinesAndDerivatives();
 
 			int supportKsi = degreeKsi + 1;
 			int supportHeta = degreeHeta + 1;
@@ -217,32 +214,36 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 		/// </summary>
 		public double[,] Values { get; private set; }
 
-        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
+        public double[,] EvaluateFunctionsAt(NaturalPoint naturalPoint)
         {
             throw new NotImplementedException();
         }
 
-        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature3D quadrature)
+        public double[,] EvaluateFunctionsAtGaussPoints(IQuadrature3D quadrature)
         {
             throw new NotImplementedException();
         }
 
-        public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
+        public (double[,] derivativesKsi, double[,] derivativesHeta, double[,] derivativesZeta) EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
         {
             throw new NotImplementedException();
         }
 
-        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature3D quadrature)
+        public (double[,] derivativesKsi, double[,] derivativesHeta, double[,] derivativesZeta) EvaluateNaturalDerivativesAtGaussPoints(IQuadrature3D quadrature)
         {
             throw new NotImplementedException();
         }
 
-        public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
+        public (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesZeta,
+            double[,] secondDerivativesKsiHeta, double[,] secondDerivativesHetaZeta, double[,] secondDerivativesKsiZeta) 
+            EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
         {
             throw new NotImplementedException();
         }
 
-        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature3D quadrature)
+        public (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesZeta,
+            double[,] secondDerivativesKsiHeta, double[,] secondDerivativesHetaZeta, double[,] secondDerivativesKsiZeta) 
+            EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature3D quadrature)
         {
             throw new NotImplementedException();
         }

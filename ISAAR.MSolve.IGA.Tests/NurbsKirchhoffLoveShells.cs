@@ -9,6 +9,7 @@ using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Boundary;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Loading.NodalLoads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.LinearAlgebra;
@@ -407,24 +408,9 @@ namespace ISAAR.MSolve.IGA.Tests
 			var modelReader = new IsogeometricShellReader(GeometricalFormulation.Linear,filename,sectionMaterial: material);
 			var model=modelReader.GenerateModelFromFile();
 
-			model.Loads.Add(new Load()
-			{
-				Amount = -1,
-				Node = model.ControlPoints.ToList()[9],
-				DOF = StructuralDof.TranslationZ
-			});
-			model.Loads.Add(new Load()
-			{
-				Amount = -1,
-				Node = model.ControlPoints.ToList()[10],
-				DOF = StructuralDof.TranslationZ
-			});
-			model.Loads.Add(new Load()
-			{
-				Amount = -1,
-				Node = model.ControlPoints.ToList()[11],
-				DOF = StructuralDof.TranslationZ
-			});
+			model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[9],StructuralDof.TranslationZ,-1));
+            model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[10],StructuralDof.TranslationZ,-1));
+            model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[11],StructuralDof.TranslationZ,-1));
 
 			for (int i = 0; i < 6; i++)
 			{
@@ -548,24 +534,9 @@ namespace ISAAR.MSolve.IGA.Tests
 			for (int i = 0; i < loadVector.ColumnCount; i += 3)
 			{
 				var indexCP = i / 3;
-				model.Loads.Add(new Load()
-				{
-					Amount = loadVector.At(0, i),
-					Node = model.ControlPoints.ToList()[indexCP],
-					DOF = StructuralDof.TranslationX
-				});
-				model.Loads.Add(new Load()
-				{
-					Amount = loadVector.At(0, i + 1),
-					Node = model.ControlPoints.ToList()[indexCP],
-					DOF = StructuralDof.TranslationY
-				});
-				model.Loads.Add(new Load()
-				{
-					Amount = loadVector.At(0, i + 2),
-					Node = model.ControlPoints.ToList()[indexCP],
-					DOF = StructuralDof.TranslationZ
-				});
+                model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[indexCP], StructuralDof.TranslationX, loadVector.At(0, i)));
+                model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[indexCP], StructuralDof.TranslationY, loadVector.At(0, i+1)));
+                model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[indexCP], StructuralDof.TranslationZ, loadVector.At(0, i+2)));
 			}
 
 			//foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)

@@ -258,21 +258,21 @@ namespace ISAAR.MSolve.IGA.Elements.Structural
 
             for (int i = 0; i < element.ControlPoints.Count(); i++)
             {
-                knotDisplacements[paraviewKnotRenumbering[0], 0] += shapeFunctionsK0[i] * localDisplacements[i, 0];
-                knotDisplacements[paraviewKnotRenumbering[0], 1] += shapeFunctionsK0[i] * localDisplacements[i, 1];
-                knotDisplacements[paraviewKnotRenumbering[0], 2] += shapeFunctionsK0[i] * localDisplacements[i, 2];
+                knotDisplacements[paraviewKnotRenumbering[0], 0] += shapeFunctionsK0[i,0] * localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[0], 1] += shapeFunctionsK0[i,0] * localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[0], 2] += shapeFunctionsK0[i,0] * localDisplacements[i, 2];
+                                                                                      
+                knotDisplacements[paraviewKnotRenumbering[1], 0] += shapeFunctionsK1[i,0] * localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[1], 1] += shapeFunctionsK1[i,0] * localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[1], 2] += shapeFunctionsK1[i,0] * localDisplacements[i, 2];
+                                                                                      
+                knotDisplacements[paraviewKnotRenumbering[2], 0] += shapeFunctionsK2[i,0] * localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[2], 1] += shapeFunctionsK2[i,0] * localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[2], 2] += shapeFunctionsK2[i,0] * localDisplacements[i, 2];
 
-                knotDisplacements[paraviewKnotRenumbering[1], 0] += shapeFunctionsK1[i] * localDisplacements[i, 0];
-                knotDisplacements[paraviewKnotRenumbering[1], 1] += shapeFunctionsK1[i] * localDisplacements[i, 1];
-                knotDisplacements[paraviewKnotRenumbering[1], 2] += shapeFunctionsK1[i] * localDisplacements[i, 2];
-
-                knotDisplacements[paraviewKnotRenumbering[2], 0] += shapeFunctionsK2[i] * localDisplacements[i, 0];
-                knotDisplacements[paraviewKnotRenumbering[2], 1] += shapeFunctionsK2[i] * localDisplacements[i, 1];
-                knotDisplacements[paraviewKnotRenumbering[2], 2] += shapeFunctionsK2[i] * localDisplacements[i, 2];
-
-                knotDisplacements[paraviewKnotRenumbering[3], 0] += shapeFunctionsK3[i] * localDisplacements[i, 0];
-                knotDisplacements[paraviewKnotRenumbering[3], 1] += shapeFunctionsK3[i] * localDisplacements[i, 1];
-                knotDisplacements[paraviewKnotRenumbering[3], 2] += shapeFunctionsK3[i] * localDisplacements[i, 2];
+                knotDisplacements[paraviewKnotRenumbering[3], 0] += shapeFunctionsK3[i,0] * localDisplacements[i, 0];
+                knotDisplacements[paraviewKnotRenumbering[3], 1] += shapeFunctionsK3[i,0] * localDisplacements[i, 1];
+                knotDisplacements[paraviewKnotRenumbering[3], 2] += shapeFunctionsK3[i,0] * localDisplacements[i, 2];
             }
 
             return knotDisplacements;
@@ -375,21 +375,21 @@ namespace ISAAR.MSolve.IGA.Elements.Structural
             var elementControlPoints = element.ControlPoints.ToArray();
             for (int i = 0; i < elementControlPoints.Length; i++)
             {
-                knotDisplacements[paraviewKnotRenumbering[0], 0] += shapeFunctionsK0[i] * elementControlPoints[i].X;
-                knotDisplacements[paraviewKnotRenumbering[0], 1] += shapeFunctionsK0[i] * elementControlPoints[i].Y;
-                knotDisplacements[paraviewKnotRenumbering[0], 2] += shapeFunctionsK0[i] * elementControlPoints[i].Z;
-
-                knotDisplacements[paraviewKnotRenumbering[1], 0] += shapeFunctionsK1[i] * elementControlPoints[i].X;
-                knotDisplacements[paraviewKnotRenumbering[1], 1] += shapeFunctionsK1[i] * elementControlPoints[i].Y;
-                knotDisplacements[paraviewKnotRenumbering[1], 2] += shapeFunctionsK1[i] * elementControlPoints[i].Z;
-
-                knotDisplacements[paraviewKnotRenumbering[2], 0] += shapeFunctionsK2[i] * elementControlPoints[i].X;
-                knotDisplacements[paraviewKnotRenumbering[2], 1] += shapeFunctionsK2[i] * elementControlPoints[i].Y;
-                knotDisplacements[paraviewKnotRenumbering[2], 2] += shapeFunctionsK2[i] * elementControlPoints[i].Z;
-
-                knotDisplacements[paraviewKnotRenumbering[3], 0] += shapeFunctionsK3[i] * elementControlPoints[i].X;
-                knotDisplacements[paraviewKnotRenumbering[3], 1] += shapeFunctionsK3[i] * elementControlPoints[i].Y;
-                knotDisplacements[paraviewKnotRenumbering[3], 2] += shapeFunctionsK3[i] * elementControlPoints[i].Z;
+                knotDisplacements[paraviewKnotRenumbering[0], 0] += shapeFunctionsK0[i,0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[0], 1] += shapeFunctionsK0[i,0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[0], 2] += shapeFunctionsK0[i,0] * elementControlPoints[i].Z;
+                                                                                      
+                knotDisplacements[paraviewKnotRenumbering[1], 0] += shapeFunctionsK1[i,0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[1], 1] += shapeFunctionsK1[i,0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[1], 2] += shapeFunctionsK1[i,0] * elementControlPoints[i].Z;
+                                                                                      
+                knotDisplacements[paraviewKnotRenumbering[2], 0] += shapeFunctionsK2[i,0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[2], 1] += shapeFunctionsK2[i,0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[2], 2] += shapeFunctionsK2[i,0] * elementControlPoints[i].Z;
+                                                                                      
+                knotDisplacements[paraviewKnotRenumbering[3], 0] += shapeFunctionsK3[i,0] * elementControlPoints[i].X;
+                knotDisplacements[paraviewKnotRenumbering[3], 1] += shapeFunctionsK3[i,0] * elementControlPoints[i].Y;
+                knotDisplacements[paraviewKnotRenumbering[3], 2] += shapeFunctionsK3[i,0] * elementControlPoints[i].Z;
             }
 
             return knotDisplacements;

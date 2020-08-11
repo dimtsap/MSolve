@@ -16,44 +16,63 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 	/// </summary>
 	public class Nurbs1D:IShapeFunction1D
 	{
-		/// <summary>
+        private readonly int degree;
+        private readonly double[] knotValueVector;
+        private readonly ControlPoint[] controlPoints;
+        private readonly GaussLegendrePoint3D[] gaussPoints;
+
+        /// <summary>
 		/// Defines an 1D NURBS shape function for an element.
 		/// </summary>
 		/// <param name="element">An <see cref="Element"/> of type <see cref="NurbsElement1D"/>.</param>
 		/// <param name="controlPoints">A <see cref="List{T}"/> containing the control points of the element.</param>
 		public Nurbs1D(int degree, double[] KnotValueVector, ControlPoint[] controlPoints, GaussLegendrePoint3D[] gaussPoints)
         {
+            this.degree = degree;
+            this.knotValueVector = KnotValueVector;
+            this.controlPoints = controlPoints;
+
+            this.gaussPoints = gaussPoints;
             var parametricGaussPointKsi = gaussPoints.Select(gp => gp.Ksi).ToArray();
-			var bsplinesKsi = new BSplines1D(degree, KnotValueVector, parametricGaussPointKsi);
-			bsplinesKsi.calculateBSPLinesAndDerivatives();
+            var numberOfGaussPoints = parametricGaussPointKsi.Length;
+			var (values, derivativeValues) = CalculateNurbs1D(degree, KnotValueVector, controlPoints, gaussPoints, parametricGaussPointKsi, numberOfGaussPoints);
+            Values = values;
+            DerivativeValues = derivativeValues;
+        }
 
-			int supportKsi = degree + 1;
-			int numberOfElementControlPoints = supportKsi;
+        private (double[,] values, double[,] derivativeValues) CalculateNurbs1D(int degree, double[] KnotValueVector,
+            ControlPoint[] controlPoints, GaussLegendrePoint3D[] gaussPoints, double[] parametricGaussPointKsi,
+            int numberOfGaussPoints)
+        {
+            var bsplinesKsi = new BSplines1D(degree, KnotValueVector, parametricGaussPointKsi);
+            var values = new double[controlPoints.Length, gaussPoints.Length];
+            var derivativeValues = new double[controlPoints.Length, gaussPoints.Length];
+            for (int i = 0; i < numberOfGaussPoints; i++)
+            {
+                double sumKsi = 0;
+                double sumdKsi = 0;
 
-            Values = new double[numberOfElementControlPoints, gaussPoints.Length];
-			DerivativeValues = new double[numberOfElementControlPoints, gaussPoints.Length];
-			for (int i = 0; i < supportKsi; i++)
-			{
-				double sumKsi = 0;
-				double sumdKsi = 0;
+                for (int j = 0; j < controlPoints.Length; j++)
+                {
+                    int indexKsi = controlPoints[j].ID;
+                    sumKsi += bsplinesKsi.Values[indexKsi, i] * controlPoints[j].WeightFactor;
+                    sumdKsi += bsplinesKsi.DerivativeValues[indexKsi, i] * controlPoints[j].WeightFactor;
+                }
 
-				for (int j = 0; j < numberOfElementControlPoints; j++)
-				{
-					int indexKsi = controlPoints[j].ID;
-					sumKsi += bsplinesKsi.Values[indexKsi, i] * controlPoints[j].WeightFactor;
-					sumdKsi += bsplinesKsi.DerivativeValues[indexKsi, i] * controlPoints[j].WeightFactor;
-				}
-				for (int j = 0; j < numberOfElementControlPoints; j++)
-				{
-					int indexKsi = controlPoints[j].ID;
-					Values[j, i] = bsplinesKsi.Values[indexKsi, i] * controlPoints[j].WeightFactor / sumKsi;
-					DerivativeValues[j, i] = controlPoints[j].WeightFactor * (bsplinesKsi.DerivativeValues[indexKsi, i] * sumKsi -
-						bsplinesKsi.Values[indexKsi, i] * sumdKsi) / Math.Pow(sumKsi, 2);
-				}
-			}
-		}
+                for (int j = 0; j < controlPoints.Length; j++)
+                {
+                    int indexKsi = controlPoints[j].ID;
+                    Values[j, i] = bsplinesKsi.Values[indexKsi, i] * controlPoints[j].WeightFactor / sumKsi;
+                    DerivativeValues[j, i] = controlPoints[j].WeightFactor *
+                        (bsplinesKsi.DerivativeValues[indexKsi, i] * sumKsi -
+                         bsplinesKsi.Values[indexKsi, i] * sumdKsi) / Math.Pow(sumKsi, 2);
+                }
+            }
 
-		/// <summary>
+            return (values, derivativeValues);
+        }
+
+        /// <summary>
 		/// <see cref="Matrix"/> containing NURBS shape function derivatives.
 		/// Row represent Control Points, while columns Gauss Points.
 		/// </summary>
@@ -67,24 +86,36 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
 
 		public double[,] SecondDerivativeValues => throw new NotImplementedException();
 
-        public double[] EvaluateFunctionsAt(NaturalPoint naturalPoint)
+        public double[,] EvaluateFunctionsAt(NaturalPoint naturalPoint)
         {
-            throw new NotImplementedException();
+            var parametricGaussPointKsi = new double[]{naturalPoint.Xi};
+            var (values, _) = CalculateNurbs1D(degree, knotValueVector, controlPoints, gaussPoints, parametricGaussPointKsi, parametricGaussPointKsi.Length);
+
+            return values;
         }
 
-        public IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature1D quadrature)
+        public double[,] EvaluateFunctionsAtGaussPoints(IQuadrature1D quadrature)
         {
-            throw new NotImplementedException();
+            var parametricGaussPointKsi = quadrature.IntegrationPoints.Select(x => x.Xi).ToArray();
+            var (values, _) = CalculateNurbs1D(degree, knotValueVector, controlPoints, gaussPoints, parametricGaussPointKsi, parametricGaussPointKsi.Length);
+
+            return values;
         }
 
         public double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint)
         {
-            throw new NotImplementedException();
+            var parametricGaussPointKsi = new double[]{naturalPoint.Xi};
+            var (_, derivativeValues) = CalculateNurbs1D(degree, knotValueVector, controlPoints, gaussPoints, parametricGaussPointKsi, parametricGaussPointKsi.Length);
+
+            return derivativeValues;
         }
 
-        public IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature1D quadrature)
+        public double[,] EvaluateNaturalDerivativesAtGaussPoints(IQuadrature1D quadrature)
         {
-            throw new NotImplementedException();
+            var parametricGaussPointKsi = quadrature.IntegrationPoints.Select(x => x.Xi).ToArray();
+            var (_, derivativeValues) = CalculateNurbs1D(degree, knotValueVector, controlPoints, gaussPoints, parametricGaussPointKsi, parametricGaussPointKsi.Length);
+
+            return derivativeValues;
         }
 
         public double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint)
@@ -92,7 +123,7 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses
             throw new NotImplementedException();
         }
 
-        public IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature1D quadrature)
+        public double[,] EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature1D quadrature)
         {
             throw new NotImplementedException();
         }

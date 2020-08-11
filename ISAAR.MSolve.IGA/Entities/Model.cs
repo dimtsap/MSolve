@@ -10,6 +10,7 @@ using ISAAR.MSolve.FEM.Interfaces;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Boundary;
 using ISAAR.MSolve.IGA.Interfaces;
+using ISAAR.MSolve.IGA.Loading.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 namespace ISAAR.MSolve.IGA.Entities
@@ -92,7 +93,7 @@ namespace ISAAR.MSolve.IGA.Entities
 		/// <summary>
 		/// List containing the loads applied to the the <see cref="Model"/>.
 		/// </summary>
-		public IList<Load> Loads { get; private set; } = new List<Load>();
+		public IList<ILoad> Loads { get; private set; } = new List<ILoad>();
 
 		/// <summary>
 		/// List of <see cref="IMassAccelerationHistoryLoad"/> applied to the <see cref="Model"/>.
@@ -162,14 +163,37 @@ namespace ISAAR.MSolve.IGA.Entities
 		/// <param name="distributeNodalLoads"><inheritdoc cref="NodalLoadsToSubdomainsDistributor"/></param>
 		public void AssignNodalLoads(NodalLoadsToSubdomainsDistributor distributeNodalLoads)
 		{
-			var globalNodalLoads = new Table<INode, IDofType, double>();
-			foreach (var load in Loads) globalNodalLoads.TryAdd(load.Node, load.DOF, load.Amount);
+            var globalNodalLoads = new Table<INode, IDofType, double>();
+            foreach (var load in Loads)
+            {
+                var loadTable = load.CalculateLoad();
+                foreach ((INode node, IDofType dof, double load) tuple in loadTable)
+                {
+                    if (globalNodalLoads.Contains(tuple.node, tuple.dof))
+                    {
+                        globalNodalLoads[tuple.node, tuple.dof] += tuple.load;
+                    }
+                    else
+                    {
+                        globalNodalLoads.TryAdd(tuple.node, tuple.dof, tuple.load);
+                    }
+                }
+            }
 
-			var subdomainNodalLoads = distributeNodalLoads(globalNodalLoads);
-			foreach (var idSubdomainLoads in subdomainNodalLoads)
-			{
-				PatchesDictionary[idSubdomainLoads.Key].Forces.AddIntoThis(idSubdomainLoads.Value);
-			}
+            Dictionary<int, SparseVector> subdomainNodalLoads = distributeNodalLoads(globalNodalLoads);
+            foreach (var idSubdomainLoads in subdomainNodalLoads)
+            {
+                PatchesDictionary[idSubdomainLoads.Key].Forces.AddIntoThis(idSubdomainLoads.Value);
+            }
+
+			//var globalNodalLoads = new Table<INode, IDofType, double>();
+			//foreach (var load in Loads) globalNodalLoads.TryAdd(load.Node, load.DOF, load.Amount);
+
+			//var subdomainNodalLoads = distributeNodalLoads(globalNodalLoads);
+			//foreach (var idSubdomainLoads in subdomainNodalLoads)
+			//{
+			//	PatchesDictionary[idSubdomainLoads.Key].Forces.AddIntoThis(idSubdomainLoads.Value);
+			//}
 		}
 
 		/// <summary>
@@ -212,7 +236,6 @@ namespace ISAAR.MSolve.IGA.Entities
 		{
 			BuildInterconnectionData();
 			AssignConstraints();
-			RemoveInactiveNodalLoads();
 		}
 		
 		private void AssignConstraints()
@@ -255,14 +278,5 @@ namespace ISAAR.MSolve.IGA.Entities
 			}
 		}
 
-		private void RemoveInactiveNodalLoads()
-		{
-			var activeLoads = new List<Load>(Loads.Count);
-			activeLoads.AddRange(from load in Loads
-								 let isConstrained = Constraints.Contains(load.Node, load.DOF)
-								 where !isConstrained
-								 select load);
-			Loads = activeLoads;
-		}
 	}
 }

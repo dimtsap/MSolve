@@ -20,9 +20,9 @@ namespace ISAAR.MSolve.IGA.Loading.LineLoads
         public Table<INode, IDofType, double> CalculateLineLoad(IShapeFunction1D interpolation, IQuadrature1D integration, IReadOnlyList<INode> nodes)
         {
             var loadTable = new Table<INode, IDofType, double>();
-			IReadOnlyList<double[,]> shapeGradientsNatural =
+			var shapeGradientsNatural =
 				interpolation.EvaluateNaturalDerivativesAtGaussPoints(integration);
-			IReadOnlyList<double[]> shapeFunctionNatural =
+			var shapeFunctionNatural =
 				interpolation.EvaluateFunctionsAtGaussPoints(integration);
 			
 			for (int gp = 0; gp < integration.IntegrationPoints.Count; gp++)
@@ -30,9 +30,9 @@ namespace ISAAR.MSolve.IGA.Loading.LineLoads
 				var jacobianMatrix = Vector.CreateZero(3);
 				for (int indexNode = 0; indexNode < nodes.Count; indexNode++)
 				{
-					jacobianMatrix[0] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].X;
-					jacobianMatrix[1] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].Y;
-					jacobianMatrix[2] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].Z;
+					jacobianMatrix[0] += shapeGradientsNatural[indexNode,gp] * nodes[indexNode].X;
+					jacobianMatrix[1] += shapeGradientsNatural[indexNode,gp] * nodes[indexNode].Y;
+					jacobianMatrix[2] += shapeGradientsNatural[indexNode,gp] * nodes[indexNode].Z;
 				}
 
 				var jacdet = jacobianMatrix.Norm2();
@@ -42,11 +42,11 @@ namespace ISAAR.MSolve.IGA.Loading.LineLoads
 				for (int indexNode = 0; indexNode < nodes.Count; indexNode++)
 				{
 					var node = nodes[indexNode];
-					var valueX = _pressure * tangentVector[0] * shapeFunctionNatural[gp][indexNode] * jacdet *
+					var valueX = _pressure * tangentVector[0] * shapeFunctionNatural[indexNode,gp] * jacdet *
 					             weightFactor;
-					var valueY = _pressure * tangentVector[1] * shapeFunctionNatural[gp][indexNode] * jacdet *
+					var valueY = _pressure * tangentVector[1] * shapeFunctionNatural[indexNode,gp] * jacdet *
 					             weightFactor;
-					var valueZ = _pressure * tangentVector[2] * shapeFunctionNatural[gp][indexNode] * jacdet *
+					var valueZ = _pressure * tangentVector[2] * shapeFunctionNatural[indexNode,gp] * jacdet *
 					             weightFactor;
 					
 					if (loadTable.Contains(node, StructuralDof.TranslationX))

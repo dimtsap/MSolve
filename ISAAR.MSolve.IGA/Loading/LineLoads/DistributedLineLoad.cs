@@ -27,9 +27,9 @@ namespace ISAAR.MSolve.IGA.Loading.LineLoads
         public Table<INode, IDofType, double> CalculateLineLoad(IShapeFunction1D interpolation, IQuadrature1D integration, IReadOnlyList<INode> nodes)
         {
             var loadTable = new Table<INode, IDofType, double>();
-			IReadOnlyList<double[,]> shapeGradientsNatural =
+			var shapeGradientsNatural =
 				interpolation.EvaluateNaturalDerivativesAtGaussPoints(integration);
-			IReadOnlyList<double[]> shapeFunctionNatural =
+			var shapeFunctionNatural =
 				interpolation.EvaluateFunctionsAtGaussPoints(integration);
 
 
@@ -38,9 +38,9 @@ namespace ISAAR.MSolve.IGA.Loading.LineLoads
 				var jacobianMatrix = Vector.CreateZero(3);
 				for (int indexNode = 0; indexNode < nodes.Count; indexNode++)
 				{
-					jacobianMatrix[0] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].X;
-					jacobianMatrix[1] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].Y;
-					jacobianMatrix[2] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].Z;
+					jacobianMatrix[0] += shapeGradientsNatural[indexNode,gp] * nodes[indexNode].X;
+					jacobianMatrix[1] += shapeGradientsNatural[indexNode,gp] * nodes[indexNode].Y;
+					jacobianMatrix[2] += shapeGradientsNatural[indexNode,gp]* nodes[indexNode].Z;
 				}
 
 				var jacdet = jacobianMatrix.Norm2();
@@ -49,9 +49,9 @@ namespace ISAAR.MSolve.IGA.Loading.LineLoads
 				for (int indexNode = 0; indexNode < nodes.Count; indexNode++)
 				{
 					var node = nodes[indexNode];
-					var valueX = _loadX * shapeFunctionNatural[gp][indexNode] * jacdet * weightFactor;
-					var valueY = _loadY * shapeFunctionNatural[gp][indexNode] * jacdet * weightFactor;
-					var valueZ = _loadZ * shapeFunctionNatural[gp][indexNode] * jacdet * weightFactor;
+					var valueX = _loadX * shapeFunctionNatural[indexNode,gp] * jacdet * weightFactor;
+					var valueY = _loadY * shapeFunctionNatural[indexNode,gp] * jacdet * weightFactor;
+					var valueZ = _loadZ * shapeFunctionNatural[indexNode,gp] * jacdet * weightFactor;
 					if (loadTable.Contains(node, StructuralDof.TranslationX))
 					{
 						loadTable[node, StructuralDof.TranslationX] += valueX;

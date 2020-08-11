@@ -12,6 +12,7 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.FEM.Materials;
 using ISAAR.MSolve.IGA.Elements.Boundary;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Loading.NodalLoads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.LinearAlgebra.Output;
 using ISAAR.MSolve.Materials;
@@ -239,12 +240,7 @@ namespace ISAAR.MSolve.IGA.Tests
                     for (int i = model.ControlPoints.Count() - 100; i < model.ControlPoints.Count(); i++)
                     {
                         var id = model.ControlPoints.ToList()[i].ID;
-                        model.Loads.Add(new Load()
-                        {
-                            Amount = 100 / 10e4,
-                            Node = model.ControlPointsDictionary[id],
-                            DOF = StructuralDof.TranslationZ
-                        });
+                        model.Loads.Add(new NodalLoad(model.ControlPointsDictionary[id],StructuralDof.TranslationZ,100/10e4));
                     }
 
                     var solverBuilder = new SuiteSparseSolver.Builder();

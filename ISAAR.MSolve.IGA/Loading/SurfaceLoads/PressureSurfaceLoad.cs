@@ -24,9 +24,9 @@ namespace ISAAR.MSolve.IGA.Loading.SurfaceLoads
         public Table<INode, IDofType, double> CalculateSurfaceLoad(IShapeFunction2D interpolation, IQuadrature2D integration, IReadOnlyList<INode> nodes)
         {
            var loadTable = new Table<INode, IDofType, double>();
-			IReadOnlyList<double[,]> shapeGradientsNatural =
+			var (derivativesKsi, derivativesHeta)=
 				interpolation.EvaluateNaturalDerivativesAtGaussPoints(integration);
-			IReadOnlyList<double[]> shapeFunctionNatural =
+			var shapeFunctionNatural =
 				interpolation.EvaluateFunctionsAtGaussPoints(integration);
 			for (int gp = 0; gp < integration.IntegrationPoints.Count; gp++)
 			{
@@ -34,13 +34,13 @@ namespace ISAAR.MSolve.IGA.Loading.SurfaceLoads
 				var jacobianMatrix = Matrix.CreateZero(2, 3);
 				for (int indexNode = 0; indexNode < nodes.Count; indexNode++)
 				{
-					jacobianMatrix[0, 0] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].X;
-					jacobianMatrix[0, 1] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].Y;
-					jacobianMatrix[0, 2] += shapeGradientsNatural[gp][indexNode, 0] * nodes[indexNode].Z;
+					jacobianMatrix[0, 0] += derivativesKsi[indexNode,gp] * nodes[indexNode].X;
+					jacobianMatrix[0, 1] += derivativesKsi[indexNode,gp] * nodes[indexNode].Y;
+					jacobianMatrix[0, 2] += derivativesKsi[indexNode,gp] * nodes[indexNode].Z;
 
-					jacobianMatrix[1, 0] += shapeGradientsNatural[gp][indexNode, 1] * nodes[indexNode].X;
-					jacobianMatrix[1, 1] += shapeGradientsNatural[gp][indexNode, 1] * nodes[indexNode].Y;
-					jacobianMatrix[1, 2] += shapeGradientsNatural[gp][indexNode, 1] * nodes[indexNode].Z;
+					jacobianMatrix[1, 0] += derivativesHeta[indexNode,gp] * nodes[indexNode].X;
+					jacobianMatrix[1, 1] += derivativesHeta[indexNode,gp] * nodes[indexNode].Y;
+					jacobianMatrix[1, 2] += derivativesHeta[indexNode,gp] * nodes[indexNode].Z;
 				}
 
 				var tangentVector1 = jacobianMatrix.GetRow(0);
@@ -66,11 +66,11 @@ namespace ISAAR.MSolve.IGA.Loading.SurfaceLoads
 				for (int indexNode = 0; indexNode < nodes.Count; indexNode++)
 				{
 					var node = nodes[indexNode];
-					var valueX = _pressure * unitNormalVector[0] * shapeFunctionNatural[gp][indexNode] * jacdet *
+					var valueX = _pressure * unitNormalVector[0] * shapeFunctionNatural[indexNode,gp] * jacdet *
 								 weightFactor;
-					var valueY = _pressure * unitNormalVector[1] * shapeFunctionNatural[gp][indexNode] * jacdet *
+					var valueY = _pressure * unitNormalVector[1] * shapeFunctionNatural[indexNode,gp] * jacdet *
 								 weightFactor;
-					var valueZ = _pressure * unitNormalVector[2] * shapeFunctionNatural[gp][indexNode] * jacdet *
+					var valueZ = _pressure * unitNormalVector[2] * shapeFunctionNatural[indexNode,gp] * jacdet *
 								 weightFactor;
 					if (loadTable.Contains(node, StructuralDof.TranslationX))
 					{

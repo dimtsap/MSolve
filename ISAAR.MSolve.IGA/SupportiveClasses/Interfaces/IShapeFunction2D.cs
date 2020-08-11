@@ -13,12 +13,16 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
         double[,] SecondDerivativeValuesKsi { get; }
         double[,] SecondDerivativeValuesKsiHeta { get; }
         
-        double[] EvaluateFunctionsAt(NaturalPoint naturalPoint);
-        double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint);
-        double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint);
+        double[,] EvaluateFunctionsAt(NaturalPoint naturalPoint);
+        (double[,] derivativesKsi, double[,] derivativesHeta) EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint);
 
-        IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature);
-        IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature);
-        IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature);
+        (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesKsiHeta)
+            EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint);
+
+        double[,] EvaluateFunctionsAtGaussPoints(IQuadrature2D quadrature);
+        (double[,] derivativesKsi, double[,] derivativesHeta) EvaluateNaturalDerivativesAtGaussPoints(IQuadrature2D quadrature);
+
+        (double[,] secondDerivativesKsi, double[,] secondDerivativesHeta, double[,] secondDerivativesKsiHeta)
+            EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature2D quadrature);
     }
 }

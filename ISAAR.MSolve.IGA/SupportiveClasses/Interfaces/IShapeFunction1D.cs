@@ -10,11 +10,11 @@ namespace ISAAR.MSolve.IGA.SupportiveClasses.Interfaces
         double[,] DerivativeValues { get; }
         double[,] SecondDerivativeValues { get; }
 
-        IReadOnlyList<double[]> EvaluateFunctionsAtGaussPoints(IQuadrature1D quadrature);
-        IReadOnlyList<double[,]> EvaluateNaturalDerivativesAtGaussPoints(IQuadrature1D quadrature);
-        IReadOnlyList<double[,]> EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature1D quadrature);
+        double[,] EvaluateFunctionsAtGaussPoints(IQuadrature1D quadrature);
+        double[,] EvaluateNaturalDerivativesAtGaussPoints(IQuadrature1D quadrature);
+        double[,]  EvaluateNaturalSecondDerivativesAtGaussPoints(IQuadrature1D quadrature);
 
-        double[] EvaluateFunctionsAt(NaturalPoint naturalPoint);
+        double[,] EvaluateFunctionsAt(NaturalPoint naturalPoint);
         double[,] EvaluateNaturalDerivativesAt(NaturalPoint naturalPoint);
         double[,] EvaluateNaturalSecondDerivativesAt(NaturalPoint naturalPoint);
     }

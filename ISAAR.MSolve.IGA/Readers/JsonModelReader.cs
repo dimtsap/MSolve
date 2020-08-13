@@ -35,7 +35,7 @@ namespace ISAAR.MSolve.IGA.Readers
 
         public (ModelDto geometry, Model model) ReadGeometryAndCreateModel()
         {
-            var jsonFile=File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "Cantilever2D.json"));
+            var jsonFile=File.ReadAllText(filePath);
             var geometry = JsonConvert.DeserializeObject<ModelDto>(jsonFile);
 
             var model=CreateModelData(geometry);

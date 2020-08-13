@@ -169,6 +169,7 @@ namespace ISAAR.MSolve.IGA.Entities
                 var loadTable = load.CalculateLoad();
                 foreach ((INode node, IDofType dof, double load) tuple in loadTable)
                 {
+                    if (tuple.node.Constraints.Any(x => x.DOF == tuple.dof)) continue;
                     if (globalNodalLoads.Contains(tuple.node, tuple.dof))
                     {
                         globalNodalLoads[tuple.node, tuple.dof] += tuple.load;
@@ -177,6 +178,7 @@ namespace ISAAR.MSolve.IGA.Entities
                     {
                         globalNodalLoads.TryAdd(tuple.node, tuple.dof, tuple.load);
                     }
+
                 }
             }
 

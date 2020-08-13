@@ -72,8 +72,21 @@ namespace ISAAR.MSolve.IGA.Geometry
                 }
 
                 var quadrature= new FullQuadrature1D(degree, knots[i].Ksi, knots[i+1].Ksi);
-                var nurbs = new Nurbs1D(degree, KnotValueVector.CopyToArray(), controlPoints.ToArray(), quadrature.GaussPoints.ToArray());
-                var lineLoadElement = new LineLoadElement(lineLoad, nurbs, quadrature, controlPoints);
+
+                var nurbs = new Nurbs1D(degree, KnotValueVector.CopyToArray(), elementControlPoints.Select(controlPoint => new ControlPoint()
+                {
+                    ID = (edge == NurbsSurfaceEdges.Left || edge == NurbsSurfaceEdges.Right)
+                        ? controlPoint.ID % surfaceGeometry.NumberOfCpHeta
+                        : controlPoint.ID / surfaceGeometry.NumberOfCpHeta,
+                    Ksi = controlPoint.Ksi,
+                    Heta = controlPoint.Heta,
+                    Zeta = controlPoint.Zeta,
+                    X = controlPoint.X,
+                    Y = controlPoint.Y,
+                    Z = controlPoint.Z,
+                    WeightFactor = controlPoint.WeightFactor,
+                }).ToArray(), quadrature.GaussPoints.ToArray());
+                var lineLoadElement = new LineLoadElement(lineLoad, nurbs, quadrature, elementControlPoints.ToArray());
                 edgeLoads.Add(lineLoadElement);
             }
 

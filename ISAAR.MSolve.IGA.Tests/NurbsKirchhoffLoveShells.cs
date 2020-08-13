@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,10 @@ using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Boundary;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Geometry;
+using ISAAR.MSolve.IGA.Geometry.NurbsMesh;
+using ISAAR.MSolve.IGA.Loading.LineLoads;
+using ISAAR.MSolve.IGA.Loading.LoadElementFactories;
 using ISAAR.MSolve.IGA.Loading.NodalLoads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
@@ -22,6 +27,7 @@ using ISAAR.MSolve.Solvers;
 using ISAAR.MSolve.Solvers.Direct;
 using MathNet.Numerics.Data.Matlab;
 using MathNet.Numerics.LinearAlgebra;
+using Newtonsoft.Json;
 using Xunit;
 using MatlabWriter = ISAAR.MSolve.LinearAlgebra.Output.MatlabWriter;
 
@@ -517,19 +523,37 @@ namespace ISAAR.MSolve.IGA.Tests
         [Fact]
 		public void IsogeometricSquareShell()
 		{
-			var filename = "SquareShell";
-			string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
             var material = new ShellElasticMaterial2Dtransformationb()
             {
                 YoungModulus = 10000000,
                 PoissonRatio = 0.0
             };
-            var modelReader = new IsogeometricShellReader(GeometricalFormulation.NonLinear, filepath, material);
-            var model = modelReader.GenerateModelFromFile();
+            var filename = "SquareShell";
+            string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.json");
+            var jsonReader = new JsonModelReader(filepath, shellMaterial:material);
 
+            var (geometry, model)=jsonReader.ReadGeometryAndCreateModel();
+            var rightEdgeLoads=geometry.NurbsSurfacePatches[0]
+                .CreateLoadForEdge(model,NurbsSurfaceEdges.Right, new DistributedLineLoad(0, -100, 0));
 
-			Matrix<double> loadVector =
-				MatlabReader.Read<double>(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "SquareShell.mat"), "LoadVector");
+            geometry.NurbsSurfacePatches[0].ConstraintDofsOfEdge(model, NurbsSurfaceEdges.Left, new List<IDofType>()
+            {
+                StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ
+            });
+            geometry.NurbsSurfacePatches[0].ConstraintDofsOfEdge(model, NurbsSurfaceEdges.Right, new List<IDofType>()
+            {
+                StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ
+            });
+            geometry.NurbsSurfacePatches[0].ConstraintDofsOfEdge(model, NurbsSurfaceEdges.Bottom, new List<IDofType>()
+            {
+                StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ
+            });
+            geometry.NurbsSurfacePatches[0].ConstraintDofsOfEdge(model, NurbsSurfaceEdges.Top, new List<IDofType>()
+            {
+                StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ
+            });
+
+            Matrix<double> loadVector = MatlabReader.Read<double>(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "SquareShell.mat"), "LoadVector");
 
 
 			for (int i = 0; i < loadVector.ColumnCount; i += 3)
@@ -539,16 +563,6 @@ namespace ISAAR.MSolve.IGA.Tests
                 model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[indexCP], StructuralDof.TranslationY, loadVector.At(0, i+1)));
                 model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[indexCP], StructuralDof.TranslationZ, loadVector.At(0, i+2)));
 			}
-
-            //foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
-            //{
-            //    foreach (var controlPoint in edge.ControlPointsDictionary.Values)
-            //    {
-            //        model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
-            //        model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
-            //        model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
-            //    }
-            //}
 
             // Solvers
             var solverBuilder = new SkylineSolver.Builder();

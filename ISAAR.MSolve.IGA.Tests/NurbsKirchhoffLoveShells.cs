@@ -12,6 +12,7 @@ using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Loading.NodalLoads;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.SupportiveClasses;
+using ISAAR.MSolve.IGA.SupportiveClasses.Interpolation;
 using ISAAR.MSolve.LinearAlgebra;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
@@ -539,18 +540,18 @@ namespace ISAAR.MSolve.IGA.Tests
                 model.Loads.Add(new NodalLoad(model.ControlPoints.ToList()[indexCP], StructuralDof.TranslationZ, loadVector.At(0, i+2)));
 			}
 
-			//foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
-			//{
-			//	foreach (var controlPoint in edge.ControlPointsDictionary.Values)
-			//	{
-			//		model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationX});
-			//		model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationY});
-			//		model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() {DOF = StructuralDof.TranslationZ});
-			//	}
-			//}
+            //foreach (var edge in model.PatchesDictionary[0].EdgesDictionary.Values)
+            //{
+            //    foreach (var controlPoint in edge.ControlPointsDictionary.Values)
+            //    {
+            //        model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationX });
+            //        model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationY });
+            //        model.ControlPointsDictionary[controlPoint.ID].Constraints.Add(new Constraint() { DOF = StructuralDof.TranslationZ });
+            //    }
+            //}
 
-			// Solvers
-			var solverBuilder = new SkylineSolver.Builder();
+            // Solvers
+            var solverBuilder = new SkylineSolver.Builder();
 			ISolver solver = solverBuilder.BuildSolver(model);
 
 			// Structural problem provider

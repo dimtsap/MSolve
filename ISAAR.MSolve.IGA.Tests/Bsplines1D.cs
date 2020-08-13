@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using ISAAR.MSolve.IGA.SupportiveClasses;
+using ISAAR.MSolve.IGA.SupportiveClasses.Interpolation;
 using Xunit;
 
 namespace ISAAR.MSolve.IGA.Tests
@@ -43,7 +44,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			var parametricCoordinates = ParametricCoordinates;
 
-			var bsplines1D= new SupportiveClasses.BSplines1D(degree, knotValueVector, parametricCoordinates);
+			var bsplines1D= new BSplines1D(degree, knotValueVector, parametricCoordinates);
 
 			var expectedValues = new double[4, 4]
 			{
@@ -71,7 +72,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			var parametricCoordinates = ParametricCoordinates;
 
-			var bsplines1D = new SupportiveClasses.BSplines1D(degree, knotValueVector, parametricCoordinates);
+			var bsplines1D = new BSplines1D(degree, knotValueVector, parametricCoordinates);
 
 			var expectedDerivativeValues = new double[4, 4]
 			{
@@ -100,7 +101,7 @@ namespace ISAAR.MSolve.IGA.Tests
 
 			var parametricCoordinates = ParametricCoordinates;
 
-			var bsplines1D = new SupportiveClasses.BSplines1D(degree, knotValueVector, parametricCoordinates);
+			var bsplines1D = new BSplines1D(degree, knotValueVector, parametricCoordinates);
 			
 			for (var p = 0; p < 4; p++)
 			{

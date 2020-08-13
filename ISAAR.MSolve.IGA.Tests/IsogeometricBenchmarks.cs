@@ -7,9 +7,13 @@ using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.IGA.Elements;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Loading;
+using ISAAR.MSolve.IGA.Loading.LineLoads;
+using ISAAR.MSolve.IGA.Loading.LoadElementFactories;
 using ISAAR.MSolve.IGA.Readers;
 using ISAAR.MSolve.IGA.Readers.NurbsMesh;
 using ISAAR.MSolve.IGA.SupportiveClasses;
+using ISAAR.MSolve.IGA.SupportiveClasses.Interpolation;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Materials;
 using ISAAR.MSolve.Problems;
@@ -21,6 +25,7 @@ using MathNet.Numerics.Data.Matlab;
 using MathNet.Numerics.LinearAlgebra;
 using Newtonsoft.Json;
 using Xunit;
+using JsonModelReader = ISAAR.MSolve.IGA.Readers.JsonModelReader;
 
 namespace ISAAR.MSolve.IGA.Tests
 {
@@ -215,103 +220,83 @@ namespace ISAAR.MSolve.IGA.Tests
 		[Fact]
         public void TestNewReader()
         {
+            var material = new ElasticMaterial2D(StressState2D.PlaneStress)
+            {
+                YoungModulus = 100000,
+                PoissonRatio = 0.3
+            };
+            var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "Cantilever2D.json");
+            var jsonReader = new JsonModelReader(filepath, material);
 
-            var jsonFile=File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "Cantilever2D.json"));
-            var modelGeometry = JsonConvert.DeserializeObject<ModelDto>(jsonFile);
-			//var modelDto= new ModelDto()
-   //         {
-			//	ControlPoints = new List<ControlPointDto>(60)
-   //             {
-			//		new ControlPointDto(){ID = 0,X =0 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 1,X =0 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 2,X =0 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 3,X =0 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 4,X =0 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 5,X =0 ,Y =10   ,Z = 0,Weight =1 },
+            var (geometry, model)=jsonReader.ReadGeometryAndCreateModel();
+            var rightEdgeLoads=geometry.NurbsSurfacePatches[0]
+                .CreateLoadForEdge(model,NurbsSurfaceEdges.Right, new DistributedLineLoad(0, -100, 0));
 
-   //                 new ControlPointDto(){ID = 6,X =2.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 7,X =2.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 8,X =2.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 9,X =2.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 10,X =2.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 11,X =2.5 ,Y =10   ,Z = 0,Weight =1 },
+            geometry.NurbsSurfacePatches[0].ConstraintDofsOfEdge(model, NurbsSurfaceEdges.Left, new List<IDofType>()
+            {
+                StructuralDof.TranslationX, StructuralDof.TranslationY
+            });
+			
+            var solverBuilder = new SkylineSolver.Builder();
+            ISolver solver = solverBuilder.BuildSolver(model);
 
-   //                 new ControlPointDto(){ID = 12,X =7.5 ,Y =0   ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 13,X =7.5 ,Y =1.25,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 14,X =7.5 ,Y =3.75,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 15,X =7.5 ,Y =6.25,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 16,X =7.5 ,Y =8.75,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 17,X =7.5 ,Y =10  ,Z = 0,Weight =1 },
+            // Structural problem provider
+            var provider = new ProblemStructural(model, solver);
 
-   //                 new ControlPointDto(){ID = 18,X =12.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 19,X =12.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 20,X =12.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 21,X =12.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 22,X =12.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 23,X =12.5 ,Y =10   ,Z = 0,Weight =1 },
+            // Linear static analysis
+            var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+            var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
 
-   //                 new ControlPointDto(){ID = 24,X =17.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 25,X =17.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 26,X =17.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 27,X =17.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 28,X =17.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 29,X =17.5 ,Y =10   ,Z = 0,Weight =1 },
+            // Run the analysis
+            parentAnalyzer.Initialize();
+            parentAnalyzer.Solve();
 
-   //                 new ControlPointDto(){ID = 30,X =22.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 31,X =22.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 32,X =22.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 33,X =22.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 34,X =22.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 35,X =22.5 ,Y =10   ,Z = 0,Weight =1 },
+			double[] loadVectorExpected =
+			{
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -83.3333333333334, 0, -166.666666666667,
+				0,
+				-250.000000000000, 0, -250.000000000000, 0, -166.666666666667, 0, -83.3333333333334
+			};
 
-   //                 new ControlPointDto(){ID = 36,X =27.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 37,X =27.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 38,X =27.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 39,X =27.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 40,X =27.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 41,X =27.5 ,Y =10   ,Z = 0,Weight =1 },
+			for (int i = 0; i < loadVectorExpected.Length; i++)
+				Assert.Equal(loadVectorExpected[i], model.PatchesDictionary[0].Forces[i], 6);
 
-   //                 new ControlPointDto(){ID = 42,X =32.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 43,X =32.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 44,X =32.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 45,X =32.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 46,X =32.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 47,X =32.5 ,Y =10   ,Z = 0,Weight =1 },
-
-   //                 new ControlPointDto(){ID = 48,X =37.5 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 49,X =37.5 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 50,X =37.5 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 51,X =37.5 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 52,X =37.5 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 53,X =37.5 ,Y =10   ,Z = 0,Weight =1 },
-
-   //                 new ControlPointDto(){ID = 54,X =40 ,Y =0    ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 55,X =40 ,Y =1.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 56,X =40 ,Y =3.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 57,X =40 ,Y =6.25 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 58,X =40 ,Y =8.75 ,Z = 0,Weight =1 },
-   //                 new ControlPointDto(){ID = 59,X =40 ,Y =10   ,Z = 0,Weight =1 },
-
-   //             },
-			//	NurbsSurfacePatches = new List<NurbsSurfaceGeometryDto>(1)
-   //             {
-			//		new NurbsSurfaceGeometryDto()
-   //                 {
-			//			ID = 0,
-			//			KnotValueVectorKsi = new double[]{0, 0, 0,	1, 2, 3, 4, 5, 6, 7, 8, 8, 8},
-			//			KnotValueVectorHeta = new double[]{0, 0, 0, 1, 2, 3, 4, 4, 4 },
-			//			NumberOfCpKsi = 10,
-			//			NumberOfCpHeta = 6,
-			//			DegreeKsi = 2,
-			//			DegreeHeta = 2,
-			//			Thickness = 1,
-			//			GeometryType = NurbsGeometryType.Plane,
-			//			ControlPointIDs = new int[60]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59}
-   //                 }
-   //             }
-   //         };
-
-   //         var a = JsonConvert.SerializeObject(modelDto);
+			//Test fro Displacement Vector
+			double[] displacementVectorExpected = new double[]
+			{
+				-0.0614562631781765, -0.0219170576325587, -0.0393637953297948, -0.00985891244520424,
+				-0.0126687982396880,
+				-0.000943275549340603, 0.0126687982396881, -0.000943275549340565, 0.0393637953297948,
+				-0.00985891244520429,
+				0.0614562631781765, -0.0219170576325587, -0.164630630046951, -0.143599796794095, -0.122284459518038,
+				-0.137572020341543, -0.0396482606150141, -0.129909984638882, 0.0396482606150142, -0.129909984638882,
+				0.122284459518038, -0.137572020341543, 0.164630630046951, -0.143599796794095, -0.255126649525807,
+				-0.367249906501344, -0.188034807331162, -0.360563789448209, -0.0622102833016037, -0.354689958832955,
+				0.0622102833016041, -0.354689958832955, 0.188034807331162, -0.360563789448210, 0.255126649525807,
+				-0.367249906501344, -0.329973104647066, -0.672298362080536, -0.245006560671741, -0.667431304467007,
+				-0.0808025488806688, -0.662174063778831, 0.0808025488806692, -0.662174063778831, 0.245006560671741,
+				-0.667431304467006, 0.329973104647066, -0.672298362080536, -0.389985650923780, -1.04507710416196,
+				-0.289753557243170, -1.04105642269944, -0.0959521766831420, -1.03721560192611, 0.0959521766831417,
+				-1.03721560192610, 0.289753557243169, -1.04105642269944, 0.389985650923779, -1.04507710416196,
+				-0.435055143301642, -1.47030303359559, -0.323516436156270, -1.46754420136883, -0.107046279714281,
+				-1.46472910091973, 0.107046279714280, -1.46472910091973, 0.323516436156269, -1.46754420136883,
+				0.435055143301642,
+				-1.47030303359559, -0.464895102729005, -1.93322992417900, -0.346196414935151, -1.93146777511281,
+				-0.114797364187326, -1.92958905082341, 0.114797364187326, -1.92958905082341, 0.346196414935151,
+				-1.93146777511282, 0.464895102729004, -1.93322992417900, -0.480254160241311, -2.41767489777727,
+				-0.357018220686884, -2.41725889060713, -0.117854053323470, -2.41770706308454, 0.117854053323469,
+				-2.41770706308454, 0.357018220686882, -2.41725889060713, 0.480254160241309, -2.41767489777726,
+				-0.481234435380421, -2.66710696029277, -0.357129997781511, -2.66655837235305, -0.118099002572320,
+				-2.66369484882849, 0.118099002572319, -2.66369484882849, 0.357129997781510, -2.66655837235305,
+				0.481234435380421,
+				-2.66710696029277
+			};
+			for (int i = 0; i < displacementVectorExpected.Length; i++)
+				Assert.Equal(displacementVectorExpected[i], solver.LinearSystems[0].Solution[i], 6);
         }
 
 		[Fact]

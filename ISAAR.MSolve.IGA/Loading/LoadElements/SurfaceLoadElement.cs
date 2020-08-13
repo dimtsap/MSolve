@@ -3,7 +3,6 @@ using ISAAR.MSolve.Discretization.Commons;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
 using ISAAR.MSolve.Discretization.Integration.Quadratures;
 using ISAAR.MSolve.Discretization.Interfaces;
-using ISAAR.MSolve.FEM.Entities;
 using ISAAR.MSolve.IGA.Loading.Interfaces;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interfaces;
 
@@ -14,10 +13,10 @@ namespace ISAAR.MSolve.IGA.Loading.LoadElements
         private readonly ISurfaceLoad surfaceLoad;
         private readonly IShapeFunction2D isoparametricInterpolation2D;
         private readonly IQuadrature2D quadrature2D;
-        private readonly IReadOnlyList<Node> nodes;
+        private readonly IReadOnlyList<INode> nodes;
 
         public SurfaceLoadElement(ISurfaceLoad surfaceLoad, IShapeFunction2D isoparametricInterpolation2D,
-            IQuadrature2D quadrature2D, IReadOnlyList<Node> nodes)
+            IQuadrature2D quadrature2D, IReadOnlyList<INode> nodes)
         {
             this.surfaceLoad = surfaceLoad;
             this.isoparametricInterpolation2D = isoparametricInterpolation2D;

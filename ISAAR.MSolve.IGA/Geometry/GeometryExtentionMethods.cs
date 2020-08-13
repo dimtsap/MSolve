@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using ISAAR.MSolve.Discretization;
 using ISAAR.MSolve.Discretization.FreedomDegrees;
-using ISAAR.MSolve.IGA.Elements.Continuum;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Geometry.NurbsMesh;
 using ISAAR.MSolve.IGA.Loading.Interfaces;
 using ISAAR.MSolve.IGA.Loading.LoadElementFactories;
 using ISAAR.MSolve.IGA.Loading.LoadElements;
-using ISAAR.MSolve.IGA.Readers.NurbsMesh;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interpolation;
 using ISAAR.MSolve.IGA.SupportiveClasses.Quadrature;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
-namespace ISAAR.MSolve.IGA.Loading
+namespace ISAAR.MSolve.IGA.Geometry
 {
     public static class GeometryExtentionMethods
     {

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace ISAAR.MSolve.IGA.Readers.NurbsMesh
+namespace ISAAR.MSolve.IGA.Geometry.NurbsMesh
 {
     public class ModelDto
     {

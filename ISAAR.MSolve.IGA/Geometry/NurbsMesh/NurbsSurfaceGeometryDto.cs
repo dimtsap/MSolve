@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ISAAR.MSolve.IGA.Readers.NurbsMesh
+﻿namespace ISAAR.MSolve.IGA.Geometry.NurbsMesh
 {
     public enum NurbsGeometryType
     {

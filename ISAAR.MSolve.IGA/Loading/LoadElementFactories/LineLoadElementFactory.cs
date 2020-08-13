@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using ISAAR.MSolve.IGA.Entities;
+using ISAAR.MSolve.IGA.Geometry.NurbsMesh;
 using ISAAR.MSolve.IGA.Loading.Interfaces;
 using ISAAR.MSolve.IGA.Loading.LoadElements;
-using ISAAR.MSolve.IGA.Readers.NurbsMesh;
 
 namespace ISAAR.MSolve.IGA.Loading.LoadElementFactories
 {

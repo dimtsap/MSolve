@@ -6,7 +6,7 @@ using System.Text;
 using ISAAR.MSolve.IGA.Elements.Continuum;
 using ISAAR.MSolve.IGA.Elements.Structural;
 using ISAAR.MSolve.IGA.Entities;
-using ISAAR.MSolve.IGA.Readers.NurbsMesh;
+using ISAAR.MSolve.IGA.Geometry.NurbsMesh;
 using ISAAR.MSolve.IGA.SupportiveClasses;
 using ISAAR.MSolve.IGA.SupportiveClasses.Interpolation;
 using ISAAR.MSolve.LinearAlgebra.Vectors;

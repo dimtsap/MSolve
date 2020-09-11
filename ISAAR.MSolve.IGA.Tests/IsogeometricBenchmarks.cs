@@ -216,7 +216,7 @@ namespace ISAAR.MSolve.IGA.Tests
             var filepath = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "PlateTension.json");
             var jsonReader = new JsonModelReader(filepath, material);
 
-            var (geometry, model)=jsonReader.ReadGeometryAndCreateModel();
+			var (geometry, model)=jsonReader.ReadGeometryAndCreateModel();
 			
             var rightEdgeLoads=geometry.NurbsSurfacePatches[0].CreateLoadForEdge(model,NurbsSurfaceEdges.Right, new DistributedLineLoad2D(100,0));
             foreach (var load in rightEdgeLoads)

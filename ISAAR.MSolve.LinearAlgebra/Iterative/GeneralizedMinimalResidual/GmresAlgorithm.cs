@@ -3,6 +3,7 @@ using ISAAR.MSolve.LinearAlgebra.Commons;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Preconditioning;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Termination;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
+using ISAAR.MSolve.LinearAlgebra.Matrices.Builders;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
@@ -73,7 +74,8 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
 
                 var g = Vector.CreateZero(innerIterations+1);
                 g[0] = residualNorm;
-                var hessenbergMatrix = Matrix.CreateZero(innerIterations + 1, innerIterations);
+                var hessenbergMatrix = DokColMajor.CreateEmpty(innerIterations + 1, innerIterations);
+                //var hessenbergMatrix = Matrix.CreateZero(innerIterations + 1, innerIterations);
 
                 var indexIteration = 0;
                 for (int innerIteration = 0; innerIteration < innerIterations; innerIteration++)
@@ -117,13 +119,25 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
 
                     if (innerIteration > 0)
                     {
-                        y = hessenbergMatrix.GetColumn(innerIteration).GetSubvector(0,innerIteration+2);
+
+                        //y = hessenbergMatrix.GetColumn(innerIteration).GetSubvector(0,innerIteration+2);
+                        y = Vector.CreateZero(innerIteration + 2);
+                        for (int i = 0; i < innerIteration+2; i++)
+                        {
+                            y[i] = hessenbergMatrix[i, innerIteration];
+                        }
+
 
                         for (int i = 0; i <= innerIteration-1; i++)
                         {
                             y = CalculateGivensRotation(c[i], s[i], i, y);
                         }
-                        hessenbergMatrix.SetSubcolumn(innerIteration, y);
+
+                        //hessenbergMatrix.SetSubcolumn(innerIteration, y);
+                        for (int i = 0; i < y.Length; i++)
+                        {
+                            hessenbergMatrix[i, innerIteration] = y[i];
+                        }
                     }
 
                     var mu = Math.Sqrt(hessenbergMatrix[innerIteration, innerIteration] *
@@ -152,8 +166,15 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
                 y[indexIteration + 1] =g[indexIteration + 1] / hessenbergMatrix[indexIteration + 1, indexIteration + 1];
                 for (int i = indexIteration; i >= 0; i--)
                 {
-                    y[i] = (g[i] - (hessenbergMatrix.GetRow(i).GetSubvector(i+1, indexIteration + 2)
-                                        .DotProduct(y.GetSubvector(i + 1, indexIteration + 2)) ))/ hessenbergMatrix[i, i];
+                    var aux = Vector.CreateZero(indexIteration + 2 - (i + 1));
+                    for (int j = i+1; j < indexIteration+2; j++)
+                    {
+                        aux[j-(i+1)] = hessenbergMatrix[i, j];
+                    }
+
+                    //y[i] = (g[i] - (hessenbergMatrix.GetRow(i).GetSubvector(i+1, indexIteration + 2)
+                    //                    .DotProduct(y.GetSubvector(i + 1, indexIteration + 2)) ))/ hessenbergMatrix[i, i];
+                    y[i] = (g[i] - (aux.DotProduct(y.GetSubvector(i + 1, indexIteration + 2)) ))/ hessenbergMatrix[i, i];
                 }
 
 

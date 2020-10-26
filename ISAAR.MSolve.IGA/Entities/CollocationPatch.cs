@@ -23,7 +23,10 @@ namespace ISAAR.MSolve.IGA.Entities
         public Table<INode, IDofType, double> Constraints { get; } = new Table<INode, IDofType, double>();
 
         IReadOnlyList<IElement> ISubdomain.Elements => Elements;
-        public List<ICollocationElement> Elements { get; } = new List<ICollocationElement>();
+
+        public List<ICollocationElement> Elements =new List<ICollocationElement>();
+
+        private Dictionary<int, ICollocationElement> ElementsDictionary=new Dictionary<int, ICollocationElement>();
 
         public int ID { get; }
 
@@ -485,7 +488,8 @@ namespace ISAAR.MSolve.IGA.Entities
 
                     foreach (var point in elementCollocationPoints)
                     {
-                        if (Elements.Any(e => e.ID == point.ID)) continue;
+                        //if (Elements.Any(e => e.ID == point.ID)) continue;
+                        if (ElementsDictionary.ContainsKey(point.ID)) continue;
                         var element = new NURBSElement2DCollocation
                         {
                             ID = point.ID,
@@ -495,12 +499,12 @@ namespace ISAAR.MSolve.IGA.Entities
                         };
                         element.AddKnots(knotsOfElement);
                         element.AddControlPoints(elementControlPoints.ToList<ControlPoint>());
-                        Elements.Add(element);
+                        ElementsDictionary.Add(element.ID,element);
                     }
                 }
             }
 
-            var orderedElements = Elements.OrderBy(e => ((ICollocationElement)e).CollocationPoint.ID).ToList();
+            var orderedElements = ElementsDictionary.Values.OrderBy(e => ((ICollocationElement)e).CollocationPoint.ID).ToList();
             Elements.Clear();
             Elements.AddRange(orderedElements);
 

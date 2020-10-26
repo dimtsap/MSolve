@@ -35,9 +35,9 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 				}
 			}
 
-			SubmatrixExtractorCscSymBase.CopyValuesArrayAndZeros(originalMatrix.RawValues, Submatrix00.RawData, map00);
-			SubmatrixExtractorCscSymBase.CopyValuesArray(originalMatrix.RawValues, Submatrix01.RawValues, map01);
-			SubmatrixExtractorCscSymBase.CopyValuesArray(originalMatrix.RawValues, Submatrix10.RawValues, map10);
+			//SubmatrixExtractorCscSymBase.CopyValuesArrayAndZeros(originalMatrix.RawValues, Submatrix00.RawData, map00);
+			//SubmatrixExtractorCscSymBase.CopyValuesArray(originalMatrix.RawValues, Submatrix01.RawValues, map01);
+			//SubmatrixExtractorCscSymBase.CopyValuesArray(originalMatrix.RawValues, Submatrix10.RawValues, map10);
 			SubmatrixExtractorCscSymBase.CopyValuesArray(originalMatrix.RawValues, Submatrix11.RawValues, map11);
 		}
 
@@ -45,10 +45,10 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 		{
 			int n0 = indicesGroup0.Length;
 			int n1 = indicesGroup1.Length;
-			var submatrix00 = IntMatrixColMajor.CreateZero(n0, n0);
-			SubmatrixExtractorCscSymBase.Fill(submatrix00.RawValues, -1); // Later, -1 index will be overwritten by all entries, except explicit zeros of A00 
-			var submatrix01 = IntDokRowMajor.CreateZero(n0, n1);
-			var submatrix10 = IntDokRowMajor.CreateZero(n1, n0);
+			//var submatrix00 = IntMatrixColMajor.CreateZero(n0, n0);
+			//SubmatrixExtractorCscSymBase.Fill(submatrix00.RawValues, -1); // Later, -1 index will be overwritten by all entries, except explicit zeros of A00 
+			//var submatrix01 = IntDokRowMajor.CreateZero(n0, n1);
+			//var submatrix10 = IntDokRowMajor.CreateZero(n1, n0);
 			var submatrix11 = IntDokColMajor.CreateZero(n1, n1);
 
 			// Original matrix indices to submatrix indices. Group 0 indices i0 are stored as: -i0-1. 
@@ -64,34 +64,35 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 				int subI = originalToSubIndices[i];
 				if (subI < 0) // i belongs to group 0 indices
 				{
-					subI = -subI - 1; // Mapping to [0, oo) for group 0 indices
-					for (int t = start; t < end; ++t)
-					{
-						int j = originalMatrix.RawColIndices[t];
-						int subJ = originalToSubIndices[j];
-						if (subJ < 0) // (i, j) belongs to submatrix A00
-						{
-							subJ = -subJ - 1; // Mapping to [0, oo) for group 0 indices
-							submatrix00[subI, subJ] = t;
-						}
-						else // (i, j) belongs to submatrix A01
-						{
-							submatrix01[subI, subJ] = t;
-						}
-					}
+					//subI = -subI - 1; // Mapping to [0, oo) for group 0 indices
+					//for (int t = start; t < end; ++t)
+					//{
+					//	int j = originalMatrix.RawColIndices[t];
+					//	int subJ = originalToSubIndices[j];
+					//	if (subJ < 0) // (i, j) belongs to submatrix A00
+					//	{
+					//		subJ = -subJ - 1; // Mapping to [0, oo) for group 0 indices
+					//		submatrix00[subI, subJ] = t;
+					//	}
+					//	else // (i, j) belongs to submatrix A01
+					//	{
+					//		submatrix01[subI, subJ] = t;
+					//	}
+					//}
 				}
 				else // i belongs to group 1 indices
 				{
 					for (int t = start; t < end; ++t)
 					{
-						int j = originalMatrix.RawColIndices[t];
-						int subJ = originalToSubIndices[j];
-						if (subJ < 0) // (i, j) belongs to submatrix A10
-						{
-							subJ = -subJ - 1; // Mapping to [0, oo) for group 0 indices
-							submatrix10[subI, subJ] = t;
-						}
-						else // (i, j) belongs to submatrix A11
+                        int j = originalMatrix.RawColIndices[t];
+                        int subJ = originalToSubIndices[j];
+                        //if (subJ < 0) // (i, j) belongs to submatrix A10
+                        //{
+                        //	subJ = -subJ - 1; // Mapping to [0, oo) for group 0 indices
+                        //	submatrix10[subI, subJ] = t;
+                        //}
+                        //else // (i, j) belongs to submatrix A11
+                        if (subJ>=0)
 						{
 							submatrix11[subI, subJ] = t;
 						}
@@ -101,20 +102,20 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 
 			// Finalize the data structures required to represent the submatrices
 			// A00 dense, col major
-			this.Submatrix00 = Matrix.CreateZero(n0, n0);
-			this.map00 = submatrix00.RawValues;
+			//this.Submatrix00 = Matrix.CreateZero(n0, n0);
+			//this.map00 = submatrix00.RawValues;
 
-			// A01 CSR
-			int[] colIndices01, rowOffsets01;
-			(this.map01, colIndices01, rowOffsets01) = submatrix01.BuildCsrArrays();
-			this.Submatrix01 = CsrMatrix.CreateFromArrays(
-				n0, n1, new double[this.map01.Length], colIndices01, rowOffsets01, false);
+			//// A01 CSR
+			//int[] colIndices01, rowOffsets01;
+			//(this.map01, colIndices01, rowOffsets01) = submatrix01.BuildCsrArrays();
+			//this.Submatrix01 = CsrMatrix.CreateFromArrays(
+			//	n0, n1, new double[this.map01.Length], colIndices01, rowOffsets01, false);
 
-			// A10 CSR
-			int[] colIndices10, rowOffsets10;
-			(this.map10, colIndices10, rowOffsets10) = submatrix10.BuildCsrArrays();
-			this.Submatrix10 = CsrMatrix.CreateFromArrays(
-				n1, n0, new double[this.map10.Length], colIndices10, rowOffsets10, false);
+			//// A10 CSR
+			//int[] colIndices10, rowOffsets10;
+			//(this.map10, colIndices10, rowOffsets10) = submatrix10.BuildCsrArrays();
+			//this.Submatrix10 = CsrMatrix.CreateFromArrays(
+			//	n1, n0, new double[this.map10.Length], colIndices10, rowOffsets10, false);
 
 			// A11 CSC upper triangle
 			int[] rowIndices11, colOffsets11;

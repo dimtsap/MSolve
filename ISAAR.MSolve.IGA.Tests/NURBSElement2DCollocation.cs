@@ -943,8 +943,9 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-            var filename = "7x7";
-			string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
+            var filename = "256x256";
+            //var filename = "7x7";
+            string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filepath);
 			modelReader.CreateCollocationModelFromFile();
 

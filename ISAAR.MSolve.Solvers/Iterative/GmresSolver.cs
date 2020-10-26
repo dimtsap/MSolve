@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using ISAAR.MSolve.Discretization.Interfaces;
 using ISAAR.MSolve.LinearAlgebra.Iterative;
 using ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual;
@@ -65,6 +66,12 @@ namespace ISAAR.MSolve.Solvers.Iterative
             if (!stats.HasConverged)
                 throw new IterativeSolverNotConvergedException("Gmres did not converge");
             watch.Stop();
+            using (StreamWriter writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(),"OasGmres.txt")))
+            {
+                writer.WriteLine($"Converged: {stats.HasConverged}");
+                writer.WriteLine($"Gmres iterations: {stats.NumIterationsRequired}");
+                writer.WriteLine($"Gmres residual norm: {stats.ResidualNormRatioEstimation}");
+            }
             Logger.LogTaskDuration("Iterative algorithm", watch.ElapsedMilliseconds);
             Logger.LogIterativeAlgorithm(stats.NumIterationsRequired, stats.ResidualNormRatioEstimation);
             Logger.IncrementAnalysisStep();

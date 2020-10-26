@@ -9,5 +9,8 @@ namespace ISAAR.MSolve.Discretization.Interfaces
 
         ISubdomainConstrainedDofOrdering ConstrainedDofRowOrdering { get; set; }
         ISubdomainConstrainedDofOrdering ConstrainedDofColOrdering { get; set; }
+
+		int NumberOfCpKsi { get; }
+        int NumberOfCpHeta { get; }
     }
 }

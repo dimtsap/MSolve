@@ -58,14 +58,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// <see cref="RawValues"/>.Length == <see cref="RawRowIndices"/>.Length.
         /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal int[] RawColOffsets => colOffsets;
+        public int[] RawColOffsets => colOffsets;
 
         /// <summary>
         /// The internal array that stores the row indices of the non-zero entries in <see cref="RawValues"/>.
         /// Its length is equal to the number of the upper triangle's non-zero entries. 
         /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal int[] RawRowIndices => rowIndices;
+        public int[] RawRowIndices => rowIndices;
 
         /// <summary>
         /// The number of columns of the matrix. 

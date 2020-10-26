@@ -63,14 +63,14 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// Its length is equal to the number of non-zero entries. 
         /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal double[] RawValues => values;
+        public double[] RawValues => values;
 
         /// <summary>
         /// The internal array that stores the column indices of the non-zero entries in <see cref="RawValues"/>.
         /// Its length is equal to the number of non-zero entries. 
         /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal int[] RawColIndices => colIndices;
+        public int[] RawColIndices => colIndices;
 
         /// <summary>
         /// The internal array that stores the index into the arrays <see cref="RawValues"/> and <see cref="RawColIndices"/> of  
@@ -78,7 +78,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// non-zero entries, which must be equal to <see cref="RawValues"/>.Length == <see cref="RawColIndices"/>.Length.
         /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal int[] RawRowOffsets => rowOffsets;
+        public int[] RawRowOffsets => rowOffsets;
 
         /// <summary>
         /// See <see cref="IIndexable2D.this[int, int]"/>.

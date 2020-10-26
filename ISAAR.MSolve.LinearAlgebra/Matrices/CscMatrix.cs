@@ -75,7 +75,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Matrices
         /// consecutive. Its length is equal to the number of non-zero entries. 
         /// It should only be used for passing the raw array to linear algebra libraries.
         /// </summary>
-        internal double[] RawValues => values;
+        public double[] RawValues => values;
 
         /// <summary>
         /// The internal array that stores the index into the arrays <see cref="RawValues"/> and <see cref="RawRowIndices"/> of  

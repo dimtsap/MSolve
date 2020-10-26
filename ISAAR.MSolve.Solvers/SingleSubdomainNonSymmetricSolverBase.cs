@@ -82,7 +82,19 @@ namespace ISAAR.MSolve.Solvers
 
         public Dictionary<int, SparseVector> DistributeNodalLoads(Table<INode, IDofType, double> globalNodalLoads)
         {
-            return new Dictionary<int, SparseVector>();
+            var subdomainLoads = new SortedDictionary<int, double>();
+            foreach ((INode node, IDofType dofType, double amount) in globalNodalLoads)
+            {
+                var cp = subdomain.FreeDofRowOrdering.FreeDofs.GetRows().SingleOrDefault(x => x.ID == node.ID);
+                if (cp == null) continue;
+
+                int subdomainDofIdx = subdomain.FreeDofRowOrdering.FreeDofs[cp, dofType];
+                subdomainLoads[subdomainDofIdx] = amount;
+            }
+            return new Dictionary<int, SparseVector>
+            {
+                { subdomain.ID, SparseVector.CreateFromDictionary(subdomain.FreeDofRowOrdering.NumFreeDofs, subdomainLoads) }
+            };
         }
 
         public Dictionary<int, Matrix> InverseSystemMatrixTimesOtherMatrix(Dictionary<int, IMatrixView> otherMatrix)

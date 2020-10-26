@@ -57,7 +57,10 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
 
             for ( var iteration = 0; iteration < maximumIterations; iteration++)
             {
-                preconditioner.SolveLinearSystem(residual, residual);
+                var preconditionedResidual = Vector.CreateZero(residual.Length);
+                preconditioner.SolveLinearSystem(residual, preconditionedResidual);
+                residual = preconditionedResidual;
+                //preconditioner.SolveLinearSystem(residual, residual);
                 //var residual = ExactResidual.Calculate(matrix, rhs, solution);
 
                 residualNorm = residual.Norm2();
@@ -79,7 +82,12 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
                     v[innerIteration + 1] = Vector.CreateZero(v[innerIteration].Length);
 
                     matrix.Multiply(v[innerIteration], v[innerIteration + 1]);
-                    preconditioner.SolveLinearSystem(v[innerIteration + 1], v[innerIteration + 1]);
+
+                    var preconditionedV = Vector.CreateZero(residual.Length);
+                    preconditioner.SolveLinearSystem(v[innerIteration + 1], preconditionedV);
+                    v[innerIteration + 1] = preconditionedV;
+
+                    //preconditioner.SolveLinearSystem(v[innerIteration + 1], v[innerIteration + 1]);
 
                     var av = v[innerIteration + 1].Norm2();
 
@@ -185,7 +193,7 @@ namespace ISAAR.MSolve.LinearAlgebra.Iterative.GeneralizedMinimalResidual
 
         public class Builder
         {
-            public int MaximumIterations { get; set; } = 1000;
+            public int MaximumIterations { get; set; } = 100000;
 
             public IMaxIterationsProvider InnerIterationsProvider { get; set; } =
                 new PercentageMaxIterationsProvider(1.0);

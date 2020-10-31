@@ -22,7 +22,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Decomposition
                 for (int j = 0; j < _hetaDecomposition.GetNumberOfSubdomains; j++)
                 {
                     var axisHetaIndices = _hetaDecomposition.GetIndicesOfSubdomainCp(j);
-                    var numberOfIndicesHeta = axisKsiIndices.Length;
+                    var numberOfIndicesHeta = axisHetaIndices.Length;
 
                     var indices2D = new int[numberOfIndicesKsi*numberOfIndicesHeta];
                     var counter = 0;

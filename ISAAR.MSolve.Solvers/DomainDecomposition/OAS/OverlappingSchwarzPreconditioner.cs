@@ -33,6 +33,19 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS
                 var r3 = Rkl.Multiply(r2, true);
                 lhsVector.AddIntoThis(r3);
             }
+
+            //var R0 = _dofSeparator.GetGlobalToCoarseMapping;
+            //var r01 = R0.Multiply((Vector) rhsVector, true);
+            //var r02 = _matrixManager.SolveCoarseProblemLinearSystem(r01);
+            //var r03 = R0.Multiply(r02, false);
+
+            var R0 = _dofSeparator.GetGlobalToCoarseMapping;
+            var r01 = R0.Multiply((Vector) rhsVector, false);
+            var r02 = _matrixManager.SolveCoarseProblemLinearSystem(r01);
+            var r03 = R0.Multiply(r02, true);
+
+
+            lhsVector.AddIntoThis(r03);
         }
 
         public class Factory: IPreconditionerFactory

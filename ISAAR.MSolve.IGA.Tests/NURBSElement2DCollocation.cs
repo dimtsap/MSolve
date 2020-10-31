@@ -976,7 +976,7 @@ namespace ISAAR.MSolve.IGA.Tests
             //};
             var solverBuilder = new GmresSolver.Builder()
             {
-                PreconditionerFactory = new OverlappingSchwarzPreconditioner.Factory(model, 2, 2)
+                PreconditionerFactory = new OverlappingSchwarzPreconditioner.Factory(model, 4, 4)
             };
 
             ISolver solver = solverBuilder.BuildSolver(model);

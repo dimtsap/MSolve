@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
+using ISAAR.MSolve.LinearAlgebra.Matrices.Builders;
 using ISAAR.MSolve.LinearAlgebra.Triangulation;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
 using ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs;
@@ -15,6 +16,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
         private Dictionary<int, CscMatrix> Akl = new Dictionary<int, CscMatrix>();
         private Dictionary<int, LUCSparseNet> invAkl = new Dictionary<int, LUCSparseNet>();
         //private Dictionary<int, LUFactorization> invAkl = new Dictionary<int, LUFactorization>(); 
+        private LUCSparseNet invA0;
 
         public OasMatrixManager(OasDofSeparator dofSeparator)
         {
@@ -42,7 +44,43 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 
                 invAkl[i] = LUCSparseNet.Factorize(Akl);
             }
+            var A0 = ExtactCoarseProblemMatrix(Kff);
+            invA0 = LUCSparseNet.Factorize(A0);
         }
+
+        private CscMatrix ExtactCoarseProblemMatrix(CsrMatrix Kff)
+        {
+            // Global To Local Interpolation
+            //var R0 = dofSeparator.GetGlobalToCoarseMapping;
+            //var aux1 = Kff.MultiplyLeft(R0, false, true);
+            //var A0 = aux1.MultiplyRight(R0, false);
+
+            // Local to Global Interpolation
+            var R0 = dofSeparator.GetGlobalToCoarseMapping;
+            var aux1 = Kff.MultiplyLeft(R0, false,false);
+            var A0 = aux1.MultiplyRight(R0, false, true);
+
+            var dokCol = DokColMajor.CreateEmpty(A0.NumRows, A0.NumColumns);
+            for (int i = 0; i < A0.NumRows; i++)
+            {
+                for (int j = 0; j < A0.NumColumns; j++)
+                {
+                    if (Math.Abs(A0[i, j]) < 1e-16) continue;
+                    dokCol[i, j] = A0[i, j];
+                }
+            }
+
+            return dokCol.BuildCscMatrix(true);
+        }
+
+        public Vector SolveCoarseProblemLinearSystem(Vector rhsVector)
+        {
+            var solution = Vector.CreateZero(rhsVector.Length);
+            invA0.SolveLinearSystem(rhsVector, solution);
+            return solution;
+        }
+
+
 
         public Vector SolveSubdomainLinearSystem(Vector rhsVector, int subdomainId)
         {

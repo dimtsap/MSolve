@@ -1,4 +1,5 @@
 ﻿using ISAAR.MSolve.Discretization.FreedomDegrees;
+using ISAAR.MSolve.LinearAlgebra.Vectors;
 
 namespace ISAAR.MSolve.Discretization.Interfaces
 {
@@ -12,5 +13,11 @@ namespace ISAAR.MSolve.Discretization.Interfaces
 
 		int NumberOfCpKsi { get; }
         int NumberOfCpHeta { get; }
+
+        Vector KnotValueVectorKsi { get; set; }
+        Vector KnotValueVectorHeta { get; set; }
+
+        int DegreeKsi { get; set; }
+        int DegreeHeta { get; set; }
     }
 }

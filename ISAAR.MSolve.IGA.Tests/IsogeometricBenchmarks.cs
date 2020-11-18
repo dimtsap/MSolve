@@ -1802,7 +1802,7 @@ namespace ISAAR.MSolve.IGA.Tests
 			
 			Model model = new Model();
 			ModelCreator modelCreator = new ModelCreator(model);
-			string filename = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "5x5.txt");
+			string filename = Path.Combine(Directory.GetCurrentDirectory(), "InputFiles", "13x13.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filename);
 			modelReader.CreateModelFromFile();
 			
@@ -1823,15 +1823,16 @@ namespace ISAAR.MSolve.IGA.Tests
 
 
             var k = solver.LinearSystems[0].Matrix;
-            Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<double>(k.NumRows, k.NumColumns);
+            Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
             for (int i = 0; i < k.NumRows; i++)
             {
                 for (int j = 0; j < k.NumColumns; j++)
                 {
-                    kmatlab[i, j] = k[i, j];
+                    if (k[i, j] != 0)
+                        kmatlab[i, j] = k[i, j];
                 }
             }
-            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(),"K5x5Dimitra.mat"), kmatlab, "KG");
+            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), $"{filename}.mat"), kmatlab, "KTotal");
 		}
 
 	}

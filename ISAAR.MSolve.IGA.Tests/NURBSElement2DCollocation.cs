@@ -846,7 +846,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-            var filename = "7x7";
+            var filename = "63x63";
 			string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filepath);
 			modelReader.CreateCollocationModelFromFile();
@@ -885,56 +885,43 @@ namespace ISAAR.MSolve.IGA.Tests
             }
             MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), $"{filename}.mat"), kmatlab, "KTotal");
 
+        }
 
-            var coarsePoints = new List<NaturalPoint>();
-            //var ksi = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
-            //var heta = new double[] { 0, 0.083333333, 0.25, 0.5, 0.75, 0.916666667, 1.0 };
+		[Fact]
+		private void TestGalerkinPointCreation()
+		{
+			var model = new Model();
+			ModelCreator modelCreator = new ModelCreator(model);
+            var filename = "13x13";
+			string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
+			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filepath);
+			modelReader.CreateModelFromFile();
 
-            //var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-            //var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
+			var patch = model.Patches[0];
+			var solverBuilder = new PcgSolver.Builder();
+			ISolver solver = solverBuilder.BuildSolver(model);
 
-            var ksi = new double[] { 0, 0.5,  1.0 };
-            var heta = new double[] { 0, 0.5, 1.0 };
+			// Structural problem provider
+			var provider = new ProblemStructural(model, solver);
 
-            var xCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-            var yCP = new double[] { 0, 0.25, 0.5, 0.75, 1.0 };
-            var linearCP = new List<ControlPoint>();
-            var id = 0;
-            for (int i = 0; i < 5; i++)
+			// Linear static analysis
+			var childAnalyzer = new LinearAnalyzer(model, solver, provider);
+			var parentAnalyzer = new StaticAnalyzer(model, solver, provider, childAnalyzer);
+			// Run the analysis
+			parentAnalyzer.Initialize();
+
+			var k = solver.LinearSystems[0].Matrix;
+
+            Matrix<double> kmatlab = MathNet.Numerics.LinearAlgebra.CreateMatrix.Sparse<double>(k.NumRows, k.NumColumns);
+            for (int i = 0; i < k.NumRows; i++)
             {
-                for (int j = 0; j < 5; j++)
+                for (int j = 0; j < k.NumColumns; j++)
                 {
-                    linearCP.Add(new ControlPoint() { ID = id++, Ksi = xCP[i], Heta = yCP[j], WeightFactor = 1.0, X = xCP[i], Y = yCP[j], });
+                    if (k[i, j] != 0)
+                        kmatlab[i, j] = k[i, j];
                 }
             }
-            var linearVectorKsi = Vector.CreateFromArray(new double[] { 0, 0, 0.25, 0.5, 0.75, 1, 1 });
-
-            foreach (var x in ksi)
-                coarsePoints.AddRange(heta.Select(y => new NaturalPoint(x, y, 0.0)));
-
-            var R0 = new double[model.ControlPoints.Count * 2, coarsePoints.Count * 2];
-            for (int i = 0; i < coarsePoints.Count; i++)
-            {
-                var pointShapeFunctions = new NURBS2D(1, 1, linearVectorKsi,
-                    linearVectorKsi, coarsePoints[i], linearCP, true);
-                for (int j = 0; j < pointShapeFunctions.NurbsValues.NumRows; j++)
-                {
-                    R0[2 * j, 2 * i] = pointShapeFunctions.NurbsValues[j, 0];
-
-                    R0[2 * j + 1, 2 * i + 1] = pointShapeFunctions.NurbsValues[j, 0];
-                }
-            }
-
-            Matrix<double> Rmatlab = CreateMatrix.Dense<double>(R0.GetLength(0), R0.GetLength(1));
-            for (int i = 0; i < R0.GetLength(0); i++)
-            {
-                for (int j = 0; j < R0.GetLength(1); j++)
-                {
-                    Rmatlab[i, j] = R0[i, j];
-                }
-            }
-            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), $"R0_linear.mat"), Rmatlab, "R0_linear");
-
+            MatlabWriter.Write(Path.Combine(Directory.GetCurrentDirectory(), $"{filename}.mat"), kmatlab, "KTotal");
         }
 
 

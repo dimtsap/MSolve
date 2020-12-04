@@ -21,16 +21,18 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
         private readonly IStructuralAsymmetricModel model;
         private readonly int numberOfSubdomainsX;
         private readonly int numberOfSubdomainsY;
+        private readonly int overlapping;
         private readonly Dictionary<int, DofTable> subdomainDofOrderingsLocal=new Dictionary<int, DofTable>();
         private readonly Dictionary<int ,int[]> subdomainDofsLocalToFree=new Dictionary<int, int[]>();
         private readonly Dictionary<int, BooleanMatrixRowsToColumns> subdomainToFreeDofMappings=new Dictionary<int, BooleanMatrixRowsToColumns>();
         private CsrMatrix globalToCoarseMappingMatrix;
 
-        public OasDofSeparator(IStructuralAsymmetricModel model, int numberOfSubdomainsX, int numberOfSubdomainsY)
+        public OasDofSeparator(IStructuralAsymmetricModel model, int numberOfSubdomainsX, int numberOfSubdomainsY, int overlapping=1)
         {
             this.model = model;
             this.numberOfSubdomainsX = numberOfSubdomainsX;
             this.numberOfSubdomainsY = numberOfSubdomainsY;
+            this.overlapping = overlapping;
         }
 
         public int NumberOfSubdomains => numberOfSubdomainsX * numberOfSubdomainsY;
@@ -46,8 +48,8 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
 
         public void SeparateSubdomainAndCoarseProblemDofs()
         {
-            var ksiDecomposition = new AxisDecomposition(model.Subdomains[0].NumberOfCpKsi, numberOfSubdomainsX);
-            var hetaDecomposition = new AxisDecomposition(model.Subdomains[0].NumberOfCpHeta, numberOfSubdomainsY);
+            var ksiDecomposition = new AxisDecomposition(model.Subdomains[0].NumberOfCpKsi, numberOfSubdomainsX, overlapping);
+            var hetaDecomposition = new AxisDecomposition(model.Subdomains[0].NumberOfCpHeta, numberOfSubdomainsY, overlapping);
             var overlappingDecomposition = new OverlappingDecomposition2D(ksiDecomposition, hetaDecomposition);
 
             var freeDofs = model.Subdomains[0].FreeDofRowOrdering.FreeDofs;

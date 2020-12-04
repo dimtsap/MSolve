@@ -59,10 +59,10 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS
             /// <summary>
             /// Initializes a new instance of <see cref="IdentityPreconditioner.Factory"/>.
             /// </summary>
-            public Factory(IStructuralAsymmetricModel model, int numberOfSubdomainsX, int numberOfSubdomainsY)
+            public Factory(IStructuralAsymmetricModel model, int numberOfSubdomainsX, int numberOfSubdomainsY, int overlapping=1)
             {
                 this.model = model;
-                this.DofSeparator=new OasDofSeparator(model,numberOfSubdomainsX, numberOfSubdomainsY);
+                this.DofSeparator=new OasDofSeparator(model,numberOfSubdomainsX, numberOfSubdomainsY, overlapping);
                 this.MatrixManager= new OasMatrixManager(DofSeparator);
             }
 

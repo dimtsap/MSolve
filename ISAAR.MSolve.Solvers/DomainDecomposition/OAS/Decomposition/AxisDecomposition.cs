@@ -10,6 +10,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Decomposition
         private readonly int numberOfControlPoints;
         private int cpPerSubdomain;
         private List<int[]> subdomainCpIndices=new List<int[]>();
+
         public AxisDecomposition(int numberOfControlPoints, int numberOfSubdomains, int overlapping=1)
         {
             this.numberOfControlPoints = numberOfControlPoints;

@@ -14,6 +14,7 @@ using ISAAR.MSolve.IGA.Entities;
 using ISAAR.MSolve.IGA.Postprocessing;
 using ISAAR.MSolve.IGA.Problems.SupportiveClasses;
 using ISAAR.MSolve.IGA.Readers;
+using ISAAR.MSolve.LinearAlgebra;
 using ISAAR.MSolve.LinearAlgebra.Iterative.Preconditioning;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Vectors;
@@ -846,7 +847,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
-            var filename = "63x63";
+            var filename = "128";
 			string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filepath);
 			modelReader.CreateCollocationModelFromFile();
@@ -892,7 +893,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new Model();
 			ModelCreator modelCreator = new ModelCreator(model);
-            var filename = "13x13";
+            var filename = "42x42";
 			string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filepath);
 			modelReader.CreateModelFromFile();
@@ -930,6 +931,7 @@ namespace ISAAR.MSolve.IGA.Tests
 		{
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
+            //var filename = "Collocation128x128";
             var filename = "256x256";
             //var filename = "7x7";
             string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
@@ -951,7 +953,7 @@ namespace ISAAR.MSolve.IGA.Tests
 				ControlPoint = model.ControlPoints.Last()
             });
 
-
+			// LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
 
             //var solverBuilder = new GmresSolver.Builder()
             //{
@@ -963,7 +965,7 @@ namespace ISAAR.MSolve.IGA.Tests
             //};
             var solverBuilder = new GmresSolver.Builder()
             {
-                PreconditionerFactory = new OverlappingSchwarzPreconditioner.Factory(model, 4, 4)
+                PreconditionerFactory = new OverlappingSchwarzPreconditioner.Factory(model, 4,4,3)
             };
 
             ISolver solver = solverBuilder.BuildSolver(model);

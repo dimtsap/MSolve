@@ -44,11 +44,11 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 
                 invAkl[i] = LUCSparseNet.Factorize(Akl);
             }
-            var A0 = ExtactCoarseProblemMatrix(Kff);
+            var A0 = ExtractCoarseProblemMatrix(Kff);
             invA0 = LUCSparseNet.Factorize(A0);
         }
 
-        private CscMatrix ExtactCoarseProblemMatrix(CsrMatrix Kff)
+        private CscMatrix ExtractCoarseProblemMatrix(CsrMatrix Kff)
         {
             // Global To Local Interpolation
             //var R0 = dofSeparator.GetGlobalToCoarseMapping;
@@ -56,9 +56,20 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
             //var A0 = aux1.MultiplyRight(R0, false);
 
             // Local to Global Interpolation
-            var R0 = dofSeparator.GetGlobalToCoarseMapping;
-            var aux1 = Kff.MultiplyLeft(R0, false,false);
-            var A0 = aux1.MultiplyRight(R0, false, true);
+
+            
+             var R0 = dofSeparator.GetGlobalToCoarseMapping;
+
+             var A0=MultiplyR0TimesKffTimesR0Transpose(R0, Kff);
+             
+             
+             // var A0=R0.ThisTimesOtherTimesThisTranspose(Kff);
+             
+             //var aux1 = R0.MultiplyRight(Kff,false, false);
+            // var aux1 = Kff.MultiplyLeft(R0, false,false); // this is the last working one 
+            //
+            // var A0 = R0.MultiplyLeft(aux1,true); // this is the last working one
+            //var A0 = aux1.MultiplyRight(R0, false, true);
 
             var dokCol = DokColMajor.CreateEmpty(A0.NumRows, A0.NumColumns);
             for (int i = 0; i < A0.NumRows; i++)
@@ -71,6 +82,26 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
             }
 
             return dokCol.BuildCscMatrix(true);
+        }
+
+        private Matrix MultiplyR0TimesKffTimesR0Transpose(CscMatrix r0, CsrMatrix kff)
+        {
+            var coarseProblemSize = r0.NumRows;
+            var globalProblemSize = r0.NumColumns;
+            var columnsOfAux = new Vector[coarseProblemSize];
+            for (int i = 0; i < coarseProblemSize; i++)
+            {
+                var columnOfTranspose=r0.GetRow(i);
+                columnsOfAux[i]=kff.Multiply(columnOfTranspose);
+            }
+
+            var matrix = Matrix.CreateZero(coarseProblemSize, coarseProblemSize);
+            for (int i = 0; i < coarseProblemSize; i++)
+            {
+               matrix.SetSubcolumn(i,r0.Multiply(columnsOfAux[i])); 
+            }
+
+            return matrix;
         }
 
         public Vector SolveCoarseProblemLinearSystem(Vector rhsVector)

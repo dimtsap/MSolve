@@ -1246,6 +1246,6 @@ cpcoord = 1225
 1224	32	32	0	1
 
 
-material = steel 100000 0.45 plstress
+material = steel 100000 0.4995 plstress
 
 end

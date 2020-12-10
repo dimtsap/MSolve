@@ -25,7 +25,8 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
         private readonly Dictionary<int, DofTable> subdomainDofOrderingsLocal=new Dictionary<int, DofTable>();
         private readonly Dictionary<int ,int[]> subdomainDofsLocalToFree=new Dictionary<int, int[]>();
         private readonly Dictionary<int, BooleanMatrixRowsToColumns> subdomainToFreeDofMappings=new Dictionary<int, BooleanMatrixRowsToColumns>();
-        private CsrMatrix globalToCoarseMappingMatrix;
+        // private CsrMatrix globalToCoarseMappingMatrix;
+        private CscMatrix globalToCoarseMappingMatrix;
 
         public OasDofSeparator(IStructuralAsymmetricModel model, int numberOfSubdomainsX, int numberOfSubdomainsY, int overlapping=1)
         {
@@ -40,7 +41,8 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
         public BooleanMatrixRowsToColumns GetDofMappingBoundaryClusterToSubdomain(int subdomainID) =>
             subdomainToFreeDofMappings[subdomainID];
 
-        public CsrMatrix GetGlobalToCoarseMapping => globalToCoarseMappingMatrix;
+        // public CsrMatrix GetGlobalToCoarseMapping => globalToCoarseMappingMatrix;
+        public CscMatrix GetGlobalToCoarseMapping => globalToCoarseMappingMatrix;
 
         public int[] GetDofsSubdomainToFree(int subdomainId) => subdomainDofsLocalToFree[subdomainId];
 
@@ -110,24 +112,45 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
             foreach (var x in cpPositionsKsi)
                 finePoints.AddRange(cpPositionsHeta.Select(y => new NaturalPoint(x, y, 0.0)));
 
-            var globalToCoarseMatrix = DokRowMajor.CreateEmpty(freeCoarseProblemDof, freeModelDof);
+            // CSR format
+            // var globalToCoarseMatrix = DokRowMajor.CreateEmpty(freeCoarseProblemDof, freeModelDof);
+            // for (int i = cpPositionsHeta.Length; i < finePoints.Count; i++)
+            // {
+            //     var pointShapeFunctions = new NURBS2D_Solve(model.Subdomains[0].DegreeKsi, model.Subdomains[0].DegreeHeta,
+            //         coarseKvvKsi, coarseKvvHeta, finePoints[i], coarseCp, true);
+            //
+            //     var fineIdxFree = i - cpPositionsHeta.Length;
+            //     for (int j = cpCoarsePositionsHeta.Length; j < pointShapeFunctions.NurbsValues.NumRows; j++)
+            //     {
+            //         var coarseIdxFree = j - cpCoarsePositionsHeta.Length;
+            //
+            //         if (!(Math.Abs(pointShapeFunctions.NurbsValues[j, 0]) > 1e-16)) continue;
+            //         globalToCoarseMatrix[2 * coarseIdxFree, 2 * fineIdxFree] = pointShapeFunctions.NurbsValues[j, 0];
+            //         globalToCoarseMatrix[2 * coarseIdxFree + 1, 2 * fineIdxFree + 1] = pointShapeFunctions.NurbsValues[j, 0];
+            //     }
+            // }
+            //
+            // globalToCoarseMappingMatrix = globalToCoarseMatrix.BuildCsrMatrix(true);
+            
+            // CSC format
+            var globalToCoarseMatrix = DokColMajor.CreateEmpty(freeCoarseProblemDof, freeModelDof);
             for (int i = cpPositionsHeta.Length; i < finePoints.Count; i++)
             {
                 var pointShapeFunctions = new NURBS2D_Solve(model.Subdomains[0].DegreeKsi, model.Subdomains[0].DegreeHeta,
                     coarseKvvKsi, coarseKvvHeta, finePoints[i], coarseCp, true);
-
+            
                 var fineIdxFree = i - cpPositionsHeta.Length;
                 for (int j = cpCoarsePositionsHeta.Length; j < pointShapeFunctions.NurbsValues.NumRows; j++)
                 {
                     var coarseIdxFree = j - cpCoarsePositionsHeta.Length;
-
+            
                     if (!(Math.Abs(pointShapeFunctions.NurbsValues[j, 0]) > 1e-16)) continue;
                     globalToCoarseMatrix[2 * coarseIdxFree, 2 * fineIdxFree] = pointShapeFunctions.NurbsValues[j, 0];
                     globalToCoarseMatrix[2 * coarseIdxFree + 1, 2 * fineIdxFree + 1] = pointShapeFunctions.NurbsValues[j, 0];
                 }
             }
-
-            globalToCoarseMappingMatrix = globalToCoarseMatrix.BuildCsrMatrix(true);
+            
+            globalToCoarseMappingMatrix = globalToCoarseMatrix.BuildCscMatrix(true);
         }
 
         private Vector CalculateKnotValueVectorFromKnots(double[] knots, int degree)
@@ -152,46 +175,46 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
             return knotValueVector;
         }
 
-        private void CalculateGlobalToCoarseMapping1(AxisDecomposition ksiDecomposition, AxisDecomposition hetaDecomposition)
-        {
-            var cpPositionsKsi =
-                CalculateControlPointAxisPositions(model.Subdomains[0].KnotValueVectorKsi, model.Subdomains[0].DegreeKsi);
-            var cpPositionsHeta =
-                CalculateControlPointAxisPositions(model.Subdomains[0].KnotValueVectorHeta, model.Subdomains[0].DegreeHeta);
-
-            var coarseCpKsi = CalculateCoarseAxis(ksiDecomposition, cpPositionsKsi);
-            var coarseCpHeta = CalculateCoarseAxis(hetaDecomposition, cpPositionsHeta);
-
-            var freeModelDof = (model.Subdomains[0].NumberOfCpKsi * model.Subdomains[0].NumberOfCpHeta -
-                                model.Subdomains[0].NumberOfCpHeta) * 2;
-            var freeCoarseProblemDof = (coarseCpKsi.Length * coarseCpHeta.Length - coarseCpHeta.Length) * 2;
-
-            var coarsePoints = new List<NaturalPoint>();
-            foreach (var x in coarseCpKsi)
-                coarsePoints.AddRange(coarseCpHeta.Select(y => new NaturalPoint(x, y, 0.0)));
-
-            var modelCps = model.Nodes.Select(x => x as IWeightedPoint).ToList();
-
-            var globalToCoarseMatrix = DokRowMajor.CreateEmpty(freeModelDof, freeCoarseProblemDof);
-            for (int i = coarseCpHeta.Length; i < coarsePoints.Count; i++)
-            {
-                var pointShapeFunctions = new NURBS2D_Solve(model.Subdomains[0].DegreeKsi, model.Subdomains[0].DegreeHeta,
-                    model.Subdomains[0].KnotValueVectorKsi,
-                    model.Subdomains[0].KnotValueVectorHeta, coarsePoints[i], modelCps, true);
-                var coarseIdxFree = i - coarseCpHeta.Length;
-                for (int j = cpPositionsHeta.Length; j < pointShapeFunctions.NurbsValues.NumRows; j++)
-                {
-                    var freeIdxGlobal = j - cpPositionsHeta.Length;
-
-                    if (!(Math.Abs(pointShapeFunctions.NurbsValues[j, 0]) > 1e-16)) continue;
-                    globalToCoarseMatrix[2 * freeIdxGlobal, 2 * coarseIdxFree] =
-                        pointShapeFunctions.NurbsValues[j, 0];
-                    globalToCoarseMatrix[2 * freeIdxGlobal + 1, 2 * coarseIdxFree + 1] = pointShapeFunctions.NurbsValues[j, 0];
-                }
-            }
-
-            globalToCoarseMappingMatrix = globalToCoarseMatrix.BuildCsrMatrix(true);
-        }
+        // private void CalculateGlobalToCoarseMapping1(AxisDecomposition ksiDecomposition, AxisDecomposition hetaDecomposition)
+        // {
+        //     var cpPositionsKsi =
+        //         CalculateControlPointAxisPositions(model.Subdomains[0].KnotValueVectorKsi, model.Subdomains[0].DegreeKsi);
+        //     var cpPositionsHeta =
+        //         CalculateControlPointAxisPositions(model.Subdomains[0].KnotValueVectorHeta, model.Subdomains[0].DegreeHeta);
+        //
+        //     var coarseCpKsi = CalculateCoarseAxis(ksiDecomposition, cpPositionsKsi);
+        //     var coarseCpHeta = CalculateCoarseAxis(hetaDecomposition, cpPositionsHeta);
+        //
+        //     var freeModelDof = (model.Subdomains[0].NumberOfCpKsi * model.Subdomains[0].NumberOfCpHeta -
+        //                         model.Subdomains[0].NumberOfCpHeta) * 2;
+        //     var freeCoarseProblemDof = (coarseCpKsi.Length * coarseCpHeta.Length - coarseCpHeta.Length) * 2;
+        //
+        //     var coarsePoints = new List<NaturalPoint>();
+        //     foreach (var x in coarseCpKsi)
+        //         coarsePoints.AddRange(coarseCpHeta.Select(y => new NaturalPoint(x, y, 0.0)));
+        //
+        //     var modelCps = model.Nodes.Select(x => x as IWeightedPoint).ToList();
+        //
+        //     var globalToCoarseMatrix = DokRowMajor.CreateEmpty(freeModelDof, freeCoarseProblemDof);
+        //     for (int i = coarseCpHeta.Length; i < coarsePoints.Count; i++)
+        //     {
+        //         var pointShapeFunctions = new NURBS2D_Solve(model.Subdomains[0].DegreeKsi, model.Subdomains[0].DegreeHeta,
+        //             model.Subdomains[0].KnotValueVectorKsi,
+        //             model.Subdomains[0].KnotValueVectorHeta, coarsePoints[i], modelCps, true);
+        //         var coarseIdxFree = i - coarseCpHeta.Length;
+        //         for (int j = cpPositionsHeta.Length; j < pointShapeFunctions.NurbsValues.NumRows; j++)
+        //         {
+        //             var freeIdxGlobal = j - cpPositionsHeta.Length;
+        //
+        //             if (!(Math.Abs(pointShapeFunctions.NurbsValues[j, 0]) > 1e-16)) continue;
+        //             globalToCoarseMatrix[2 * freeIdxGlobal, 2 * coarseIdxFree] =
+        //                 pointShapeFunctions.NurbsValues[j, 0];
+        //             globalToCoarseMatrix[2 * freeIdxGlobal + 1, 2 * coarseIdxFree + 1] = pointShapeFunctions.NurbsValues[j, 0];
+        //         }
+        //     }
+        //
+        //     globalToCoarseMappingMatrix = globalToCoarseMatrix.BuildCsrMatrix(true);
+        // }
 
         private double[] CalculateCoarseAxis(AxisDecomposition axisDecomposition, double[] cpPositions)
         {
@@ -238,12 +261,17 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
             var subdomainDofOrdering = new DofTable();
             var localToGlobal = new List<int>();
             var cpIndices = overlappingDecomposition.GetControlPointIndicesOfSubdomain(i);
-            var freeControlPoints = freeDofs.GetRows();
+            // var freeControlPoints = freeDofs.GetRows().ToArray();
+            // var freeControlPoints = freeDofs.GetRows().ToDictionary(x => x.ID);
+            var freeControlPoints = freeDofs.GetRows().ToDictionary(x => x.ID);
 
             for (int j = 0; j < cpIndices.Length; j++)
             {
-                var node=freeControlPoints.SingleOrDefault(x => x.ID == cpIndices[j]);
-                if (node==null) continue;
+                // var node=freeControlPoints.FirstOrDefault(x => x.ID == cpIndices[j]);
+                // if (node==null) continue;
+                if (!freeControlPoints.ContainsKey(cpIndices[j])) continue;
+                var node=freeControlPoints[cpIndices[j]];
+                
                 var dofsOfNode = freeDofs.GetDataOfRow(node);
                 foreach (var dofTypeIdxPair in dofsOfNode)
                 {

@@ -388,7 +388,9 @@ namespace ISAAR.MSolve.IGA.Entities
         private void CreateCollocationPoints2D()
         {
             #region CollocationPoints
-            var collocationPoints = new List<CollocationPoint2D>();
+
+            var collocationPoints = new CollocationPoint2D[NumberOfControlPointsKsi*NumberOfControlPointsHeta];
+            var counterCollocationPoint = 0;
             var index = 0;
             for (int i = 0; i < NumberOfControlPointsKsi; i++)
             {
@@ -412,7 +414,8 @@ namespace ISAAR.MSolve.IGA.Entities
                     if (i == NumberOfControlPointsKsi - 1) collocationPoint2D.Edge = Edge2D.Right;
                     if (j == 0) collocationPoint2D.Edge = Edge2D.Bottom;
                     if (j == NumberOfControlPointsHeta - 1) collocationPoint2D.Edge = Edge2D.Top;
-                    collocationPoints.Add(collocationPoint2D);
+                    collocationPoints[counterCollocationPoint++] = collocationPoint2D;
+                    // collocationPoints.Add(collocationPoint2D);
                 }
             }
             #endregion
@@ -481,10 +484,33 @@ namespace ISAAR.MSolve.IGA.Entities
                             elementControlPoints.Add(this.ControlPoints[controlPointID]);
                         }
                     }
+                    
+                    var elementCollocationPoints= new List<CollocationPoint2D>();
 
-                    var elementCollocationPoints = collocationPoints.Where(cp =>
-                        knotsOfElement[0].Ksi <= cp.Xi && cp.Xi <= knotsOfElement[3].Ksi &&
-                        knotsOfElement[0].Heta <= cp.Eta && cp.Eta <= knotsOfElement[3].Heta).ToList();
+                    for (int k = 0; k < collocationPoints.Length; k++)
+                    {
+                        var collocationPoint = collocationPoints[k];
+                        if (knotsOfElement[0].Ksi <= collocationPoint.Xi && collocationPoint.Xi <= knotsOfElement[3].Ksi &&
+                            knotsOfElement[0].Heta <= collocationPoint.Eta && collocationPoint.Eta <= knotsOfElement[3].Heta)
+                        {
+                            elementCollocationPoints.Add(collocationPoint);
+                        }
+                    }
+
+                    // foreach (var collocationPoint in collocationPoints)
+                    // {
+                    //     if (knotsOfElement[0].Ksi <= collocationPoint.Xi && collocationPoint.Xi <= knotsOfElement[3].Ksi &&
+                    //         knotsOfElement[0].Heta <= collocationPoint.Eta && collocationPoint.Eta <= knotsOfElement[3].Heta)
+                    //     {
+                    //         elementCollocationPoints.Add(collocationPoint);
+                    //     }
+                    // }
+                    
+                    
+                    
+                    // var elementCollocationPoints = collocationPoints.Where(cp =>
+                    //     knotsOfElement[0].Ksi <= cp.Xi && cp.Xi <= knotsOfElement[3].Ksi &&
+                    //     knotsOfElement[0].Heta <= cp.Eta && cp.Eta <= knotsOfElement[3].Heta).ToList();
 
                     foreach (var point in elementCollocationPoints)
                     {

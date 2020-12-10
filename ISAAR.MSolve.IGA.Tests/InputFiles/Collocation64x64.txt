@@ -4510,6 +4510,6 @@ cpcoord = 4489
 4487	64	63.6666666700000	0	1
 4488	64	64	0	1
 
-material = steel 100000 0.45 plstress
+material = steel 100000 0.4995 plstress
 
 end

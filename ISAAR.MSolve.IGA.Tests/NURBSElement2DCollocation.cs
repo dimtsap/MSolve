@@ -932,7 +932,8 @@ namespace ISAAR.MSolve.IGA.Tests
 			var model = new CollocationModel();
 			ModelCreator modelCreator = new ModelCreator(model);
             //var filename = "Collocation128x128";
-            var filename = "256x256";
+            // var filename = "256x256";
+            var filename = "512x512";
             //var filename = "7x7";
             string filepath = Path.Combine(Directory.GetCurrentDirectory(),"InputFiles",$"{filename}.txt");
 			IsogeometricReader modelReader = new IsogeometricReader(modelCreator, filepath);
@@ -953,7 +954,7 @@ namespace ISAAR.MSolve.IGA.Tests
 				ControlPoint = model.ControlPoints.Last()
             });
 
-			// LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
+			//LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
 
             //var solverBuilder = new GmresSolver.Builder()
             //{
@@ -965,7 +966,7 @@ namespace ISAAR.MSolve.IGA.Tests
             //};
             var solverBuilder = new GmresSolver.Builder()
             {
-                PreconditionerFactory = new OverlappingSchwarzPreconditioner.Factory(model, 4,4,3)
+                PreconditionerFactory = new OverlappingSchwarzPreconditioner.Factory(model, 8,8,1)
             };
 
             ISolver solver = solverBuilder.BuildSolver(model);

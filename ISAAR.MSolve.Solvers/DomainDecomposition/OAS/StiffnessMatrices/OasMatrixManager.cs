@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ISAAR.MSolve.LinearAlgebra;
 using ISAAR.MSolve.LinearAlgebra.Matrices;
 using ISAAR.MSolve.LinearAlgebra.Matrices.Builders;
 using ISAAR.MSolve.LinearAlgebra.Triangulation;
@@ -60,7 +61,9 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
             
              var R0 = dofSeparator.GetGlobalToCoarseMapping;
 
+             LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
              var A0=MultiplyR0TimesKffTimesR0Transpose(R0, Kff);
+             LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.Managed;
              
              
              // var A0=R0.ThisTimesOtherTimesThisTranspose(Kff);
@@ -99,6 +102,26 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
             for (int i = 0; i < coarseProblemSize; i++)
             {
                matrix.SetSubcolumn(i,r0.Multiply(columnsOfAux[i])); 
+            }
+
+            return matrix;
+        }
+        
+        private Matrix MultiplyR0TimesKffTimesR0Transpose(CsrMatrix r0, CsrMatrix kff)
+        {
+            var coarseProblemSize = r0.NumRows;
+            var globalProblemSize = r0.NumColumns;
+            var columnsOfAux = new Vector[coarseProblemSize];
+            for (int i = 0; i < coarseProblemSize; i++)
+            {
+                var columnOfTranspose=r0.GetRow(i);
+                columnsOfAux[i]=kff.Multiply(columnOfTranspose);
+            }
+
+            var matrix = Matrix.CreateZero(coarseProblemSize, coarseProblemSize);
+            for (int i = 0; i < coarseProblemSize; i++)
+            {
+                matrix.SetSubcolumn(i,r0.Multiply(columnsOfAux[i])); 
             }
 
             return matrix;

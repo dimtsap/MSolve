@@ -41,7 +41,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
         public BooleanMatrixRowsToColumns GetDofMappingBoundaryClusterToSubdomain(int subdomainID) =>
             subdomainToFreeDofMappings[subdomainID];
 
-        public CsrMatrix GetGlobalToCoarseMapping => globalToCoarseMappingMatrix;
+        //public CsrMatrix GetGlobalToCoarseMapping => globalToCoarseMappingMatrix;
         // public CscMatrix GetGlobalToCoarseMapping => globalToCoarseMappingMatrix;
 
         public int[] GetDofsSubdomainToFree(int subdomainId) => subdomainDofsLocalToFree[subdomainId];
@@ -72,7 +72,7 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.Dofs
                     subdomainDofsLocalToFree[i]);
             }
 
-            CalculateGlobalToCoarseMapping2(ksiDecomposition, hetaDecomposition);
+            //CalculateGlobalToCoarseMapping2(ksiDecomposition, hetaDecomposition);
         }
 
         private void CalculateGlobalToCoarseMapping2(AxisDecomposition ksiDecomposition, AxisDecomposition hetaDecomposition)

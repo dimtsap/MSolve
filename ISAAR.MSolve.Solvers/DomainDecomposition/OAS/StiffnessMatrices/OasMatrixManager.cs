@@ -45,47 +45,47 @@ namespace ISAAR.MSolve.Solvers.DomainDecomposition.OAS.StiffnessMatrices
 
                 invAkl[i] = LUCSparseNet.Factorize(Akl);
             }
-            var A0 = ExtractCoarseProblemMatrix(Kff);
-            invA0 = LUCSparseNet.Factorize(A0);
+            //var A0 = ExtractCoarseProblemMatrix(Kff);
+            //invA0 = LUCSparseNet.Factorize(A0);
         }
 
-        private CscMatrix ExtractCoarseProblemMatrix(CsrMatrix Kff)
-        {
-            // Global To Local Interpolation
-            //var R0 = dofSeparator.GetGlobalToCoarseMapping;
-            //var aux1 = Kff.MultiplyLeft(R0, false, true);
-            //var A0 = aux1.MultiplyRight(R0, false);
+        //private CscMatrix ExtractCoarseProblemMatrix(CsrMatrix Kff)
+        //{
+        //    // Global To Local Interpolation
+        //    //var R0 = dofSeparator.GetGlobalToCoarseMapping;
+        //    //var aux1 = Kff.MultiplyLeft(R0, false, true);
+        //    //var A0 = aux1.MultiplyRight(R0, false);
 
-            // Local to Global Interpolation
+        //    // Local to Global Interpolation
 
             
-             var R0 = dofSeparator.GetGlobalToCoarseMapping;
+        //     var R0 = dofSeparator.GetGlobalToCoarseMapping;
 
-             LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
-             var A0=MultiplyR0TimesKffTimesR0Transpose(R0, Kff);
-             LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.Managed;
+        //     LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.MKL;
+        //     var A0=MultiplyR0TimesKffTimesR0Transpose(R0, Kff);
+        //     LibrarySettings.LinearAlgebraProviders = LinearAlgebraProviderChoice.Managed;
              
              
-             // var A0=R0.ThisTimesOtherTimesThisTranspose(Kff);
+        //     // var A0=R0.ThisTimesOtherTimesThisTranspose(Kff);
              
-             //var aux1 = R0.MultiplyRight(Kff,false, false);
-            // var aux1 = Kff.MultiplyLeft(R0, false,false); // this is the last working one 
-            //
-            // var A0 = R0.MultiplyLeft(aux1,true); // this is the last working one
-            //var A0 = aux1.MultiplyRight(R0, false, true);
+        //     //var aux1 = R0.MultiplyRight(Kff,false, false);
+        //    // var aux1 = Kff.MultiplyLeft(R0, false,false); // this is the last working one 
+        //    //
+        //    // var A0 = R0.MultiplyLeft(aux1,true); // this is the last working one
+        //    //var A0 = aux1.MultiplyRight(R0, false, true);
 
-            var dokCol = DokColMajor.CreateEmpty(A0.NumRows, A0.NumColumns);
-            for (int i = 0; i < A0.NumRows; i++)
-            {
-                for (int j = 0; j < A0.NumColumns; j++)
-                {
-                    if (Math.Abs(A0[i, j]) < 1e-16) continue;
-                    dokCol[i, j] = A0[i, j];
-                }
-            }
+        //    var dokCol = DokColMajor.CreateEmpty(A0.NumRows, A0.NumColumns);
+        //    for (int i = 0; i < A0.NumRows; i++)
+        //    {
+        //        for (int j = 0; j < A0.NumColumns; j++)
+        //        {
+        //            if (Math.Abs(A0[i, j]) < 1e-16) continue;
+        //            dokCol[i, j] = A0[i, j];
+        //        }
+        //    }
 
-            return dokCol.BuildCscMatrix(true);
-        }
+        //    return dokCol.BuildCscMatrix(true);
+        //}
 
         private Matrix MultiplyR0TimesKffTimesR0Transpose(CscMatrix r0, CsrMatrix kff)
         {
